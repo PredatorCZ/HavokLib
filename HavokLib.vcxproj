@@ -1,0 +1,109 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\HavokApi.hpp" />
+    <ClInclude Include="source\hkaAnimation.h" />
+    <ClInclude Include="source\hkaAnimationContainer.h" />
+    <ClInclude Include="source\hkaAnnotation.h" />
+    <ClInclude Include="source\hkaDecompressor.h" />
+    <ClInclude Include="source\hkaDeltaCompressedAnimation.h" />
+    <ClInclude Include="source\hkaDeltaDecompressor.h" />
+    <ClInclude Include="source\hkaSkeleton.h" />
+    <ClInclude Include="source\hkaWaveletCompressedAnimation.h" />
+    <ClInclude Include="source\hkaWaveletDecompressor.h" />
+    <ClInclude Include="source\hkHeader.hpp" />
+    <ClInclude Include="source\hkNewHeader.h" />
+    <ClInclude Include="source\hkObjectBase.h" />
+    <ClInclude Include="source\hkReflectorUtil.h" />
+    <ClInclude Include="source\hkRootLevelContainer.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="3rd_party\PreCore\datas\MasterPrinter.cpp" />
+    <ClCompile Include="source\hkaDeltaDecompressor.cpp" />
+    <ClCompile Include="source\hkaWaveletDecompressor.cpp" />
+    <ClCompile Include="source\hkCore.cpp" />
+    <ClCompile Include="source\hkHeader.cpp" />
+    <ClCompile Include="source\hkNewHeader.cpp" />
+    <ClCompile Include="source\hkRegistry.cpp" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{FFCA4C01-B4D8-46B2-8224-8D210C11B3CD}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>HavokLib</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>lib\$(Platform)_$(Configuration)\</OutDir>
+    <IntDir>ObjDump\$(Platform)_$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup>
+    <BuildPreprocessMacro01 Condition="'$(Configuration)'=='Debug'">_DEBUG;</BuildPreprocessMacro01>
+    <BuildPreprocessMacro Condition="'$(Platform)'=='Win32'">WIN32;$(BuildPreprocessMacro01)</BuildPreprocessMacro>
+    <BuildPreprocessMacro Condition="'$(Platform)'=='x64'">$(BuildPreprocessMacro01)</BuildPreprocessMacro>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>3rd_party\PreCore;include</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>$(BuildPreprocessMacro)_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
