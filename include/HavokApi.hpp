@@ -18,9 +18,10 @@
 #pragma once
 #include <vector>
 #include <functional>
-#include "datas\endian.hpp"
-#include "datas\vectors.hpp"
-#include "datas\jenkinshash.hpp"
+#include "datas/endian.hpp"
+#include "datas/vectors.hpp"
+#include "datas/jenkinshash.hpp"
+#include "datas/reflector.hpp"
 
 class BinReader;
 struct IhkPackFile;
@@ -33,7 +34,8 @@ struct hkaAnimatedReferenceFrame;
 struct hkaAnnotationTrack;
 struct hkRootLevelContainer;
 
-void InitializeHavokRegistry();
+#define DECLARE_HKCLASS(classname) static const JenHash HASH = JenkinsHash(#classname, sizeof(#classname) - 1);\
+ES_FORCEINLINE const char *ClassName() { return namePtr; }
 
 ////////////////////////////////////////////////////////////////////////// Havok Iterators
 
@@ -86,10 +88,37 @@ public:
 
 ////////////////////////////////////////////////////////////////////////// Havok Interface Classes
 
+enum hkXMLToolsets
+{
+	HKUNKVER,
+	HK550,
+	HK660,
+	HK710,
+	HK2010_2,
+	HK2011,
+	HK2011_2,
+	HK2012_2,
+	HK2013,
+	HK2014,
+};
+
+namespace pugi
+{
+	class xml_node;
+};
+typedef pugi::xml_node XMLnode;
+
+struct XMLHandle
+{
+	XMLnode *node;
+	hkXMLToolsets toolset;
+};
+
 //Internal class, DO NOT work with this one, always up-cast it
 struct hkVirtualClass
 {
-	unsigned int hash;
+	JenHash hash;
+	JenHash superHash;
 	const char *namePtr;
 	char *masterBuffer;
 	IhkPackFile *header;
@@ -98,17 +127,7 @@ struct hkVirtualClass
 	virtual void SwapEndian() = 0;
 	virtual void Process() {};
 	virtual void SetDataPointer(void *Ptr) = 0;
-};
-
-struct IhkPackFile
-{
-	virtual std::vector<hkVirtualClass*> GetClasses(const char* hkClassName) = 0;
-	virtual const hkVirtualClass *GetClass(const void *ptr) = 0;
-	virtual std::vector<hkVirtualClass*> &GetAllClasses() = 0;
-	virtual ~IhkPackFile() = 0;
-	virtual int GetVersion() = 0;
-	ES_INLINE hkRootLevelContainer *GetRootLevelContainer() { return reinterpret_cast<hkRootLevelContainer*>(GetClasses("hkRootLevelContainer")[0]); }
-	static IhkPackFile *Create(const wchar_t *fileName);
+	virtual void ToXML(XMLHandle hdl) const {};
 };
 
 #pragma warning(disable : 4324)
@@ -117,6 +136,8 @@ __declspec(align(16))struct hkQTransform
 	Vector position;
 	__declspec(align(16)) Vector4 rotation;
 	Vector scale;
+
+	std::string ToString() const;
 };
 #pragma warning(default : 4324)
 
@@ -128,7 +149,8 @@ struct hkLocalFrameOnBone
 
 struct hkaPartition
 {
-	const char *name;
+	DECLARE_REFLECTOR_WNAMES_STATIC;
+	std::string name;
 	short startBoneIndex,
 		numBones;
 };
@@ -143,6 +165,7 @@ struct hkFullBone
 
 struct hkaSkeleton : hkVirtualClass
 {
+	DECLARE_HKCLASS(hkaSkeleton)
 	virtual const char *GetSkeletonName() const = 0;
 	virtual const int GetNumFloatSlots() const = 0;
 	virtual const char *GetFloatSlot(int id) const = 0;
@@ -177,8 +200,6 @@ struct hkaSkeleton : hkVirtualClass
 	const iteratorBoneTMs BoneTransforms() const { return iteratorBoneTMs(this); }
 	const iteratorBoneParentIDs BoneParentIDs() const { return iteratorBoneParentIDs(this); }
 	const iteratorFullBones FullBones() const { return iteratorFullBones(this); }
-
-	static const JenHash HASH;
 };
 
 struct hkNamedVariant
@@ -191,10 +212,14 @@ struct hkNamedVariant
 	operator const char*() const { return name; }
 	operator JenHash() const { return JenkinsHash(className, static_cast<const int>(strlen(className))); }
 	bool operator==(const JenHash iHash) const { return static_cast<JenHash>(*this) == iHash; }
+
+	void ToXML(XMLHandle hdl) const;
 };
 
 struct hkRootLevelContainer : hkVirtualClass
 {
+	DECLARE_HKCLASS(hkRootLevelContainer)
+
 	virtual const int GetNumVariants() const = 0;
 	virtual const hkNamedVariant GetVariant(int id) const = 0;
 	
@@ -203,11 +228,12 @@ struct hkRootLevelContainer : hkVirtualClass
 	const interatorVariant begin() const { return interatorVariant(this, 0); }
 	const interatorVariant end() const { return interatorVariant(this); }
 
-	static const JenHash HASH;
 };
 
 struct hkaAnimationContainer : hkVirtualClass
 {
+	DECLARE_HKCLASS(hkaAnimationContainer)
+
 	virtual const int GetNumSkeletons() const = 0;
 	virtual const hkaSkeleton *GetSkeleton(int id) const = 0;
 	virtual const int GetNumAnimations() const = 0;
@@ -230,8 +256,6 @@ struct hkaAnimationContainer : hkVirtualClass
 	const iteratorBindings Bindings() const { return iteratorBindings(this); }
 	const iteratorAttachments Attachments() const { return iteratorAttachments(this); }
 	const iteratorMeshBinds MeshBinds() const { return iteratorMeshBinds(this); }
-
-	static const JenHash HASH;
 };
 
 enum hkaAnimationType
@@ -249,6 +273,8 @@ enum hkaAnimationType
 
 struct hkaAnnotationTrack : hkVirtualClass
 {
+	DECLARE_HKCLASS(hkaAnnotationTrack)
+
 	struct Annotation
 	{
 		float time;
@@ -264,12 +290,13 @@ struct hkaAnnotationTrack : hkVirtualClass
 	const interatorAnnotation end() const { return interatorAnnotation(this); }
 
 	operator const char*() const { return GetName(); }
-
-	static const JenHash HASH;
 };
+
 typedef std::auto_ptr<hkaAnnotationTrack> hkaAnnotationTrackPtr;
 struct hkaAnimation : hkVirtualClass
 {
+	DECLARE_HKCLASS(hkaAnimation)
+
 	virtual const char *GetAnimationTypeName() const = 0;
 	virtual const hkaAnimationType GetAnimationType() const = 0;
 	virtual const float GetDuration() const = 0;
@@ -278,6 +305,23 @@ struct hkaAnimation : hkVirtualClass
 	virtual const hkaAnimatedReferenceFrame *GetExtractedMotion() const = 0;
 	virtual const int GetNumAnnotations() const = 0;
 	virtual hkaAnnotationTrackPtr GetAnnotation(int id) const = 0;
+};
 
-	static const JenHash HASH;
+struct IhkPackFile
+{
+	typedef std::vector<hkVirtualClass *> VirtualClasses;
+	virtual VirtualClasses &GetAllClasses() = 0;
+	virtual int GetVersion() = 0;
+	virtual ~IhkPackFile() = 0;
+
+	ES_INLINE VirtualClasses GetClasses(const char *hkClassName) { return GetClasses(JenkinsHash(hkClassName, static_cast<int>(strlen(hkClassName)))); }
+	ES_INLINE hkRootLevelContainer *GetRootLevelContainer() { return static_cast<hkRootLevelContainer *>(GetClasses(hkRootLevelContainer::HASH)[0]); }
+	VirtualClasses GetClasses(JenHash hash);
+	const hkVirtualClass *GetClass(const void *ptr);
+
+	static IhkPackFile *Create(const wchar_t *fileName);
+	int ExportXML(const wchar_t *fileName, hkXMLToolsets toolsetVersion);
+
+	//Internal use only
+	static hkVirtualClass *ConstructClass(JenHash hash);
 };

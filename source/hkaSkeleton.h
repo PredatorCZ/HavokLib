@@ -16,11 +16,11 @@
 */
 
 #pragma once
-#include "HavokApi.hpp"
+#include "hkInternalInterfaces.h"
 #include "hkObjectBase.h"
 #include "datas/disabler.hpp"
 
-template<class C> struct hkaSkeleton_t : hkaSkeleton
+template<class C> struct hkaSkeleton_t : hkaSkeletonInternalInterface
 {
 	C *Data;
 	hkClassConstructor(hkaSkeleton_t<C>);

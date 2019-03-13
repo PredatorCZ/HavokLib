@@ -131,8 +131,6 @@ struct hkxSectionHeader
 	int LinkBuffer();
 	int LinkBuffer86();
 
-	std::vector<hkVirtualClass*> GetVirtualClasses(const char* hkClassName);
-	hkVirtualClass *GetClass(const void* ptr);
 	~hkxSectionHeader();
 	ES_FORCEINLINE void SwapEndian();
 };
@@ -165,9 +163,7 @@ struct hkxHeader : IhkPackFile
 
 	int Load(BinReader &rd);
 	ES_FORCEINLINE hkxSectionHeader *GetDataSection() { return &sections[contentsSectionIndex]; }
-	std::vector<hkVirtualClass*> GetClasses(const char* hkClassName);
 	ES_FORCEINLINE std::vector<hkVirtualClass*> &GetAllClasses() { return GetDataSection()->virtualClasses; }
-	const hkVirtualClass *GetClass(const void *ptr);
 	int GetVersion();
 	ES_FORCEINLINE void SwapEndian();
 	~hkxHeader() {}

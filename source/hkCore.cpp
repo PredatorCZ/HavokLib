@@ -15,20 +15,17 @@
 	along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "HavokApi.hpp"
+#include <map>
+#include "HavokXMLApi.hpp"
 #include "hkHeader.hpp"
 #include "hkNewHeader.h"
 #include "datas/binreader.hpp"
 #include "datas/masterprinter.hpp"
+#include "datas/flags.hpp"
+#include "pugixml.hpp"
+#include "hkXML.h"
 
-#define HashClass(cls) const JenHash cls::HASH = JenkinsHash(#cls, sizeof(#cls) - 1);
-
-HashClass(hkaSkeleton)
-HashClass(hkRootLevelContainer)
-HashClass(hkaAnimationContainer)
-HashClass(hkaAnnotationTrack)
-HashClass(hkaAnimation)
-
+REFLECTOR_START_WNAMES(hkaPartition, name, startBoneIndex, numBones);
 
 IhkPackFile *IhkPackFile::Create(const wchar_t *fileName)
 {
@@ -80,3 +77,94 @@ IhkPackFile *IhkPackFile::Create(const wchar_t *fileName)
 }
 
 IhkPackFile::~IhkPackFile() {}
+
+struct xmlToolsetProp
+{
+	enum xmlToolsetPropFlags
+	{
+		TopLevelObject,
+		MaxPredicate
+	};
+	EnumFlags<uchar, xmlToolsetPropFlags> flags;
+	char version[3];
+	const char name[16];	
+};
+
+static const std::map<hkXMLToolsets, xmlToolsetProp> xmlToolsetProps =
+{
+	{HK550, {0, "5", "Havok-5.5.0-r1"}},
+	{HK660, {(1 << xmlToolsetProp::TopLevelObject), "7", "Havok-6.6.0-r1"}},
+	{HK710, {(1 << xmlToolsetProp::TopLevelObject), "7", "Havok-7.1.0-r1"}},
+	{HK2010_2, {(1 << xmlToolsetProp::TopLevelObject), "8", "hk_2010.2.0-r1"}},
+	{HK2011, {(1 << xmlToolsetProp::TopLevelObject), "9", "hk_2011.1.0-r1"}},
+	{HK2011_2, {(1 << xmlToolsetProp::TopLevelObject), "9", "hk_2011.2.0-r1"}},
+	{HK2012_2, {(1 << xmlToolsetProp::TopLevelObject), "9", "hk_2012.2.0-r1"}},
+	{HK2013, {(1 << xmlToolsetProp::TopLevelObject), "9", "hk_2013.1.0-r1"}},
+	{HK2014, {(1 << xmlToolsetProp::TopLevelObject) | (1 << xmlToolsetProp::MaxPredicate), "11", "hk_2014.1.0-r1"}},
+};
+
+int IhkPackFile::ExportXML(const wchar_t *fileName, hkXMLToolsets toolsetVersion)
+{
+	pugi::xml_document doc;
+	pugi::xml_node &master = doc.append_child("hkpackfile");
+
+	const xmlToolsetProp &propRef = xmlToolsetProps.at(toolsetVersion);
+
+	master.append_attribute("classversion").set_value(propRef.version);
+	master.append_attribute("contentsversion").set_value(propRef.name);
+
+	if (propRef.flags[xmlToolsetProp::MaxPredicate])
+	{
+		master.append_attribute("maxpredicate").set_value(21);
+		master.append_attribute("predicates");
+	}
+
+	pugi::xml_node &dataSection = master.append_child("hksection");
+	dataSection.append_attribute(_hkName).set_value("__data__");
+
+	VirtualClasses allClasses = GetAllClasses();
+
+	for (auto &c : allClasses)
+	{
+		pugi::xml_node &classNode = dataSection.append_child(_hkObject);
+		pugi::xml_attribute &addrAttr = classNode.append_attribute(_hkName);
+		addrAttr.set_value(PointerToString(c));
+		classNode.append_attribute(_hkClass).set_value(c->namePtr);
+
+		if (c->superHash == hkRootLevelContainer::HASH && propRef.flags[xmlToolsetProp::TopLevelObject])
+			master.append_attribute("toplevelobject").set_value(addrAttr.as_string());
+
+		c->ToXML({ &classNode, toolsetVersion });
+	}
+
+	return !doc.save_file(fileName);
+}
+
+const hkVirtualClass *IhkPackFile::GetClass(const void *ptr)
+{
+	VirtualClasses &classes = GetAllClasses();
+
+	for (auto &c : classes)
+		if (c->GetPointer() == ptr)
+			return c;
+
+	return nullptr;
+}
+
+IhkPackFile::VirtualClasses IhkPackFile::GetClasses(JenHash hash)
+{
+	VirtualClasses &classes = GetAllClasses();
+	VirtualClasses buffa;
+
+	for (auto &c : classes)
+		if (c->superHash == hash)
+			buffa.push_back(c);
+
+	return buffa;
+}
+
+xmlHavokFile::~xmlHavokFile()
+{
+	for (auto &c : classes)
+		delete c;
+}

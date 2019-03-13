@@ -5,6 +5,11 @@ VisualStudioVersion = 16.0.28621.142
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HavokLib", "HavokLib.vcxproj", "{FFCA4C01-B4D8-46B2-8224-8D210C11B3CD}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HavokLibSamples", "_samples\HavokLibSamples.vcxproj", "{8BB24AF4-3098-43C5-8DAB-2F8FB653EACD}"
+	ProjectSection(ProjectDependencies) = postProject
+		{FFCA4C01-B4D8-46B2-8224-8D210C11B3CD} = {FFCA4C01-B4D8-46B2-8224-8D210C11B3CD}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +26,14 @@ Global
 		{FFCA4C01-B4D8-46B2-8224-8D210C11B3CD}.Release|x64.Build.0 = Release|x64
 		{FFCA4C01-B4D8-46B2-8224-8D210C11B3CD}.Release|x86.ActiveCfg = Release|Win32
 		{FFCA4C01-B4D8-46B2-8224-8D210C11B3CD}.Release|x86.Build.0 = Release|Win32
+		{8BB24AF4-3098-43C5-8DAB-2F8FB653EACD}.Debug|x64.ActiveCfg = Debug|x64
+		{8BB24AF4-3098-43C5-8DAB-2F8FB653EACD}.Debug|x64.Build.0 = Debug|x64
+		{8BB24AF4-3098-43C5-8DAB-2F8FB653EACD}.Debug|x86.ActiveCfg = Debug|Win32
+		{8BB24AF4-3098-43C5-8DAB-2F8FB653EACD}.Debug|x86.Build.0 = Debug|Win32
+		{8BB24AF4-3098-43C5-8DAB-2F8FB653EACD}.Release|x64.ActiveCfg = Release|x64
+		{8BB24AF4-3098-43C5-8DAB-2F8FB653EACD}.Release|x64.Build.0 = Release|x64
+		{8BB24AF4-3098-43C5-8DAB-2F8FB653EACD}.Release|x86.ActiveCfg = Release|Win32
+		{8BB24AF4-3098-43C5-8DAB-2F8FB653EACD}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -20,6 +20,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\HavokApi.hpp" />
+    <ClInclude Include="include\HavokXMLApi.hpp" />
+    <ClInclude Include="include\hkInternalInterfaces.h" />
     <ClInclude Include="source\hkaAnimation.h" />
     <ClInclude Include="source\hkaAnimationContainer.h" />
     <ClInclude Include="source\hkaAnnotation.h" />
@@ -34,11 +36,15 @@
     <ClInclude Include="source\hkObjectBase.h" />
     <ClInclude Include="source\hkReflectorUtil.h" />
     <ClInclude Include="source\hkRootLevelContainer.h" />
+    <ClInclude Include="source\hkXML.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="3rd_party\PreCore\datas\MasterPrinter.cpp" />
+    <ClCompile Include="3rd_party\PreCore\datas\reflector.cpp" />
+    <ClCompile Include="3rd_party\PugiXml\src\pugixml.cpp" />
     <ClCompile Include="source\hkaDeltaDecompressor.cpp" />
     <ClCompile Include="source\hkaWaveletDecompressor.cpp" />
+    <ClCompile Include="source\hkBin2XML.cpp" />
     <ClCompile Include="source\hkCore.cpp" />
     <ClCompile Include="source\hkHeader.cpp" />
     <ClCompile Include="source\hkNewHeader.cpp" />
@@ -80,7 +86,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>3rd_party\PreCore;include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>3rd_party\PreCore;include;3rd_party/pugixml/src</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>$(BuildPreprocessMacro)_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>

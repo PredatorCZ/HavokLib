@@ -77,12 +77,9 @@ struct hkxNewHeader : IhkPackFile, hkChunk
 	_clVec memberNames;
 	std::vector<ClassName> weldedClassNames;
 	std::vector<classEntryFixup> classEntries;
+	VirtualClasses virtualClasses;
 
-	std::vector<hkVirtualClass*> virtualClasses;
-
-	std::vector<hkVirtualClass*> GetClasses(const char* hkClassName);
-	const hkVirtualClass *GetClass(const void *ptr);
-	std::vector<hkVirtualClass*> &GetAllClasses() { return virtualClasses; }
+	VirtualClasses &GetAllClasses() { return virtualClasses; }
 	int GetVersion();
 	int Load(BinReader *rd);
 	~hkxNewHeader();

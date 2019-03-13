@@ -23,12 +23,8 @@
 #include <algorithm>
 #include <string>
 #include <ctype.h>
-#include <map>
 
 const int hkxSectionHeader::PODSize = offsetof(hkxSectionHeader, bufferSize) + 4;
-
-typedef std::map<unsigned int, hkVirtualClass*(*)()> hkClassMapper;
-extern hkClassMapper hkClassStorage;
 
 int hkxHeader::Load(BinReader & rd)
 {
@@ -114,26 +110,6 @@ int hkxHeader::Load(BinReader & rd)
 	}
 
 	return 0;
-}
-
-std::vector<hkVirtualClass*> hkxHeader::GetClasses(const char * hkClassName)
-{
-	hkxSectionHeader *section = GetDataSection();
-
-	if (!section)
-		return std::vector<hkVirtualClass*>();
-
-	return section->GetVirtualClasses(hkClassName);
-}
-
-const hkVirtualClass * hkxHeader::GetClass(const void * ptr)
-{
-	hkxSectionHeader *section = GetDataSection();
-
-	if (!section)
-		return nullptr;
-
-	return section->GetClass(ptr);
 }
 
 int hkxHeader::GetVersion()
@@ -364,11 +340,13 @@ int hkxSectionHeader::LinkBuffer()
 
 			const JenHash _chash = JenkinsHash(classname.c_str(), static_cast<int>(classname.size()));
 
-			if (hkClassStorage.count(_chash))
+			hkVirtualClass *cls = IhkPackFile::ConstructClass(_chash);
+
+			if (cls)
 			{
-				hkVirtualClass *cls = hkClassStorage[_chash]();
 				cls->SetDataPointer(sectionBuffer + vf.dataoffset);
 				cls->namePtr = clName;
+				cls->superHash = JenkinsHash(clName, static_cast<int>(strlen(clName)));
 				cls->masterBuffer = sectionBuffer;
 				cls->header = header;
 				if (header->layout.big_endian)
@@ -403,11 +381,13 @@ int hkxSectionHeader::LinkBuffer86()
 
 			const JenHash _chash = JenkinsHash(classname.c_str(), static_cast<int>(classname.size()));
 
-			if (hkClassStorage.count(_chash))
+			hkVirtualClass *cls = IhkPackFile::ConstructClass(_chash);
+
+			if (cls)
 			{
-				hkVirtualClass *cls = hkClassStorage[_chash]();
 				cls->SetDataPointer(sectionBuffer + vf.dataoffset);
 				cls->namePtr = clName;
+				cls->superHash = JenkinsHash(clName, static_cast<int>(strlen(clName)));
 				cls->masterBuffer = sectionBuffer;
 				cls->header = header;
 				if (header->layout.big_endian)
@@ -433,31 +413,6 @@ void hkxSectionHeader::SwapEndian()
 	FByteswapper(exportsOffset);
 	FByteswapper(importsOffset);
 	FByteswapper(bufferSize);
-}
-
-
-std::vector<hkVirtualClass*> hkxSectionHeader::GetVirtualClasses(const char * hkClassName)
-{
-	std::vector<hkVirtualClass*> buffa;
-
-	std::string hkfullclass = _hkGenerateClassname(header, hkClassName);
-
-	JenHash hash = JenkinsHash(hkfullclass.c_str(), static_cast<int>(hkfullclass.size()));
-
-	for (auto &c : virtualClasses)
-		if (c->hash == hash)
-			buffa.push_back(c);
-
-	return buffa;
-}
-
-hkVirtualClass *hkxSectionHeader::GetClass(const void * ptr)
-{
-	for (auto &c : virtualClasses)
-		if (c->GetPointer() == ptr)
-			return c;
-
-	return nullptr;
 }
 
 hkxSectionHeader::~hkxSectionHeader()

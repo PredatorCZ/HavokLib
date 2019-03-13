@@ -16,10 +16,10 @@
 */
 
 #pragma once
-#include "HavokApi.hpp"
+#include "hkInternalInterfaces.h"
 #include "hkObjectBase.h"
 
-template<class C> struct hkaAnimationContainer_t : hkaAnimationContainer
+template<class C> struct hkaAnimationContainer_t : hkaAnimationContainerInternalInterface
 {
 	C *Data;
 	hkClassConstructor(hkaAnimationContainer_t<C>);

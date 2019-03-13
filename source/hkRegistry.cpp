@@ -18,16 +18,12 @@
 #include "hkaSkeleton.h"
 #include "hkRootLevelContainer.h"
 #include "hkaAnimationContainer.h"
-
+#include "datas/macroLoop.hpp"
 #include "datas/jenkinshash.hpp"
 #include "hkaDeltaCompressedAnimation.h"
 #include "hkaWaveletCompressedAnimation.h"
 
-typedef std::map<unsigned int, hkVirtualClass*(*)()> hkClassMapper;
-hkClassMapper hkClassStorage;
-template<class C> hkVirtualClass *hkCreateDerivedClass() { return new C{}; }
-
-#define hkRegisterClass(classname) hkClassStorage[classname::HASH] = &hkCreateDerivedClass<classname>;
+#define hkRegisterClass(classname) { classname::HASH, &hkCreateDerivedClass<classname> },
 #define hkRegisterClassID(classname)const JenHash classname::HASH = JenkinsHash(#classname, sizeof(#classname) - 1);
 
 #define hkRegisterVersionedClassID(classname, version)\
@@ -39,12 +35,14 @@ hkRegisterClassID(classname##_t<##classname##version##_rp_t<hkFakePointer>>);\
 hkRegisterClassID(classname##_t<##classname##version##_rp_t<hkStripPointer>>);\
 
 #define hkRegisterVersionedClass(classname, version)\
-hkRegisterClass(classname##_t<##classname##version##_t<hkRealPointer>>);\
-hkRegisterClass(classname##_t<##classname##version##_t<hkFakePointer>>);\
-hkRegisterClass(classname##_t<##classname##version##_t<hkStripPointer>>);\
-hkRegisterClass(classname##_t<##classname##version##_rp_t<hkRealPointer>>);\
-hkRegisterClass(classname##_t<##classname##version##_rp_t<hkFakePointer>>);\
-hkRegisterClass(classname##_t<##classname##version##_rp_t<hkStripPointer>>);\
+hkRegisterClass(classname##_t<##classname##version##_t<hkRealPointer>>)\
+hkRegisterClass(classname##_t<##classname##version##_t<hkFakePointer>>)\
+hkRegisterClass(classname##_t<##classname##version##_t<hkStripPointer>>)\
+hkRegisterClass(classname##_t<##classname##version##_rp_t<hkRealPointer>>)\
+hkRegisterClass(classname##_t<##classname##version##_rp_t<hkFakePointer>>)\
+hkRegisterClass(classname##_t<##classname##version##_rp_t<hkStripPointer>>)\
+
+#define hkRegisterVersionedClassEval(classname, id, version) hkRegisterVersionedClass(classname, version)
 
 #define hkRegisterFullClassID(classname)\
 hkRegisterVersionedClassID(classname, 550)\
@@ -82,25 +80,23 @@ hkRegisterVersionedClassID(hkaWaveletCompressedAnimation, 660)
 hkRegisterVersionedClassID(hkaWaveletCompressedAnimation, 710)
 hkRegisterVersionedClassID(hkaWaveletCompressedAnimation, 2010)
 
-void InitializeHavokRegistry()
+template<class C> hkVirtualClass *hkCreateDerivedClass() { return new C{}; }
+
+static const std::map<JenHash, hkVirtualClass *(*)()> hkClassStorage =
 {
-	hkRegisterFullClass(hkaSkeleton);
-	hkRegisterFullClass(hkRootLevelContainer);
-	hkRegisterFullClass(hkaAnimationContainer);
+	StaticFor(hkRegisterFullClass, hkaSkeleton, hkRootLevelContainer, hkaAnimationContainer)
 
-	hkRegisterVersionedClass(hkaDeltaCompressedSkeletalAnimation, 550);
-	hkRegisterVersionedClass(hkaDeltaCompressedAnimation, 660);
-	hkRegisterVersionedClass(hkaDeltaCompressedAnimation, 710);
-	hkRegisterVersionedClass(hkaDeltaCompressedAnimation, 2010);
+	hkRegisterVersionedClass(hkaDeltaCompressedSkeletalAnimation, 550)
+	StaticForArgID(hkRegisterVersionedClassEval, hkaDeltaCompressedAnimation, 660, 710, 2010)
 
-	hkRegisterVersionedClass(hkaWaveletCompressedSkeletalAnimation, 550);
-	hkRegisterVersionedClass(hkaWaveletCompressedAnimation, 660);
-	hkRegisterVersionedClass(hkaWaveletCompressedAnimation, 710);
-	hkRegisterVersionedClass(hkaWaveletCompressedAnimation, 2010);
+	hkRegisterVersionedClass(hkaWaveletCompressedSkeletalAnimation, 550)
+	StaticForArgID(hkRegisterVersionedClassEval, hkaWaveletCompressedAnimation, 660, 710, 2010)
+};
 
-}
-
-void FreeHavokRegistry()
+hkVirtualClass *IhkPackFile::ConstructClass(JenHash hash)
 {
-	hkClassStorage.clear();
+	if (hkClassStorage.count(hash))
+		return hkClassStorage.at(hash)();
+
+	return nullptr;
 }

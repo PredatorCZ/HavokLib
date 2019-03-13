@@ -21,9 +21,6 @@
 #include "datas/masterprinter.hpp"
 #include <map>
 
-typedef std::map<unsigned int, hkVirtualClass*(*)()> hkClassMapper;
-extern hkClassMapper hkClassStorage;
-
 constexpr uint _ToFourCC(const char *input)
 {
 	return reinterpret_cast<const uint&>(input[2]);
@@ -263,11 +260,13 @@ int chPTCHRead(BinReader * rd, hkChunk *holder, hkxNewHeader *root)
 		std::string compiledClassname = _hkGenerateClassnameNew(root, clName);
 		const JenHash _chash = JenkinsHash(compiledClassname.c_str(), static_cast<int>(compiledClassname.size()));
 
-		if (hkClassStorage.count(_chash))
+		hkVirtualClass *cls = IhkPackFile::ConstructClass(_chash);
+
+		if (cls)
 		{
-			hkVirtualClass *cls = hkClassStorage[_chash]();
 			cls->SetDataPointer(root->dataBuffer + f.tag.hash);
 			cls->namePtr = clName;
+			cls->superHash = JenkinsHash(clName, static_cast<int>(strlen(clName)));
 			cls->masterBuffer = root->dataBuffer;
 			cls->header = root;
 
@@ -390,28 +389,4 @@ void hkxNewHeader::DumpClassNames(std::ostream &str)
 
 		str << '\n';
 	}
-}
-
-std::vector<hkVirtualClass*> hkxNewHeader::GetClasses(const char * hkClassName)
-{
-	std::vector<hkVirtualClass*> buffa;
-
-	std::string hkfullclass = _hkGenerateClassnameNew(this, hkClassName);
-
-	JenHash hash = JenkinsHash(hkfullclass.c_str(), static_cast<int>(hkfullclass.size()));
-
-	for (auto &c : virtualClasses)
-		if (c->hash == hash)
-			buffa.push_back(c);
-
-	return buffa;
-}
-
-const hkVirtualClass * hkxNewHeader::GetClass(const void * ptr)
-{
-	for (auto &c : virtualClasses)
-		if (c->GetPointer() == ptr)
-			return c;
-
-	return nullptr;
 }

@@ -16,17 +16,19 @@
 */
 
 #pragma once
-#include "HavokApi.hpp"
+#include "hkInternalInterfaces.h"
 #include "hkObjectBase.h"
 
-template<class C> struct hkRootLevelContainer_t : hkRootLevelContainer
+
+template<class C> struct hkRootLevelContainer_t : hkRootLevelContainerInternalInterface
 {
 	C *Data;
 	hkClassConstructor(hkRootLevelContainer_t<C>);
 
 	void SwapEndian() { Data->SwapEndian(); }
 	const int GetNumVariants() const { return Data->GetNumVariants(); }
-	const hkNamedVariant GetVariant(int id) const { return Data->GetVariant(header, masterBuffer, id); }
+	const hkNamedVariant GetVariant(int id) const { return Data->GetVariant(header, masterBuffer, id); }	
+	
 };
 
 template<template<class C>class _ipointer>struct hkNamedVariant_t
