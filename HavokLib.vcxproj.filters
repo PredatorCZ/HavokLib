@@ -74,9 +74,6 @@
     <ClCompile Include="source\hkaDeltaDecompressor.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="source\hkaWaveletDecompressor.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="source\hkCore.cpp">
       <Filter>Source</Filter>
     </ClCompile>

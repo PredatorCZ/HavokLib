@@ -223,7 +223,7 @@ void hkaSkeletonInternalInterface::ToXML(XMLHandle hdl) const
 
 			pugi::xml_node &boneNameNode = boneNode.append_child(_hkParam);
 			boneNameNode.append_attribute(_hkName).set_value(_hkName);
-			boneNameNode.append_buffer(&b, sizeof(&b));
+			boneNameNode.append_buffer(&b, strlen(&b));
 
 			pugi::xml_node &boneLockTSNode = boneNode.append_child(_hkParam);
 			boneLockTSNode.append_attribute(_hkName).set_value("lockTranslation");
@@ -246,7 +246,7 @@ void hkaSkeletonInternalInterface::ToXML(XMLHandle hdl) const
 
 			pugi::xml_node &boneNameNode = boneNode.append_child(_hkParam);
 			boneNameNode.append_attribute(_hkName).set_value(_hkName);
-			boneNameNode.append_buffer(&b, sizeof(&b));
+			boneNameNode.append_buffer(&b, strlen(&b));
 
 			pugi::xml_node &boneLockTSNode = boneNode.append_child(_hkParam);
 			boneLockTSNode.append_attribute(_hkName).set_value("lockTranslation");

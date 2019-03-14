@@ -43,7 +43,6 @@
     <ClCompile Include="3rd_party\PreCore\datas\reflector.cpp" />
     <ClCompile Include="3rd_party\PugiXml\src\pugixml.cpp" />
     <ClCompile Include="source\hkaDeltaDecompressor.cpp" />
-    <ClCompile Include="source\hkaWaveletDecompressor.cpp" />
     <ClCompile Include="source\hkBin2XML.cpp" />
     <ClCompile Include="source\hkCore.cpp" />
     <ClCompile Include="source\hkHeader.cpp" />

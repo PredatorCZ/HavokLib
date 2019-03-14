@@ -34,8 +34,7 @@ struct hkaAnimatedReferenceFrame;
 struct hkaAnnotationTrack;
 struct hkRootLevelContainer;
 
-#define DECLARE_HKCLASS(classname) static const JenHash HASH = JenkinsHash(#classname, sizeof(#classname) - 1);\
-ES_FORCEINLINE const char *ClassName() { return namePtr; }
+#define DECLARE_HKCLASS(classname) static const JenHash HASH = JenkinsHash(#classname, sizeof(#classname) - 1);
 
 ////////////////////////////////////////////////////////////////////////// Havok Iterators
 
@@ -138,6 +137,8 @@ __declspec(align(16))struct hkQTransform
 	Vector scale;
 
 	std::string ToString() const;
+
+	hkQTransform() : position(0.0f, 0.0f, 0.0f), rotation(0.0f, 0.0f, 0.0f, 1.0f), scale(1.0f, 1.0f, 1.0f) {}
 };
 #pragma warning(default : 4324)
 

@@ -28,7 +28,7 @@ classname()\
 {\
 	hash = classname::HASH;\
 	superHash = parent::HASH;\
-	namePtr = ClassName();\
+	namePtr = #parent;\
 }
 
 class xmlHavokFile : public IhkPackFile
@@ -104,11 +104,11 @@ class xmlSkeleton : public hkaSkeletonInternalInterface
 	const int GetNumPartitions() const { return static_cast<int>(partitions.size()); }
 	const hkaPartition GetPartition(int id) const { return partitions.at(id); }
 	const int GetNumBones() const { return static_cast<int>(bones.size()); }
-	const char *GetBoneName(int id) const { return bones.at(id).name.c_str(); }
-	const hkQTransform *GetBoneTM(int id) const { return &bones.at(id).transform; }
+	const char *GetBoneName(int id) const { return bones.at(id)->name.c_str(); }
+	const hkQTransform *GetBoneTM(int id) const { return &bones.at(id)->transform; }
 	const short GetBoneParentID(int id) const 
 	{
-		xmlBone *parent = bones.at(id).parent;
+		xmlBone *parent = bones.at(id)->parent;
 		return parent ? parent->ID : -1;
 	}
 
@@ -118,8 +118,14 @@ class xmlSkeleton : public hkaSkeletonInternalInterface
 	const char *GetFloatSlot(int id) const { return floats.at(id).name.c_str(); }
 
 	std::string name;
-	std::vector<xmlBone> bones;
+	std::vector<xmlBone*> bones;
 	std::vector<xmlRefFloat> floats;
 	std::vector<hkLocalFrameOnBone> localFrames;
 	std::vector<hkaPartition> partitions;
+
+	~xmlSkeleton()
+	{
+		for (auto &b : bones)
+			delete b;
+	}
 };
