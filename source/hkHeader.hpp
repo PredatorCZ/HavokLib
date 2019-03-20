@@ -16,7 +16,7 @@
 */
 
 #pragma once
-#include "HavokApi.hpp"
+#include "hkInternalInterfaces.h"
 
 #define hkMagic1	0x57e0e057
 #define hkMagic2	0x10c0c010
@@ -124,7 +124,7 @@ struct hkxSectionHeader
 	std::vector<hkxLocalFixup> localFixups;
 	std::vector<hkxGlobalFixup> globalFixups;
 	std::vector<hkxVirtualFixup> virtualFixups;
-	std::vector<hkVirtualClass*> virtualClasses;
+	IhkPackFile::VirtualClasses virtualClasses;
 	hkxHeader *header;
 	int Load(BinReader *rd);
 	int LoadBuffer(BinReader *rd);
@@ -163,7 +163,7 @@ struct hkxHeader : IhkPackFile
 
 	int Load(BinReader &rd);
 	ES_FORCEINLINE hkxSectionHeader *GetDataSection() { return &sections[contentsSectionIndex]; }
-	ES_FORCEINLINE std::vector<hkVirtualClass*> &GetAllClasses() { return GetDataSection()->virtualClasses; }
+	ES_FORCEINLINE VirtualClasses &GetAllClasses() { return GetDataSection()->virtualClasses; }
 	int GetVersion();
 	ES_FORCEINLINE void SwapEndian();
 	~hkxHeader() {}

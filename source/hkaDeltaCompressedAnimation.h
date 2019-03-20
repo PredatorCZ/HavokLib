@@ -16,14 +16,16 @@
 */
 
 #pragma once
+#pragma warning(disable : 4250)
 #include "HavokApi.hpp"
 #include "hkObjectBase.h"
 #include "hkaAnimation.h"
 #include "hkaDeltaDecompressor.h"
 
-template<class C> struct hkaDeltaCompressedAnimation_t : hkaSkeletalAnimation_t<typename C::parentClass>, IhkaDeltaCompressed
+template<class C> struct hkaDeltaCompressedAnimation_t : hkaDeltaCompressedAnimationInternalInterface, hkaSkeletalAnimation_t<typename C::parentClass>
 {
 	typedef C value_type;
+	typedef hkaSkeletalAnimation_t<typename C::parentClass> parent;
 	hkClassConstructor(hkaDeltaCompressedAnimation_t<C>);
 	void SwapEndian() { hkaSkeletalAnimation_t<typename C::parentClass>::SwapEndian(); static_cast<value_type*>(Data)->SwapEndian(masterBuffer); }
 	void Process() { decomp.Assign(this); }

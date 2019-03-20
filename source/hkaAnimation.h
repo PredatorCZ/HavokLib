@@ -42,7 +42,7 @@ struct AnimationType2
 	REFLECTOR_ENUM_HASH(AnimationType, UNKNOWN_ANIMATION, INTERLEAVED_ANIMATION, MIRRORED_ANIMATION, SPLINE_COMPRESSED_ANIMATION, QUANTIZED_COMPRESSED_ANIMATION, PREDICTIVE_COMPRESSED_ANIMATION, REFERENCE_POSE_ANIMATION) //2012, 2013, 2014
 };
 
-template<class C> struct hkaSkeletalAnimation_t : hkaAnimation
+template<class C> struct hkaSkeletalAnimation_t : virtual hkaAnimationInternalInterface
 {
 	C *Data;
 	hkClassConstructor_nohash(hkaSkeletalAnimation_t<C>);
@@ -74,7 +74,7 @@ template<
 	ES_FORCEINLINE const float GetDuration() const { return duration; }
 	ES_FORCEINLINE const int GetNumOfTransformTracks() const { return numOfTransformTracks; }
 	ES_FORCEINLINE const int GetNumOfFloatTracks() const { return numOfFloatTracks; }
-	ES_FORCEINLINE const hkaAnimatedReferenceFrame *GetExtractedMotion(char *masterbuffer, IhkPackFile *header) const { return reinterpret_cast<const hkaAnimatedReferenceFrame*>(header->GetClass(extractedMotion.GetData(masterbuffer))); }
+	ES_FORCEINLINE const hkaAnimatedReferenceFrame *GetExtractedMotion(char *masterbuffer, IhkPackFile *header) const { return dynamic_cast<const hkaAnimatedReferenceFrame*>(header->GetClass(extractedMotion.GetData(masterbuffer))); }
 	
 	enablePtrPair(annotations) GetNumAnnotations() const { return numAnnotations; }
 	enablehkArray(annotations) GetNumAnnotations() const { return annotations.count; }

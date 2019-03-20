@@ -18,17 +18,61 @@
 #pragma once
 #include "HavokApi.hpp"
 
-struct hkRootLevelContainerInternalInterface : hkRootLevelContainer
+struct hkVirtualClass : IhkVirtualClass
+{
+	JenHash hash;
+	JenHash superHash;
+	const char *namePtr;
+	char *masterBuffer;
+	IhkPackFile *header;
+
+	virtual void *GetPointer() = 0;
+	virtual void SwapEndian() = 0;
+	virtual void Process() {};
+	virtual void SetDataPointer(void *Ptr) = 0;
+	virtual void ToXML(XMLHandle hdl) const {};
+};
+
+
+struct hkRootLevelContainerInternalInterface : hkRootLevelContainer, hkVirtualClass
 {
 	void ToXML(XMLHandle hdl) const;
 };
 
-struct hkaAnimationContainerInternalInterface : hkaAnimationContainer
+struct hkaAnimationContainerInternalInterface : hkaAnimationContainer, hkVirtualClass
 {
 	void ToXML(XMLHandle hdl) const;
 };
 
-struct hkaSkeletonInternalInterface : hkaSkeleton
+struct hkaSkeletonInternalInterface : hkaSkeleton, hkVirtualClass
 {
 	void ToXML(XMLHandle hdl) const;
 };
+
+struct hkaAnnotationTrackInternalInterface : hkaAnnotationTrack, hkVirtualClass
+{
+	//void ToXML(XMLHandle hdl) const;
+};
+
+struct hkaAnimationInternalInterface : hkaAnimation, hkVirtualClass
+{
+	//void ToXML(XMLHandle hdl) const;
+};
+
+struct hkaDeltaCompressedAnimationInternalInterface : virtual hkaAnimationInternalInterface
+{
+	virtual const int GetNumOfPoses() const = 0;
+	virtual const int GetBlockSize() const = 0;
+	virtual const int GetQuantizedDataOffset() const = 0;
+	virtual const int GetStaticMaskOffset() const = 0;
+	virtual const int GetStaticDataOffset() const = 0;
+	virtual const char *GetData() const = 0;
+	virtual const int GetNumDynamicTracks() const = 0;
+	virtual const int GetOffsetsOffset() const = 0;
+	virtual const int GetBitWidthOffset() const = 0;
+	virtual const int GetScalesOffset() const = 0;
+	virtual const int GetNumPreserved() const = 0;
+
+	//void ToXML(XMLHandle hdl) const;
+};
+

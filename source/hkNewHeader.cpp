@@ -23,7 +23,7 @@
 
 constexpr uint _ToFourCC(const char *input)
 {
-	return reinterpret_cast<const uint&>(input[2]);
+	return static_cast<const uint&>(input[2]);
 }
 
 #define classFourCC(iname) _ToFourCC(#iname)

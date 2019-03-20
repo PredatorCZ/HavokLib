@@ -16,23 +16,8 @@
 */
 
 #pragma once
-#include "HavokApi.hpp"
+#include "hkInternalInterfaces.h"
 #include "hkaDecompressor.h"
-
-struct IhkaDeltaCompressed
-{
-	virtual const int GetNumOfPoses() const = 0;
-	virtual const int GetBlockSize() const = 0;
-	virtual const int GetQuantizedDataOffset() const = 0;
-	virtual const int GetStaticMaskOffset() const = 0;
-	virtual const int GetStaticDataOffset() const = 0;
-	virtual const char *GetData() const = 0;
-	virtual const int GetNumDynamicTracks() const = 0;
-	virtual const int GetOffsetsOffset() const = 0;
-	virtual const int GetBitWidthOffset() const = 0;
-	virtual const int GetScalesOffset() const = 0;
-	virtual const int GetNumPreserved() const = 0;
-};
 
 struct hkaDeltaDecompressor
 {
@@ -48,6 +33,6 @@ private:
 	std::vector<MasterTrack*> tracks;
 	std::vector<ILineTrack*> floats;
 public:
-	void Assign(IhkaDeltaCompressed *input);
+	void Assign(hkaDeltaCompressedAnimationInternalInterface *input);
 	~hkaDeltaDecompressor();
 };

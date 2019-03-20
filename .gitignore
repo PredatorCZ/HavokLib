@@ -35,4 +35,5 @@
 *.bat
 *hkaWaveletDecompressor*
 *.vs/*
-*/Bin/*
+*/bin/rc/*
+*.ilk

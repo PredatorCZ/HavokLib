@@ -54,7 +54,7 @@ void Decompress(float offset, float scale, char *buffer, char bitWidth, int numI
 
 }
 
-void hkaDeltaDecompressor::Assign(IhkaDeltaCompressed * input)
+void hkaDeltaDecompressor::Assign(hkaDeltaCompressedAnimationInternalInterface * input)
 {
 	char *buffer = const_cast<char*>(input->GetData());
 	hkaAnimation *anim = dynamic_cast<hkaAnimation*>(input);

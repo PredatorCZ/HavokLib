@@ -126,27 +126,32 @@ int IhkPackFile::ExportXML(const wchar_t *fileName, hkXMLToolsets toolsetVersion
 
 	for (auto &c : allClasses)
 	{
+		hkVirtualClass *cls = static_cast<hkVirtualClass*>(c);
 		pugi::xml_node &classNode = dataSection.append_child(_hkObject);
 		pugi::xml_attribute &addrAttr = classNode.append_attribute(_hkName);
 		addrAttr.set_value(PointerToString(c));
-		classNode.append_attribute(_hkClass).set_value(c->namePtr);
+		classNode.append_attribute(_hkClass).set_value(cls->namePtr);
 
-		if (c->superHash == hkRootLevelContainer::HASH && propRef.flags[xmlToolsetProp::TopLevelObject])
+		if (cls->superHash == hkRootLevelContainer::HASH && propRef.flags[xmlToolsetProp::TopLevelObject])
 			master.append_attribute("toplevelobject").set_value(addrAttr.as_string());
 
-		c->ToXML({ &classNode, toolsetVersion });
+		cls->ToXML({ &classNode, toolsetVersion });
 	}
 
 	return !doc.save_file(fileName);
 }
 
-const hkVirtualClass *IhkPackFile::GetClass(const void *ptr)
+const IhkVirtualClass *IhkPackFile::GetClass(const void *ptr)
 {
 	VirtualClasses &classes = GetAllClasses();
 
 	for (auto &c : classes)
-		if (c->GetPointer() == ptr)
+	{
+		hkVirtualClass *cls = static_cast<hkVirtualClass *>(c);
+
+		if (cls->GetPointer() == ptr)
 			return c;
+	}
 
 	return nullptr;
 }
@@ -157,8 +162,12 @@ IhkPackFile::VirtualClasses IhkPackFile::GetClasses(JenHash hash)
 	VirtualClasses buffa;
 
 	for (auto &c : classes)
-		if (c->superHash == hash)
+	{
+		hkVirtualClass *cls = static_cast<hkVirtualClass *>(c);
+
+		if (cls->superHash == hash)
 			buffa.push_back(c);
+	}
 
 	return buffa;
 }

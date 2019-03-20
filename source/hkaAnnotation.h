@@ -19,7 +19,7 @@
 #include "HavokApi.hpp"
 #include "hkObjectBase.h"
 
-template<class C> struct hkaAnnotation_t : hkaAnnotationTrack
+template<class C> struct hkaAnnotation_t : hkaAnnotationTrackInternalInterface
 {
 	C *Data;
 	hkClassConstructor_nohash(hkaAnnotation_t<C>);

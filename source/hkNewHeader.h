@@ -16,7 +16,7 @@
 */
 
 #pragma once
-#include "HavokApi.hpp"
+#include "hkInternalInterfaces.h"
 
 #define hkHederTAG 0x30474154
 

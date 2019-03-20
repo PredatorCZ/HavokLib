@@ -66,11 +66,11 @@ template<
 	enablePtrPairRef(skins) GetNumSkins() { return numSkins; }
 	enablehkArrayRef(skins) GetNumSkins() { return skins.count; }
 
-	const hkaSkeleton *GetSkeleton(IhkPackFile *header, char *masterBuffer, int id) const { return reinterpret_cast<const hkaSkeleton*>(header->GetClass(skeletons.GetData(masterBuffer)[id].GetData(masterBuffer))); };
-	const hkaAnimation *GetAnimation(IhkPackFile *header, char *masterBuffer, int id) const { return reinterpret_cast<const hkaAnimation*>(header->GetClass(animations.GetData(masterBuffer)[id].GetData(masterBuffer))); };
-	const hkaAnimationBinding *GetBinding(IhkPackFile *header, char *masterBuffer, int id) const { return reinterpret_cast<const hkaAnimationBinding*>(header->GetClass(bindings.GetData(masterBuffer)[id].GetData(masterBuffer))); };
-	const hkaBoneAttachment *GetAttachment(IhkPackFile *header, char *masterBuffer, int id) const { return reinterpret_cast<const hkaBoneAttachment*>(header->GetClass(attachments.GetData(masterBuffer)[id].GetData(masterBuffer))); };
-	const hkaMeshBinding *GetSkin(IhkPackFile *header, char *masterBuffer, int id) const { return reinterpret_cast<const hkaMeshBinding*>(header->GetClass(skins.GetData(masterBuffer)[id].GetData(masterBuffer))); };
+	const hkaSkeleton *GetSkeleton(IhkPackFile *header, char *masterBuffer, int id) const { return dynamic_cast<const hkaSkeleton*>(header->GetClass(skeletons.GetData(masterBuffer)[id].GetData(masterBuffer))); };
+	const hkaAnimation *GetAnimation(IhkPackFile *header, char *masterBuffer, int id) const { return dynamic_cast<const hkaAnimation*>(header->GetClass(animations.GetData(masterBuffer)[id].GetData(masterBuffer))); };
+	const hkaAnimationBinding *GetBinding(IhkPackFile *header, char *masterBuffer, int id) const { return dynamic_cast<const hkaAnimationBinding*>(header->GetClass(bindings.GetData(masterBuffer)[id].GetData(masterBuffer))); };
+	const hkaBoneAttachment *GetAttachment(IhkPackFile *header, char *masterBuffer, int id) const { return dynamic_cast<const hkaBoneAttachment*>(header->GetClass(attachments.GetData(masterBuffer)[id].GetData(masterBuffer))); };
+	const hkaMeshBinding *GetSkin(IhkPackFile *header, char *masterBuffer, int id) const { return dynamic_cast<const hkaMeshBinding*>(header->GetClass(skins.GetData(masterBuffer)[id].GetData(masterBuffer))); };
 
 	void SwapEndian()
 	{

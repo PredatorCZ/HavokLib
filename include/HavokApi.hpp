@@ -33,6 +33,7 @@ struct hkaMeshBinding;
 struct hkaAnimatedReferenceFrame;
 struct hkaAnnotationTrack;
 struct hkRootLevelContainer;
+struct hkVirtualClass;
 
 #define DECLARE_HKCLASS(classname) static const JenHash HASH = JenkinsHash(#classname, sizeof(#classname) - 1);
 
@@ -113,20 +114,9 @@ struct XMLHandle
 	hkXMLToolsets toolset;
 };
 
-//Internal class, DO NOT work with this one, always up-cast it
-struct hkVirtualClass
+struct IhkVirtualClass 
 {
-	JenHash hash;
-	JenHash superHash;
-	const char *namePtr;
-	char *masterBuffer;
-	IhkPackFile *header;
-
-	virtual void *GetPointer() = 0;
-	virtual void SwapEndian() = 0;
-	virtual void Process() {};
-	virtual void SetDataPointer(void *Ptr) = 0;
-	virtual void ToXML(XMLHandle hdl) const {};
+	virtual ~IhkVirtualClass() {}
 };
 
 #pragma warning(disable : 4324)
@@ -139,6 +129,13 @@ __declspec(align(16))struct hkQTransform
 	std::string ToString() const;
 
 	hkQTransform() : position(0.0f, 0.0f, 0.0f), rotation(0.0f, 0.0f, 0.0f, 1.0f), scale(1.0f, 1.0f, 1.0f) {}
+	hkQTransform(Vector pos, Vector4 rot, Vector scl) : position(pos), rotation(rot), scale(scl) {}
+
+	bool operator== (const hkQTransform &o) const
+	{
+		return position == o.position && rotation == o.rotation && scale == o.scale;
+	}
+	bool operator!= (const hkQTransform &o) const { return !(*this == o); }
 };
 #pragma warning(default : 4324)
 
@@ -164,7 +161,7 @@ struct hkFullBone
 	operator const char*() const { return name; }
 };
 
-struct hkaSkeleton : hkVirtualClass
+struct hkaSkeleton : IhkVirtualClass
 {
 	DECLARE_HKCLASS(hkaSkeleton)
 	virtual const char *GetSkeletonName() const = 0;
@@ -181,15 +178,15 @@ struct hkaSkeleton : hkVirtualClass
 	virtual const int GetNumReferenceFloats() const = 0;
 	virtual const float GetReferenceFloat(int id) const = 0;
 
-	operator const char*() const { return GetSkeletonName(); }
+	operator const char *() const { return GetSkeletonName(); }
 	hkFullBone GetFullBone(int id) const { return hkFullBone{ GetBoneName(id), GetBoneParentID(id), GetBoneTM(id) }; }
 
-	typedef hkIterProxy<hkaSkeleton, &GetNumFloatSlots, const char*, &GetFloatSlot> iteratorFloatSlots;
+	typedef hkIterProxy<hkaSkeleton, &GetNumFloatSlots, const char *, &GetFloatSlot> iteratorFloatSlots;
 	typedef hkIterProxy<hkaSkeleton, &GetNumLocalFrames, const hkLocalFrameOnBone, &GetLocalFrame> iteratorLocalFrames;
 	typedef hkIterProxy<hkaSkeleton, &GetNumPartitions, const hkaPartition, &GetPartition> iteratorPartitions;
 	typedef hkIterProxy<hkaSkeleton, &GetNumReferenceFloats, const float, &GetReferenceFloat> iteratorReferenceFloat;
-	typedef hkIterProxy<hkaSkeleton, &GetNumBones, const char*, &GetBoneName> iteratorBoneNames;
-	typedef hkIterProxy<hkaSkeleton, &GetNumBones, const hkQTransform*, &GetBoneTM> iteratorBoneTMs;
+	typedef hkIterProxy<hkaSkeleton, &GetNumBones, const char *, &GetBoneName> iteratorBoneNames;
+	typedef hkIterProxy<hkaSkeleton, &GetNumBones, const hkQTransform *, &GetBoneTM> iteratorBoneTMs;
 	typedef hkIterProxy<hkaSkeleton, &GetNumBones, const short, &GetBoneParentID> iteratorBoneParentIDs;
 	typedef hkIterProxy<hkaSkeleton, &GetNumBones, hkFullBone, &GetFullBone> iteratorFullBones;
 
@@ -207,31 +204,31 @@ struct hkNamedVariant
 {
 	const char *name;
 	const char *className;
-	const hkVirtualClass *pointer;
+	const IhkVirtualClass *pointer;
 
-	template<class C> operator const C*() const { return static_cast<const C*>(pointer); }
-	operator const char*() const { return name; }
+	template<class C> operator const C *() const { return dynamic_cast<const C *>(pointer); }
+	operator const char *() const { return name; }
 	operator JenHash() const { return JenkinsHash(className, static_cast<const int>(strlen(className))); }
 	bool operator==(const JenHash iHash) const { return static_cast<JenHash>(*this) == iHash; }
 
 	void ToXML(XMLHandle hdl) const;
 };
 
-struct hkRootLevelContainer : hkVirtualClass
+struct hkRootLevelContainer : IhkVirtualClass
 {
 	DECLARE_HKCLASS(hkRootLevelContainer)
 
 	virtual const int GetNumVariants() const = 0;
 	virtual const hkNamedVariant GetVariant(int id) const = 0;
-	
+
 	typedef hkInter<hkRootLevelContainer, &GetNumVariants, const hkNamedVariant, &GetVariant> interatorVariant;
-	
+
 	const interatorVariant begin() const { return interatorVariant(this, 0); }
 	const interatorVariant end() const { return interatorVariant(this); }
 
 };
 
-struct hkaAnimationContainer : hkVirtualClass
+struct hkaAnimationContainer : IhkVirtualClass
 {
 	DECLARE_HKCLASS(hkaAnimationContainer)
 
@@ -246,11 +243,11 @@ struct hkaAnimationContainer : hkVirtualClass
 	virtual const int GetNumSkins() const = 0;
 	virtual const hkaMeshBinding *GetSkin(int id) const = 0;
 
-	typedef hkIterProxy<hkaAnimationContainer, &GetNumSkeletons,const hkaSkeleton*, &GetSkeleton> iteratorSkeletons;
-	typedef hkIterProxy<hkaAnimationContainer, &GetNumAnimations, const hkaAnimation*, &GetAnimation> iteratorAnimations;
-	typedef hkIterProxy<hkaAnimationContainer, &GetNumBindings, const hkaAnimationBinding*, &GetBinding> iteratorBindings;
-	typedef hkIterProxy<hkaAnimationContainer, &GetNumAttachments, const hkaBoneAttachment*, &GetAttachment> iteratorAttachments;
-	typedef hkIterProxy<hkaAnimationContainer, &GetNumSkins, const hkaMeshBinding*, &GetSkin> iteratorMeshBinds;
+	typedef hkIterProxy<hkaAnimationContainer, &GetNumSkeletons, const hkaSkeleton *, &GetSkeleton> iteratorSkeletons;
+	typedef hkIterProxy<hkaAnimationContainer, &GetNumAnimations, const hkaAnimation *, &GetAnimation> iteratorAnimations;
+	typedef hkIterProxy<hkaAnimationContainer, &GetNumBindings, const hkaAnimationBinding *, &GetBinding> iteratorBindings;
+	typedef hkIterProxy<hkaAnimationContainer, &GetNumAttachments, const hkaBoneAttachment *, &GetAttachment> iteratorAttachments;
+	typedef hkIterProxy<hkaAnimationContainer, &GetNumSkins, const hkaMeshBinding *, &GetSkin> iteratorMeshBinds;
 
 	const iteratorSkeletons Skeletons() const { return iteratorSkeletons(this); }
 	const iteratorAnimations Animations() const { return iteratorAnimations(this); }
@@ -261,18 +258,18 @@ struct hkaAnimationContainer : hkVirtualClass
 
 enum hkaAnimationType
 {
-	UNKNOWN_ANIMATION, 
-	INTERLEAVED_ANIMATION, 
-	DELTA_COMPRESSED_ANIMATION, 
-	WAVELET_COMPRESSED_ANIMATION, 
-	MIRRORED_ANIMATION, 
-	SPLINE_COMPRESSED_ANIMATION, 
-	QUANTIZED_COMPRESSED_ANIMATION, 
-	PREDICTIVE_COMPRESSED_ANIMATION, 
+	UNKNOWN_ANIMATION,
+	INTERLEAVED_ANIMATION,
+	DELTA_COMPRESSED_ANIMATION,
+	WAVELET_COMPRESSED_ANIMATION,
+	MIRRORED_ANIMATION,
+	SPLINE_COMPRESSED_ANIMATION,
+	QUANTIZED_COMPRESSED_ANIMATION,
+	PREDICTIVE_COMPRESSED_ANIMATION,
 	REFERENCE_POSE_ANIMATION
 };
 
-struct hkaAnnotationTrack : hkVirtualClass
+struct hkaAnnotationTrack : IhkVirtualClass
 {
 	DECLARE_HKCLASS(hkaAnnotationTrack)
 
@@ -290,11 +287,11 @@ struct hkaAnnotationTrack : hkVirtualClass
 	const interatorAnnotation begin() const { return interatorAnnotation(this, 0); }
 	const interatorAnnotation end() const { return interatorAnnotation(this); }
 
-	operator const char*() const { return GetName(); }
+	operator const char *() const { return GetName(); }
 };
 
 typedef std::auto_ptr<hkaAnnotationTrack> hkaAnnotationTrackPtr;
-struct hkaAnimation : hkVirtualClass
+struct hkaAnimation : IhkVirtualClass
 {
 	DECLARE_HKCLASS(hkaAnimation)
 
@@ -308,20 +305,26 @@ struct hkaAnimation : hkVirtualClass
 	virtual hkaAnnotationTrackPtr GetAnnotation(int id) const = 0;
 };
 
+
+struct hkaAnimatedReferenceFrame : IhkVirtualClass {};
+struct hkaAnimationBinding : IhkVirtualClass {};
+struct hkaBoneAttachment : IhkVirtualClass {};
+struct hkaMeshBinding : IhkVirtualClass {};
+
 struct IhkPackFile
 {
-	typedef std::vector<hkVirtualClass *> VirtualClasses;
+	typedef std::vector<IhkVirtualClass *> VirtualClasses;
 	virtual VirtualClasses &GetAllClasses() = 0;
 	virtual int GetVersion() = 0;
 	virtual ~IhkPackFile() = 0;
 
 	ES_INLINE VirtualClasses GetClasses(const char *hkClassName) { return GetClasses(JenkinsHash(hkClassName, static_cast<int>(strlen(hkClassName)))); }
-	ES_INLINE hkRootLevelContainer *GetRootLevelContainer() { return static_cast<hkRootLevelContainer *>(GetClasses(hkRootLevelContainer::HASH)[0]); }
+	ES_INLINE hkRootLevelContainer *GetRootLevelContainer() { return dynamic_cast<hkRootLevelContainer *>(GetClasses(hkRootLevelContainer::HASH)[0]); }
 	VirtualClasses GetClasses(JenHash hash);
-	const hkVirtualClass *GetClass(const void *ptr);
+	const IhkVirtualClass *GetClass(const void *ptr);
 
 	static IhkPackFile *Create(const wchar_t *fileName);
-	int ExportXML(const wchar_t *fileName, hkXMLToolsets toolsetVersion);
+	int ExportXML(const wchar_t *fileName, hkXMLToolsets toolsetVersion); 
 
 	//Internal use only
 	static hkVirtualClass *ConstructClass(JenHash hash);
