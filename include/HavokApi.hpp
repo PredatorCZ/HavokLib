@@ -1,4 +1,4 @@
-/*	Havok Format Library
+/*  Havok Format Library
 	Copyright(C) 2016-2019 Lukas Cone
 
 	This program is free software : you can redistribute it and / or modify
@@ -54,13 +54,13 @@ public:
 		iterPos(_num == -1 ? std::bind(Counter, tClass)() : _num),
 		tClass(cls) {}
 
-	hkInter& operator++() { iterPos++; return *this; }
+	hkInter &operator++() { iterPos++; return *this; }
 	hkInter operator++(int) { hkInter retval = *this; ++(*this); return retval; }
 	bool operator==(hkInter input) const { return iterPos == input.iterPos; }
 	bool operator!=(hkInter input) const { return iterPos != input.iterPos; }
 
 	template<class ptrTest = returnType> typename std::enable_if<
-		std::is_pointer<ptrTest>::value, 
+		std::is_pointer<ptrTest>::value,
 		typename std::remove_pointer<returnType>::type &
 	>::type
 		operator*() const { return *std::bind(Accessor, tClass, iterPos)(); }
@@ -71,9 +71,9 @@ public:
 
 template<
 	class containerClass,
-	const int (containerClass::*Counter)()const,
+	const int (containerClass:: *Counter)()const,
 	class returnType,
-	returnType(containerClass::*Accessor)(int)const
+	returnType(containerClass:: *Accessor)(int)const
 >
 class hkIterProxy
 {
@@ -158,7 +158,7 @@ struct hkFullBone
 	const char *name;
 	short parentID;
 	const hkQTransform *transform;
-	operator const char*() const { return name; }
+	operator const char *() const { return name; }
 };
 
 struct hkaSkeleton : IhkVirtualClass
