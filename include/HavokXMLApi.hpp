@@ -40,7 +40,7 @@ public:
 	template <class C> C *NewClass() 
 	{ 
 		C *cls = new C();
-		classes.push_back(cls);
+		classes.push_back(static_cast<hkVirtualClass*>(cls));
 		return cls;
 	}
 	~xmlHavokFile();

@@ -21,9 +21,19 @@
 #include "datas/masterprinter.hpp"
 #include <map>
 
-constexpr uint _ToFourCC(const char *input)
+struct _chunkCC
 {
-	return static_cast<const uint&>(input[2]);
+	chunkCC c;
+	_chunkCC() = default;
+	_chunkCC(_chunkCC input, char item, int index) : c(input.c)
+	{
+		c.fourCC[index] = item;
+	}
+};
+
+constexpr uint _ToFourCC(const char *input, const _chunkCC chnk = {}, const int index = 2)
+{
+	return index > 5 ? chnk.c.hash : _ToFourCC(input, _chunkCC(chnk, input[index], index - 2), index + 1);
 }
 
 #define classFourCC(iname) _ToFourCC(#iname)
