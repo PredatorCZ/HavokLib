@@ -40,11 +40,11 @@ ES_INLINE const char *PointerToString(const void *ptr)
 template<class C>
 ES_INLINE void ExportReflectedClass(C &input, XMLnode &parent)
 {
-	Reflector refl(C::types, const_cast<char*>(reinterpret_cast<const char*>(&input)), C::nTypes, C::typeNames);
+	ReflectorWrapConst<C> refl(&input);
 	
-	for (int t = 0; t < C::nTypes; t++)
+	for (int t = 0; t < refl.GetNumReflectedValues(); t++)
 	{
-		IReflector::KVPair pair = refl.GetReflectedPair(t);
+		Reflector::KVPair pair = refl.GetReflectedPair(t);
 		XMLnode &nameNode = parent.append_child(_hkParam);
 		nameNode.append_attribute(_hkName).set_value(pair.name);
 		nameNode.append_buffer(pair.value.c_str(), pair.value.size());

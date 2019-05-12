@@ -51,7 +51,7 @@ enum TrackType
 
 class StaticMask
 {
-	t_Flags<short> data;
+	esFlags<short> data;
 	ES_INLINE TrackType GetTrackType(int offset)
 	{
 		return static_cast<TrackType>(static_cast<int>(data[offset]) | static_cast<int>((data[offset + 1] << 1)));

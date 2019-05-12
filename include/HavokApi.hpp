@@ -147,7 +147,7 @@ struct hkLocalFrameOnBone
 
 struct hkaPartition
 {
-	DECLARE_REFLECTOR_WNAMES_STATIC;
+	DECLARE_REFLECTOR;
 	std::string name;
 	short startBoneIndex,
 		numBones;

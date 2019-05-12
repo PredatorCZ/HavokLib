@@ -248,10 +248,10 @@ int chPTCHRead(BinReader * rd, hkChunk *holder, hkxNewHeader *root)
 			int cPointer;
 			rd->Read(cPointer);
 			
-			uintptr_t *retarget = reinterpret_cast<uintptr_t*>(root->dataBuffer + cPointer);
+			uint64 *retarget = reinterpret_cast<uint64 *>(root->dataBuffer + cPointer);
 			const classEntryFixup &xfix = root->classEntries[*retarget];
 			
-			*retarget = reinterpret_cast<uintptr_t>(xfix.tag.hash + root->dataBuffer);
+			*retarget = reinterpret_cast<uint64>(xfix.tag.hash + root->dataBuffer);
 
 			if (isHKArray)
 				*(retarget + 1) = xfix.count;
