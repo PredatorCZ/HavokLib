@@ -20,7 +20,7 @@
 
 #define DECLARE_XMLCLASS(classname, parent) DECLARE_HKCLASS(classname)\
 void SwapEndian() {}\
-void *GetPointer() { return nullptr; };\
+const void *GetPointer() const { return this; };\
 void Process() {}\
 void SetDataPointer(void *Ptr) {}\
 public:\

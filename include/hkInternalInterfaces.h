@@ -26,7 +26,6 @@ struct hkVirtualClass : IhkVirtualClass
 	char *masterBuffer;
 	IhkPackFile *header;
 
-	virtual void *GetPointer() = 0;
 	virtual void SwapEndian() = 0;
 	virtual void Process() {};
 	virtual void SetDataPointer(void *Ptr) = 0;

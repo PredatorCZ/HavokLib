@@ -25,16 +25,16 @@ static const char
 *_hkParam = "hkparam"
 ;
 
-static const int _addrBuffSize = (sizeof(void *) * 2) + 3;
-thread_local static char _addrBuffer[_addrBuffSize] = {'0', 'x'};
-
-ES_INLINE const char *PointerToString(const void *ptr)
+ES_INLINE void PointerToString(const void *ptr, std::string &str)
 {
 	if (!ptr)
-		return "null";
+		str.append("null");
 
-	_ui64toa_s(reinterpret_cast<uintptr_t>(ptr), _addrBuffer + 2, _addrBuffSize - 2, 16);
-	return _addrBuffer;
+	str.append("0x");
+	
+	char buffer[20];
+	snprintf(buffer, 20, "%X", reinterpret_cast<uintptr_t>(ptr));	
+	str.append(buffer);
 }
 
 template<class C>

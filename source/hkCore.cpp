@@ -92,15 +92,15 @@ struct xmlToolsetProp
 
 static const std::map<hkXMLToolsets, xmlToolsetProp> xmlToolsetProps =
 {
-	{HK550, {0, "5", "Havok-5.5.0-r1"}},
-	{HK660, {(1 << xmlToolsetProp::TopLevelObject), "7", "Havok-6.6.0-r1"}},
-	{HK710, {(1 << xmlToolsetProp::TopLevelObject), "7", "Havok-7.1.0-r1"}},
-	{HK2010_2, {(1 << xmlToolsetProp::TopLevelObject), "8", "hk_2010.2.0-r1"}},
-	{HK2011, {(1 << xmlToolsetProp::TopLevelObject), "9", "hk_2011.1.0-r1"}},
-	{HK2011_2, {(1 << xmlToolsetProp::TopLevelObject), "9", "hk_2011.2.0-r1"}},
-	{HK2012_2, {(1 << xmlToolsetProp::TopLevelObject), "9", "hk_2012.2.0-r1"}},
-	{HK2013, {(1 << xmlToolsetProp::TopLevelObject), "9", "hk_2013.1.0-r1"}},
-	{HK2014, {(1 << xmlToolsetProp::TopLevelObject) | (1 << xmlToolsetProp::MaxPredicate), "11", "hk_2014.1.0-r1"}},
+	{HK550, {{}, "5", "Havok-5.5.0-r1"}},
+	{HK660, {xmlToolsetProp::TopLevelObject, "7", "Havok-6.6.0-r1"}},
+	{HK710, {xmlToolsetProp::TopLevelObject, "7", "Havok-7.1.0-r1"}},
+	{HK2010_2, {xmlToolsetProp::TopLevelObject, "8", "hk_2010.2.0-r1"}},
+	{HK2011, {xmlToolsetProp::TopLevelObject, "9", "hk_2011.1.0-r1"}},
+	{HK2011_2, {xmlToolsetProp::TopLevelObject, "9", "hk_2011.2.0-r1"}},
+	{HK2012_2, {xmlToolsetProp::TopLevelObject, "9", "hk_2012.2.0-r1"}},
+	{HK2013, {xmlToolsetProp::TopLevelObject, "9", "hk_2013.1.0-r1"}},
+	{HK2014, {EnumFlags<uchar, xmlToolsetProp::xmlToolsetPropFlags>(xmlToolsetProp::TopLevelObject, xmlToolsetProp::MaxPredicate), "11", "hk_2014.1.0-r1"}},
 };
 
 int IhkPackFile::ExportXML(const wchar_t *fileName, hkXMLToolsets toolsetVersion)
@@ -126,10 +126,14 @@ int IhkPackFile::ExportXML(const wchar_t *fileName, hkXMLToolsets toolsetVersion
 
 	for (auto &c : allClasses)
 	{
-		hkVirtualClass *cls = static_cast<hkVirtualClass*>(c);
+		hkVirtualClass *cls = dynamic_cast<hkVirtualClass*>(c);
 		pugi::xml_node &classNode = dataSection.append_child(_hkObject);
 		pugi::xml_attribute &addrAttr = classNode.append_attribute(_hkName);
-		addrAttr.set_value(PointerToString(c));
+		
+		std::string _buffer;
+		PointerToString(cls->GetPointer(), _buffer);
+
+		addrAttr.set_value(_buffer.c_str());
 		classNode.append_attribute(_hkClass).set_value(cls->namePtr);
 
 		if (cls->superHash == hkRootLevelContainer::HASH && propRef.flags[xmlToolsetProp::TopLevelObject])

@@ -124,5 +124,5 @@ public:
 	}
 };
 
-#define hkClassConstructor_nohash(classname,...) void SetDataPointer(void *Ptr){Data = reinterpret_cast<decltype(Data)>(Ptr); __VA_ARGS__} void *GetPointer() { return Data; }
+#define hkClassConstructor_nohash(classname,...) void SetDataPointer(void *Ptr){Data = reinterpret_cast<decltype(Data)>(Ptr); __VA_ARGS__} const void *GetPointer() const { return Data; }
 #define hkClassConstructor(classname,...) hkClassConstructor_nohash(classname, __VA_ARGS__) static const unsigned int HASH; classname(){hash = HASH;}

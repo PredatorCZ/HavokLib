@@ -35,30 +35,18 @@ void hkNamedVariant::ToXML(XMLHandle hdl) const
 	pugi::xml_node & variantNode = objectNode.append_child(_hkParam);
 	variantNode.append_attribute(_hkName).set_value("variant");
 
-	char buffer[26];
-	size_t _off = 0;
+	std::string buffer;
 
 	if (hdl.toolset < HK710)
-		buffer[_off++] = '(';
+		buffer.push_back('(');
 
-	buffer[_off++] = '0';
-	buffer[_off++] = 'x';
-
-	_ui64toa_s(reinterpret_cast<uintptr_t>(pointer), buffer + _off, sizeof(void *) * 2, 16);
-	_off = strlen(buffer);
+	PointerToString(pointer->GetPointer(), buffer);
 
 	if (hdl.toolset < HK710)
 	{
-		buffer[_off++] = ' ';
-		buffer[_off++] = 'n';
-		buffer[_off++] = 'u';
-		buffer[_off++] = 'l';
-		buffer[_off++] = 'l';
-		buffer[_off++] = ')';
+		buffer.append(" null)");
 	}
-
-	buffer[_off++] = 0;
-	variantNode.append_buffer(buffer, 26);
+	variantNode.append_buffer(buffer.c_str(), buffer.size());
 }
 
 void hkRootLevelContainerInternalInterface::ToXML(XMLHandle hdl) const
@@ -100,7 +88,7 @@ void hkaAnimationContainerInternalInterface::ToXML(XMLHandle hdl) const
 
 	for (auto &s : Skeletons())
 	{
-		buffer += PointerToString(&s);
+		PointerToString(s.GetPointer(), buffer);
 		buffer += ' ';
 	}
 
@@ -113,7 +101,7 @@ void hkaAnimationContainerInternalInterface::ToXML(XMLHandle hdl) const
 
 	for (auto &s : Animations())
 	{
-		buffer += PointerToString(&s);
+		PointerToString(s.GetPointer(), buffer);
 		buffer += ' ';
 	}
 
@@ -126,7 +114,7 @@ void hkaAnimationContainerInternalInterface::ToXML(XMLHandle hdl) const
 
 	for (auto &s : Bindings())
 	{
-		buffer += PointerToString(&s);
+		PointerToString(s.GetPointer(), buffer);
 		buffer += ' ';
 	}
 
@@ -139,7 +127,7 @@ void hkaAnimationContainerInternalInterface::ToXML(XMLHandle hdl) const
 
 	for (auto &s : Attachments())
 	{
-		buffer += PointerToString(&s);
+		PointerToString(s.GetPointer(), buffer);
 		buffer += ' ';
 	}
 
@@ -152,7 +140,7 @@ void hkaAnimationContainerInternalInterface::ToXML(XMLHandle hdl) const
 
 	for (auto &s : MeshBinds())
 	{
-		buffer += PointerToString(&s);
+		PointerToString(s.GetPointer(), buffer);
 		buffer += ' ';
 	}
 
@@ -238,9 +226,11 @@ void hkaSkeletonInternalInterface::ToXML(XMLHandle hdl) const
 
 		for (auto &b : BoneNames())
 		{
-			const char *boneSig = PointerToString(&b);
+			std::string _buffer;
+			PointerToString(&b, _buffer);
+
 			pugi::xml_node &boneNode = datanode.append_child(_hkObject);
-			boneNode.append_attribute(_hkName).set_value(boneSig);
+			boneNode.append_attribute(_hkName).set_value(_buffer.c_str());
 			boneNode.append_attribute(_hkClass).set_value("hkaBone");
 
 
@@ -252,7 +242,7 @@ void hkaSkeletonInternalInterface::ToXML(XMLHandle hdl) const
 			boneLockTSNode.append_attribute(_hkName).set_value("lockTranslation");
 			boneLockTSNode.append_buffer("false", 6);
 
-			buffer += boneSig;
+			buffer += _buffer;
 			cc++;
 
 			if (cc % 0x10)
@@ -295,13 +285,15 @@ void hkaSkeletonInternalInterface::ToXML(XMLHandle hdl) const
 
 		for (auto &s : LocalFrames())
 		{
-			const char *lfName = PointerToString(s.localFrame);
+			std::string _buffer;
+			PointerToString(s.localFrame, _buffer);
+
 			std::string  boneIndexStr = std::to_string(s.boneIndex);
 			pugi::xml_node &frameNode = bonesNode.append_child(_hkObject);
 
 			pugi::xml_node &localFrameNode = frameNode.append_child(_hkParam);
 			localFrameNode.append_attribute(_hkName).set_value("localFrame");
-			localFrameNode.append_buffer(lfName,strlen(lfName));
+			localFrameNode.append_buffer(_buffer.c_str(), _buffer.size());
 
 			pugi::xml_node &boneIndex = frameNode.append_child(_hkParam);
 			boneIndex.append_attribute(_hkName).set_value("boneIndex");

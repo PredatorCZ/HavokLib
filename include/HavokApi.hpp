@@ -116,6 +116,7 @@ struct XMLHandle
 
 struct IhkVirtualClass 
 {
+	virtual const void *GetPointer() const = 0;
 	virtual ~IhkVirtualClass() {}
 };
 
