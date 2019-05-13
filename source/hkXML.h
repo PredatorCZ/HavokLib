@@ -33,7 +33,7 @@ ES_INLINE void PointerToString(const void *ptr, std::string &str)
 	str.append("0x");
 	
 	char buffer[20];
-	snprintf(buffer, 20, "%X", reinterpret_cast<uintptr_t>(ptr));	
+	snprintf(buffer, 20, ES_X64 ? "%llX" : "%X", reinterpret_cast<uintptr_t>(ptr));
 	str.append(buffer);
 }
 
