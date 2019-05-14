@@ -48,14 +48,33 @@ struct hkaSkeletonInternalInterface : hkaSkeleton, hkVirtualClass
 	void ToXML(XMLHandle hdl) const;
 };
 
+struct hkaAnimationBindingInternalInterface : hkaAnimationBinding, hkVirtualClass
+{
+	void ToXML(XMLHandle hdl) const;
+};
+
 struct hkaAnnotationTrackInternalInterface : hkaAnnotationTrack, hkVirtualClass
 {
-	//void ToXML(XMLHandle hdl) const;
+	void ToXML(XMLHandle hdl) const;
 };
 
 struct hkaAnimationInternalInterface : hkaAnimation, hkVirtualClass
 {
-	//void ToXML(XMLHandle hdl) const;
+	void ToXML(XMLHandle hdl) const;
+};
+
+struct hkaInterleavedAnimationInternalInterface : virtual hkaAnimationInternalInterface
+{
+	virtual int GetNumTransforms() const = 0;
+	virtual int GetNumFloats() const = 0;
+	virtual const hkQTransform *GetTransform(int id) const = 0;
+	virtual float GetFloat(int id) const = 0;
+
+	//TODO floats
+
+	bool IsTrackStatic(int trackID, TrackType type) const { return false; }
+
+	void ToXML(XMLHandle hdl) const;
 };
 
 struct hkaDeltaCompressedAnimationInternalInterface : virtual hkaAnimationInternalInterface

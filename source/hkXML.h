@@ -28,7 +28,10 @@ static const char
 ES_INLINE void PointerToString(const void *ptr, std::string &str)
 {
 	if (!ptr)
+	{
 		str.append("null");
+		return;
+	}
 
 	str.append("0x");
 	

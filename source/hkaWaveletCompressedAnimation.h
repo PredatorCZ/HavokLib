@@ -39,6 +39,9 @@ template<class C> struct hkaWaveletCompressedAnimation_t : hkaSkeletalAnimation_
 	const int GetBitWidthOffset() const { return static_cast<value_type*>(Data)->GetBitWidthOffset(); }
 	const int GetScalesOffset() const { return static_cast<value_type*>(Data)->GetScalesOffset(); }
 	const int GetNumPreserved() const { return static_cast<value_type*>(Data)->GetNumPreserved(); }
+	bool IsTrackStatic(int trackID, TrackType type) const { return false; }
+	void GetTrack(int trackID, int frame, TrackType type, Vector4 &out) const {}
+	void GetTransform(int trackID, int frame, hkQTransform &out) const {}
 };
 
 template<class C> using hkaWaveletCompressedSkeletalAnimation_t = hkaWaveletCompressedAnimation_t<C>;

@@ -257,18 +257,43 @@ struct hkaAnimationContainer : IhkVirtualClass
 	const iteratorMeshBinds MeshBinds() const { return iteratorMeshBinds(this); }
 };
 
-enum hkaAnimationType
+//ADDITIVE_DEPRECATED since 2010
+REFLECTOR_ENUM_NAKED(BlendHint, NORMAL, ADDITIVE_DEPRECATED, ADDITIVE)
+
+struct hkaAnimationBinding : IhkVirtualClass
 {
-	UNKNOWN_ANIMATION,
-	INTERLEAVED_ANIMATION,
-	DELTA_COMPRESSED_ANIMATION,
-	WAVELET_COMPRESSED_ANIMATION,
-	MIRRORED_ANIMATION,
-	SPLINE_COMPRESSED_ANIMATION,
-	QUANTIZED_COMPRESSED_ANIMATION,
-	PREDICTIVE_COMPRESSED_ANIMATION,
-	REFERENCE_POSE_ANIMATION
+	DECLARE_HKCLASS(hkaAnimationBinding)
+
+	virtual const char *GetSkeletonName() const = 0;
+	virtual const hkaAnimation *GetAnimation() const = 0;
+	virtual BlendHint GetBlendHint() const = 0;
+	virtual const int GetNumTransformTrackToBoneIndices() const = 0;
+	virtual const short GetTransformTrackToBoneIndex(int id) const = 0;
+	virtual const int GetNumFloatTrackToFloatSlotIndices() const = 0;
+	virtual const short GetFloatTrackToFloatSlotIndex(int id) const = 0;
+	virtual const int GetNumPartitionIndices() const = 0;
+	virtual const short GetPartitionIndex(int id) const = 0;
+
+	typedef hkIterProxy<hkaAnimationBinding, &GetNumTransformTrackToBoneIndices, const short, &GetTransformTrackToBoneIndex> iteratorTransformTrackToBoneIndices;
+	typedef hkIterProxy<hkaAnimationBinding, &GetNumFloatTrackToFloatSlotIndices, const short, &GetFloatTrackToFloatSlotIndex> iteratorFloatTrackToFloatSlotIndices;
+	typedef hkIterProxy<hkaAnimationBinding, &GetNumPartitionIndices, const short, &GetPartitionIndex> iteratorNumPartitionIndices;
+
+	const iteratorTransformTrackToBoneIndices TransformTrackToBoneIndices() const { return iteratorTransformTrackToBoneIndices(this); }
+	const iteratorFloatTrackToFloatSlotIndices FloatTrackToFloatSlotIndices() const { return iteratorFloatTrackToFloatSlotIndices(this); }
+	const iteratorNumPartitionIndices PartitionIndices() const { return iteratorNumPartitionIndices(this); }
 };
+
+REFLECTOR_ENUM_NAKED(hkaAnimationType, 
+	HK_UNKNOWN_ANIMATION,
+	HK_INTERLEAVED_ANIMATION,
+	HK_DELTA_COMPRESSED_ANIMATION,
+	HK_WAVELET_COMPRESSED_ANIMATION,
+	HK_MIRRORED_ANIMATION,
+	HK_SPLINE_COMPRESSED_ANIMATION,
+	HK_QUANTIZED_COMPRESSED_ANIMATION,
+	HK_PREDICTIVE_COMPRESSED_ANIMATION,
+	HK_REFERENCE_POSE_ANIMATION
+);
 
 struct hkaAnnotationTrack : IhkVirtualClass
 {
@@ -296,6 +321,13 @@ struct hkaAnimation : IhkVirtualClass
 {
 	DECLARE_HKCLASS(hkaAnimation)
 
+	enum TrackType
+	{
+		Rotation,
+		Position,
+		Scale
+	};
+
 	virtual const char *GetAnimationTypeName() const = 0;
 	virtual const hkaAnimationType GetAnimationType() const = 0;
 	virtual const float GetDuration() const = 0;
@@ -304,11 +336,20 @@ struct hkaAnimation : IhkVirtualClass
 	virtual const hkaAnimatedReferenceFrame *GetExtractedMotion() const = 0;
 	virtual const int GetNumAnnotations() const = 0;
 	virtual hkaAnnotationTrackPtr GetAnnotation(int id) const = 0;
+
+	virtual bool IsTrackStatic(int trackID, TrackType type) const = 0;
+	virtual void GetTrack(int trackID, int frame, TrackType type, Vector4 &out) const = 0;
+	virtual void GetTransform(int trackID, int frame, hkQTransform &out) const = 0;
+
+	typedef hkIterProxy<hkaAnimation, &GetNumAnnotations, hkaAnnotationTrackPtr, &GetAnnotation> interatorAnnotation;
+
+	const interatorAnnotation Annotations() const { return interatorAnnotation(this); }
+
+
 };
 
 
 struct hkaAnimatedReferenceFrame : IhkVirtualClass {};
-struct hkaAnimationBinding : IhkVirtualClass {};
 struct hkaBoneAttachment : IhkVirtualClass {};
 struct hkaMeshBinding : IhkVirtualClass {};
 

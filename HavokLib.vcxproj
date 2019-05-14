@@ -23,11 +23,13 @@
     <ClInclude Include="include\HavokXMLApi.hpp" />
     <ClInclude Include="include\hkInternalInterfaces.h" />
     <ClInclude Include="source\hkaAnimation.h" />
+    <ClInclude Include="source\hkaAnimationBinding.h" />
     <ClInclude Include="source\hkaAnimationContainer.h" />
     <ClInclude Include="source\hkaAnnotation.h" />
     <ClInclude Include="source\hkaDecompressor.h" />
     <ClInclude Include="source\hkaDeltaCompressedAnimation.h" />
     <ClInclude Include="source\hkaDeltaDecompressor.h" />
+    <ClInclude Include="source\hkaInterleavedAnimation.h" />
     <ClInclude Include="source\hkaSkeleton.h" />
     <ClInclude Include="source\hkaWaveletCompressedAnimation.h" />
     <ClInclude Include="source\hkaWaveletDecompressor.h" />

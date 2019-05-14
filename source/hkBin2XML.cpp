@@ -18,7 +18,7 @@
 #include "hkInternalInterfaces.h"
 #include "pugixml.hpp"
 #include "hkXML.h"
-
+#include "datas/masterprinter.hpp"
 
 void hkNamedVariant::ToXML(XMLHandle hdl) const
 {
@@ -53,13 +53,23 @@ void hkRootLevelContainerInternalInterface::ToXML(XMLHandle hdl) const
 {
 	pugi::xml_node &vartiantNode = hdl.node->append_child(_hkParam);
 	vartiantNode.append_attribute(_hkName).set_value("namedVariants");
-	vartiantNode.append_attribute(_hkNumElements).set_value(GetNumVariants());
+
+	int numVariants = 0;
 
 	for (auto &v : *this)
 	{
+		if (!v.pointer)
+		{
+			printwarning("[Havok XML] Couldn't export variant: \"", << v.name << "\" undefined class: " << v.className);
+			continue;
+		}
+
 		pugi::xml_node &objectNode = vartiantNode.append_child(_hkObject);
 		v.ToXML({ &objectNode, hdl.toolset });
+		numVariants++;	
 	}
+
+	vartiantNode.append_attribute(_hkNumElements).set_value(numVariants);
 }
 
 void hkaAnimationContainerInternalInterface::ToXML(XMLHandle hdl) const
@@ -114,6 +124,9 @@ void hkaAnimationContainerInternalInterface::ToXML(XMLHandle hdl) const
 
 	for (auto &s : Bindings())
 	{
+		if (!&s)
+			continue;
+
 		PointerToString(s.GetPointer(), buffer);
 		buffer += ' ';
 	}
@@ -354,5 +367,293 @@ void hkaSkeletonInternalInterface::ToXML(XMLHandle hdl) const
 			ExportReflectedClass(s, hkobj);
 		}
 	}
+
+}
+
+void hkaAnnotationTrackInternalInterface::ToXML(XMLHandle hdl) const
+{
+	std::string _buff;
+
+	pugi::xml_node tracksNode = hdl.node->append_child(_hkParam);
+	tracksNode.append_attribute(_hkName).set_value("trackName");
+	tracksNode.append_buffer(GetName(), strlen(GetName()));
+
+	pugi::xml_node annotsNode = hdl.node->append_child(_hkParam);
+	annotsNode.append_attribute(_hkName).set_value("annotations");
+	annotsNode.append_attribute(_hkNumElements).set_value(GetNumAnnotations());
+
+	for (auto &a : *this)
+	{
+		pugi::xml_node cObjNode = annotsNode.append_child(_hkObject);
+
+		pugi::xml_node timeNode = cObjNode.append_child(_hkParam);
+		timeNode.append_attribute("time");
+		_buff = std::to_string(a.time);
+		timeNode.append_buffer(_buff.c_str(), _buff.size());
+
+		pugi::xml_node textNode = cObjNode.append_child(_hkParam);
+		textNode.append_attribute("text");
+		textNode.append_buffer(a.text, strlen(a.text));
+	}
+
+}
+
+void hkaAnimationInternalInterface::ToXML(XMLHandle hdl) const
+{
+	std::string _buff;
+
+	pugi::xml_node typeNode = hdl.node->append_child(_hkParam);
+	typeNode.append_attribute(_hkName).set_value("type");
+	typeNode.append_buffer(GetAnimationTypeName(), strlen(GetAnimationTypeName()));
+
+	pugi::xml_node durationNode = hdl.node->append_child(_hkParam);
+	durationNode.append_attribute(_hkName).set_value("duration");
+	_buff = std::to_string(GetDuration());
+	durationNode.append_buffer(_buff.c_str(), _buff.size());
+
+	pugi::xml_node numTransNode = hdl.node->append_child(_hkParam);
+	numTransNode.append_attribute(_hkName).set_value("numberOfTransformTracks");
+	_buff = std::to_string(GetNumOfTransformTracks());
+	numTransNode.append_buffer(_buff.c_str(), _buff.size());
+
+	pugi::xml_node numFloatsNode = hdl.node->append_child(_hkParam);
+	numFloatsNode.append_attribute(_hkName).set_value("numberOfFloatTracks");
+	_buff = std::to_string(GetNumOfFloatTracks());
+	numFloatsNode.append_buffer(_buff.c_str(), _buff.size());
+
+	pugi::xml_node exMotionNode = hdl.node->append_child(_hkParam);
+	exMotionNode.append_attribute(_hkName).set_value("extractedMotion");
+	_buff.clear();
+	PointerToString(GetExtractedMotion() ? GetExtractedMotion()->GetPointer() : nullptr, _buff);
+	exMotionNode.append_buffer(_buff.c_str(), _buff.size());
+
+	pugi::xml_node annotsNode = hdl.node->append_child(_hkParam);
+	annotsNode.append_attribute(_hkName).set_value("annotationTracks");
+	annotsNode.append_attribute(_hkNumElements).set_value(GetNumAnnotations());
+
+	if (hdl.toolset > HK660)
+	{
+		for (auto &a : Annotations())
+		{
+			pugi::xml_node annotNode = annotsNode.append_child(_hkObject);
+			XMLHandle annotHandle = hdl;
+			annotHandle.node = &annotNode;
+
+			dynamic_cast<hkaAnnotationTrackInternalInterface *>(a.get())->ToXML(annotHandle);
+		}
+
+	}
+	else
+	{
+		pugi::xml_node mainNode = hdl.node->parent();
+		static const char *ident = "\n\t\t\t\t";
+		std::string buffer = ident;
+		int cc = 0;
+
+		for (auto &a : Annotations())
+		{
+			std::string _buffer;
+			PointerToString(a.get()->GetPointer(), _buffer);
+
+			buffer += _buffer;
+			cc++;
+
+			if (cc % 0x10)
+				buffer += ' ';
+			else
+				buffer += ident;
+
+			pugi::xml_node annotNode = mainNode.append_child(_hkObject);
+			annotNode.append_attribute(_hkName).set_value(_buffer.c_str());
+			annotNode.append_attribute(_hkClass).set_value("hkaAnnotationTrack");
+
+			XMLHandle annotHandle = hdl;
+			annotHandle.node = &annotNode;
+
+			dynamic_cast<hkaAnnotationTrackInternalInterface *>(a.get())->ToXML(annotHandle);
+
+		}
+
+		if (buffer.size())
+		{
+			buffer.pop_back();
+			buffer += ident;
+			buffer.pop_back();
+			annotsNode.append_buffer(buffer.c_str(), buffer.size());
+			buffer.clear();
+		}
+
+	}
+}
+
+void hkaInterleavedAnimationInternalInterface::ToXML(XMLHandle hdl) const
+{
+	hkaAnimationInternalInterface::ToXML(hdl);
+
+	const int numTransforms = GetNumTransforms();
+	static const char *ident = "\n\t\t\t\t";
+	std::string buffer = ident;
+
+	pugi::xml_node transNode = hdl.node->append_child(_hkParam);
+	transNode.append_attribute(_hkName).set_value("transforms");
+	transNode.append_attribute(_hkNumElements).set_value(numTransforms);
+
+	for (int t = 0; t < numTransforms; t++)
+	{
+		buffer += GetTransform(t)->ToString() + ident;
+	}
+
+	if (buffer.size())
+	{
+		buffer.pop_back();
+		transNode.append_buffer(buffer.c_str(), buffer.size());
+		buffer.clear();
+	}
+
+	const int numFloats = GetNumFloats();
+	buffer = ident;
+	int cc = 0;
+
+	pugi::xml_node floatsNode = hdl.node->append_child(_hkParam);
+	floatsNode.append_attribute(_hkName).set_value("floats");
+	floatsNode.append_attribute(_hkNumElements).set_value(numFloats);
+
+	for (int t = 0; t < numFloats; t++)
+	{
+		buffer += std::to_string(GetFloat(t));
+		cc++;
+
+		if (cc % 0x10)
+			buffer += ' ';
+		else
+			buffer += ident;
+	}
+
+	if (buffer.size())
+	{
+		buffer.pop_back();
+		buffer += ident;
+		buffer.pop_back();
+		floatsNode.append_buffer(buffer.c_str(), buffer.size());
+		buffer.clear();
+	}
+}
+
+void hkaAnimationBindingInternalInterface::ToXML(XMLHandle hdl) const
+{
+	std::string buffer;
+
+	if (hdl.toolset > HK550)
+	{
+		pugi::xml_node skelNode = hdl.node->append_child(_hkParam);
+		skelNode.append_attribute(_hkName).set_value("originalSkeletonName");
+
+		const char *skelName = GetSkeletonName();
+
+		if (skelName)
+			skelNode.append_buffer(skelName, strlen(skelName));
+	}
+
+	pugi::xml_node aniNode = hdl.node->append_child(_hkParam);
+	aniNode.append_attribute(_hkName).set_value("animation");
+
+	if (GetAnimation())
+	{
+		PointerToString(GetAnimation()->GetPointer(), buffer);
+		aniNode.append_buffer(buffer.c_str(), buffer.size());
+	}
+
+	pugi::xml_node transNode = hdl.node->append_child(_hkParam);
+	transNode.append_attribute(_hkName).set_value("transformTrackToBoneIndices");
+	transNode.append_attribute(_hkNumElements).set_value(GetNumTransformTrackToBoneIndices());
+
+	static const char *ident = "\n\t\t\t\t";
+	buffer = ident;
+	int cc = 0;
+
+	for (short t : TransformTrackToBoneIndices())
+	{
+		buffer += std::to_string(t);
+		cc++;
+
+		if (cc % 0x10)
+			buffer += ' ';
+		else
+			buffer += ident;
+	}
+
+	if (buffer.size())
+	{
+		buffer.pop_back();
+		buffer += ident;
+		buffer.pop_back();
+		transNode.append_buffer(buffer.c_str(), buffer.size());
+		buffer.clear();
+	}
+
+	pugi::xml_node floatNode = hdl.node->append_child(_hkParam);
+	floatNode.append_attribute(_hkName).set_value("floatTrackToFloatSlotIndices");
+	floatNode.append_attribute(_hkNumElements).set_value(GetNumFloatTrackToFloatSlotIndices());
+
+	buffer = ident;
+	cc = 0;
+
+	for (short t : FloatTrackToFloatSlotIndices())
+	{
+		buffer += std::to_string(t);
+		cc++;
+
+		if (cc % 0x10)
+			buffer += ' ';
+		else
+			buffer += ident;
+	}
+
+	if (buffer.size())
+	{
+		buffer.pop_back();
+		buffer += ident;
+		buffer.pop_back();
+		floatNode.append_buffer(buffer.c_str(), buffer.size());
+		buffer.clear();
+	}
+
+	if (hdl.toolset > HK2011)
+	{
+		pugi::xml_node partNode = hdl.node->append_child(_hkParam);
+		partNode.append_attribute(_hkName).set_value("partitionIndices");
+		partNode.append_attribute(_hkNumElements).set_value(GetNumPartitionIndices());
+
+		buffer = ident;
+		cc = 0;
+
+		for (short t : PartitionIndices())
+		{
+			buffer += std::to_string(t);
+			cc++;
+
+			if (cc % 0x10)
+				buffer += ' ';
+			else
+				buffer += ident;
+		}
+
+		if (buffer.size())
+		{
+			buffer.pop_back();
+			buffer += ident;
+			buffer.pop_back();
+			partNode.append_buffer(buffer.c_str(), buffer.size());
+			buffer.clear();
+		}
+	}
+
+	pugi::xml_node blendNode = hdl.node->append_child(_hkParam);
+	blendNode.append_attribute(_hkName).set_value("blendHint");
+
+	BlendHint blendHint = GetBlendHint();
+	const char *blendName = _EnumWrap<BlendHint>{}._reflected[blendHint + (!blendHint || hdl.toolset > HK710 ? 0 : 1)];
+
+	blendNode.append_buffer(blendName, strlen(blendName));
 
 }

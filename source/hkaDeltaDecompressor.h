@@ -34,5 +34,49 @@ private:
 	std::vector<ILineTrack*> floats;
 public:
 	void Assign(hkaDeltaCompressedAnimationInternalInterface *input);
+	bool IsTrackStatic(int trackID, hkaAnimation::TrackType type) const;
+	void GetTrack(int trackID, int frame, hkaAnimation::TrackType type, Vector4 &out) const;
+	void GetTransform(int trackID, int frame, hkQTransform &out) const;
 	~hkaDeltaDecompressor();
 };
+
+
+ES_INLINE bool hkaDeltaDecompressor::IsTrackStatic(int trackID, hkaAnimation::TrackType type) const
+{ 
+	switch (type)
+	{
+	case hkaAnimation::Rotation:
+		return tracks[trackID]->rotation->IsStatic();
+	case hkaAnimation::Position:
+		return tracks[trackID]->pos->IsStatic();
+	case hkaAnimation::Scale:
+		return tracks[trackID]->scale->IsStatic();
+	}
+
+	return true;
+}
+
+ES_INLINE void hkaDeltaDecompressor::GetTrack(int trackID, int frame, hkaAnimation::TrackType type, Vector4 &out) const
+{
+	switch (type)
+	{
+	case hkaAnimation::Rotation:
+		out = tracks[trackID]->rotation->GetVector(frame);
+		break;
+	case hkaAnimation::Position:
+		out = reinterpret_cast<Vector4 &>(tracks[trackID]->pos->GetVector(frame));
+		out.W = 1.0f;
+		break;
+	case hkaAnimation::Scale:
+		out = reinterpret_cast<Vector4 &>(tracks[trackID]->scale->GetVector(frame));
+		out.W = 0.0f;
+		break;
+	}
+}
+
+ES_INLINE void hkaDeltaDecompressor::GetTransform(int trackID, int frame, hkQTransform &out) const
+{
+	out.rotation = tracks[trackID]->rotation->GetVector(frame);
+	out.position = tracks[trackID]->pos->GetVector(frame);
+	out.scale = tracks[trackID]->scale->GetVector(frame);
+}

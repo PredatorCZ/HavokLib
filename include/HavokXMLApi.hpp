@@ -129,3 +129,81 @@ class xmlSkeleton : public hkaSkeletonInternalInterface
 			delete b;
 	}
 };
+
+class xmlAnnotationTrack : public hkaAnnotationTrackInternalInterface
+{
+	DECLARE_XMLCLASS(xmlAnnotationTrack, hkaAnnotationTrack);
+
+	const char *GetName() const { return name.c_str(); }
+	const int GetNumAnnotations() const { return static_cast<int>(annotations.size()); }
+	Annotation GetAnnotation(int id) const { return annotations[id]; }
+
+	std::string name;
+	std::vector<hkaAnnotationTrack::Annotation> annotations;
+};
+
+class xmlAnimation : public hkaAnimationInternalInterface
+{
+	DECLARE_XMLCLASS(xmlAnimation, hkaAnimation);
+
+	const char *GetAnimationTypeName() const { return _EnumWrap<hkaAnimationType>{}._reflected[animType]; }
+	const hkaAnimationType GetAnimationType() const { return animType; }
+	const float GetDuration() const { return duration; }
+	const hkaAnimatedReferenceFrame *GetExtractedMotion() const { return nullptr; } //TODO
+	const int GetNumAnnotations() const { return static_cast<int>(annotations.size()); }
+	hkaAnnotationTrackPtr GetAnnotation(int id) const { return std::auto_ptr<hkaAnnotationTrack>(&annotations[id]); }
+
+
+	hkaAnimationType animType;
+	float duration;
+	mutable std::vector<xmlAnnotationTrack> annotations;
+};
+
+class xmlInterleavedAnimation : public xmlAnimation
+{
+	std::vector<std::vector<hkQTransform>> transforms;
+	std::vector<std::vector<float>> floats;
+
+	const int GetNumOfTransformTracks() const { return static_cast<int>(transforms.size()); }
+	const int GetNumOfFloatTracks() const { return static_cast<int>(floats.size()); }
+	
+	void GetTrack(int trackID, int frame, TrackType type, Vector4 &out) const
+	{
+		switch (type)
+		{
+		case hkaAnimation::Rotation:
+			out = transforms[trackID][frame].rotation;
+			break;
+		case hkaAnimation::Position:
+			out = reinterpret_cast<const Vector4 &>(transforms[trackID][frame].position);
+			out.W = 1.0f;
+			break;
+		case hkaAnimation::Scale:
+			out = reinterpret_cast<const Vector4 &>(transforms[trackID][frame].scale);
+			out.W = 0.0f;
+			break;
+		}
+	}
+
+	void GetTransform(int trackID, int frame, hkQTransform &out) const { out = transforms[trackID][frame]; }
+};
+
+class xmlAnimationBinding : public hkaAnimationBindingInternalInterface
+{
+	hkaAnimation *animation = nullptr;
+	std::string skeletonName;
+	std::vector<short> transformTrackToBoneIndices;
+	std::vector<short> floatTrackToFloatSlotIndices;
+	std::vector<short> partitionIndices;
+	BlendHint blendHint = NORMAL;
+
+	const char *GetSkeletonName() const { return skeletonName.c_str(); }
+	const hkaAnimation *GetAnimation() const { return animation; }
+	BlendHint GetBlendHint() const { return blendHint; }
+	const int GetNumTransformTrackToBoneIndices() const { return static_cast<int>(transformTrackToBoneIndices.size()); }
+	const short GetTransformTrackToBoneIndex(int id) const { return transformTrackToBoneIndices[id]; }
+	const int GetNumFloatTrackToFloatSlotIndices() const { return static_cast<int>(floatTrackToFloatSlotIndices.size()); }
+	const short GetFloatTrackToFloatSlotIndex(int id) const { return floatTrackToFloatSlotIndices[id]; }
+	const int GetNumPartitionIndices() const { return static_cast<int>(partitionIndices.size()); }
+	const short GetPartitionIndex(int id) const { return partitionIndices[id]; }
+};

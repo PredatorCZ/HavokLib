@@ -22,6 +22,8 @@
 #include "datas/jenkinshash.hpp"
 #include "hkaDeltaCompressedAnimation.h"
 #include "hkaWaveletCompressedAnimation.h"
+#include "hkaInterleavedAnimation.h"
+#include "hkaAnimationBinding.h"
 
 #define hkRegisterClass(classname) { classname::HASH, &hkCreateDerivedClass<classname> },
 #define hkRegisterClassID(classname)const JenHash classname::HASH = JenkinsHash(#classname, sizeof(#classname) - 1);
@@ -80,6 +82,24 @@ hkRegisterVersionedClassID(hkaWaveletCompressedAnimation, 660)
 hkRegisterVersionedClassID(hkaWaveletCompressedAnimation, 710)
 hkRegisterVersionedClassID(hkaWaveletCompressedAnimation, 2010)
 
+hkRegisterVersionedClassID(hkaInterleavedSkeletalAnimation, 550)
+hkRegisterVersionedClassID(hkaInterleavedUncompressedAnimation, 660)
+hkRegisterVersionedClassID(hkaInterleavedUncompressedAnimation, 710)
+hkRegisterVersionedClassID(hkaInterleavedUncompressedAnimation, 2010)
+hkRegisterVersionedClassID(hkaInterleavedUncompressedAnimation, 2011)
+hkRegisterVersionedClassID(hkaInterleavedUncompressedAnimation, 2012)
+hkRegisterVersionedClassID(hkaInterleavedUncompressedAnimation, 2013)
+hkRegisterVersionedClassID(hkaInterleavedUncompressedAnimation, 2014)
+
+hkRegisterVersionedClassID(hkaAnimationBinding, 550)
+hkRegisterVersionedClassID(hkaAnimationBinding, 660)
+hkRegisterVersionedClassID(hkaAnimationBinding, 710)
+hkRegisterVersionedClassID(hkaAnimationBinding, 2010)
+hkRegisterVersionedClassID(hkaAnimationBinding, 2011)
+hkRegisterVersionedClassID(hkaAnimationBinding, 2012)
+hkRegisterVersionedClassID(hkaAnimationBinding, 2013)
+hkRegisterVersionedClassID(hkaAnimationBinding, 2014)
+
 template<class C> hkVirtualClass *hkCreateDerivedClass() { return new C{}; }
 
 static const std::map<JenHash, hkVirtualClass *(*)()> hkClassStorage =
@@ -91,6 +111,11 @@ static const std::map<JenHash, hkVirtualClass *(*)()> hkClassStorage =
 
 	hkRegisterVersionedClass(hkaWaveletCompressedSkeletalAnimation, 550)
 	StaticForArgID(hkRegisterVersionedClassEval, hkaWaveletCompressedAnimation, 660, 710, 2010)
+
+	hkRegisterVersionedClass(hkaInterleavedSkeletalAnimation, 550)
+	StaticForArgID(hkRegisterVersionedClassEval, hkaInterleavedUncompressedAnimation, 660, 710, 2010, 2011, 2012, 2013, 2014)
+
+	StaticForArgID(hkRegisterVersionedClassEval, hkaAnimationBinding, 550, 660, 710, 2010, 2011, 2012, 2013, 2014)
 };
 
 hkVirtualClass *IhkPackFile::ConstructClass(JenHash hash)

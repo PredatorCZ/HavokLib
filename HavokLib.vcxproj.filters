@@ -69,6 +69,12 @@
     <ClInclude Include="include\hkInternalInterfaces.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="source\hkaInterleavedAnimation.h">
+      <Filter>Headers\Packfile In</Filter>
+    </ClInclude>
+    <ClInclude Include="source\hkaAnimationBinding.h">
+      <Filter>Headers\Packfile In</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\hkaDeltaDecompressor.cpp">
