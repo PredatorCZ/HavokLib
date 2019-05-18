@@ -77,6 +77,6 @@ ES_INLINE void hkaDeltaDecompressor::GetTrack(int trackID, int frame, hkaAnimati
 ES_INLINE void hkaDeltaDecompressor::GetTransform(int trackID, int frame, hkQTransform &out) const
 {
 	out.rotation = tracks[trackID]->rotation->GetVector(frame);
-	out.position = tracks[trackID]->pos->GetVector(frame);
-	out.scale = tracks[trackID]->scale->GetVector(frame);
+	reinterpret_cast<Vector &>(out.position) = tracks[trackID]->pos->GetVector(frame);
+	reinterpret_cast<Vector &>(out.scale) = tracks[trackID]->scale->GetVector(frame);
 }

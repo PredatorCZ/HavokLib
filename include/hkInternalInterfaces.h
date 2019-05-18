@@ -16,6 +16,7 @@
 */
 
 #pragma once
+#pragma warning(disable : 4250)
 #include "HavokApi.hpp"
 
 struct hkVirtualClass : IhkVirtualClass
@@ -26,6 +27,7 @@ struct hkVirtualClass : IhkVirtualClass
 	char *masterBuffer;
 	IhkPackFile *header;
 
+	virtual const char *GetClassName(hkXMLToolsets toolset) const { return namePtr; }
 	virtual void SwapEndian() = 0;
 	virtual void Process() {};
 	virtual void SetDataPointer(void *Ptr) = 0;
@@ -69,7 +71,7 @@ struct hkaInterleavedAnimationInternalInterface : virtual hkaAnimationInternalIn
 	virtual int GetNumFloats() const = 0;
 	virtual const hkQTransform *GetTransform(int id) const = 0;
 	virtual float GetFloat(int id) const = 0;
-
+	bool IsDecoderSupported() const { return true; }
 	//TODO floats
 
 	bool IsTrackStatic(int trackID, TrackType type) const { return false; }
@@ -90,7 +92,13 @@ struct hkaDeltaCompressedAnimationInternalInterface : virtual hkaAnimationIntern
 	virtual const int GetBitWidthOffset() const = 0;
 	virtual const int GetScalesOffset() const = 0;
 	virtual const int GetNumPreserved() const = 0;
-
+	bool IsDecoderSupported() const { return true; }
 	//void ToXML(XMLHandle hdl) const;
 };
+
+struct hkxEnvironmentInternalInterface : hkxEnvironment, hkVirtualClass
+{
+	void ToXML(XMLHandle hdl) const;
+};
+
 

@@ -40,7 +40,7 @@ public:
 	template <class C> C *NewClass() 
 	{ 
 		C *cls = new C();
-		classes.push_back(static_cast<hkVirtualClass*>(cls));
+		classes.push_back(dynamic_cast<hkVirtualClass*>(cls));
 		return cls;
 	}
 	~xmlHavokFile();
@@ -142,7 +142,7 @@ class xmlAnnotationTrack : public hkaAnnotationTrackInternalInterface
 	std::vector<hkaAnnotationTrack::Annotation> annotations;
 };
 
-class xmlAnimation : public hkaAnimationInternalInterface
+class xmlAnimation : public virtual hkaAnimationInternalInterface
 {
 	DECLARE_XMLCLASS(xmlAnimation, hkaAnimation);
 
@@ -151,45 +151,103 @@ class xmlAnimation : public hkaAnimationInternalInterface
 	const float GetDuration() const { return duration; }
 	const hkaAnimatedReferenceFrame *GetExtractedMotion() const { return nullptr; } //TODO
 	const int GetNumAnnotations() const { return static_cast<int>(annotations.size()); }
-	hkaAnnotationTrackPtr GetAnnotation(int id) const { return std::auto_ptr<hkaAnnotationTrack>(&annotations[id]); }
-
+	hkaAnnotationTrackPtr GetAnnotation(int id) const { return hkaAnnotationTrackPtr(&annotations[id], false); }
 
 	hkaAnimationType animType;
 	float duration;
 	mutable std::vector<xmlAnnotationTrack> annotations;
 };
 
-class xmlInterleavedAnimation : public xmlAnimation
+class xmlInterleavedAnimation : public xmlAnimation, public hkaInterleavedAnimationInternalInterface
 {
-	std::vector<std::vector<hkQTransform>> transforms;
-	std::vector<std::vector<float>> floats;
+	DECLARE_HKCLASS(xmlInterleavedAnimation)
+	void SwapEndian() {}
+	const void *GetPointer() const { return this; }; 
+	void Process() {}
+	void SetDataPointer(void *Ptr) {}
+public:
+	xmlInterleavedAnimation()
+	{
+		xmlAnimation::hash = HASH;
+	}
+	typedef std::vector<hkQTransform> Transform_Container;
+	typedef std::vector<float> Float_Container;
+
+	std::vector<Transform_Container *> transforms;
+	std::vector<Float_Container *> floats;
 
 	const int GetNumOfTransformTracks() const { return static_cast<int>(transforms.size()); }
 	const int GetNumOfFloatTracks() const { return static_cast<int>(floats.size()); }
 	
+	const char *GetClassName(hkXMLToolsets toolset) const
+	{
+		if (toolset == HK550)
+			return "hkaInterleavedSkeletalAnimation";
+		else
+			return "hkaInterleavedUncompressedAnimation";
+	}
+
 	void GetTrack(int trackID, int frame, TrackType type, Vector4 &out) const
 	{
 		switch (type)
 		{
 		case hkaAnimation::Rotation:
-			out = transforms[trackID][frame].rotation;
+			out = transforms[trackID]->at(frame).rotation;
 			break;
 		case hkaAnimation::Position:
-			out = reinterpret_cast<const Vector4 &>(transforms[trackID][frame].position);
+			out = reinterpret_cast<const Vector4 &>(transforms[trackID]->at(frame).position);
 			out.W = 1.0f;
 			break;
 		case hkaAnimation::Scale:
-			out = reinterpret_cast<const Vector4 &>(transforms[trackID][frame].scale);
+			out = reinterpret_cast<const Vector4 &>(transforms[trackID]->at(frame).scale);
 			out.W = 0.0f;
 			break;
 		}
 	}
 
-	void GetTransform(int trackID, int frame, hkQTransform &out) const { out = transforms[trackID][frame]; }
+	void GetTransform(int trackID, int frame, hkQTransform &out) const { out = transforms[trackID]->at(frame); }
+
+	int GetNumTransforms() const
+	{
+		if (transforms.size())
+			return static_cast<int>(transforms[0]->size() * transforms.size());
+
+		return 0;
+	}
+
+	int GetNumFloats() const 
+	{
+		if (floats.size())
+			return static_cast<int>(floats[0]->size() * floats.size());
+
+		return 0;
+	}
+
+	const hkQTransform *GetTransform(int id) const
+	{
+		const int numTracks = static_cast<int>(transforms.size());
+		return &transforms[id % numTracks]->at(id / numTracks);
+	}
+
+	float GetFloat(int id) const 
+	{
+		const int numTracks = static_cast<int>(floats.size());
+		return floats[id % numTracks]->at(id / numTracks);
+	}
+
+	~xmlInterleavedAnimation()
+	{
+		for (auto &t : transforms)
+			delete t;
+
+		for (auto &f : floats)
+			delete f;
+	}
 };
 
 class xmlAnimationBinding : public hkaAnimationBindingInternalInterface
 {
+	DECLARE_XMLCLASS(xmlAnimationBinding, hkaAnimationBinding);
 	hkaAnimation *animation = nullptr;
 	std::string skeletonName;
 	std::vector<short> transformTrackToBoneIndices;
@@ -206,4 +264,19 @@ class xmlAnimationBinding : public hkaAnimationBindingInternalInterface
 	const short GetFloatTrackToFloatSlotIndex(int id) const { return floatTrackToFloatSlotIndices[id]; }
 	const int GetNumPartitionIndices() const { return static_cast<int>(partitionIndices.size()); }
 	const short GetPartitionIndex(int id) const { return partitionIndices[id]; }
+};
+
+struct xmlEnvironmentVariable
+{
+	std::string name,
+		value;
+};
+
+class xmlEnvironment : public hkxEnvironmentInternalInterface
+{
+	DECLARE_XMLCLASS(xmlEnvironment, hkxEnvironment);
+	std::vector<xmlEnvironmentVariable> variables;
+
+	const int GetNumVars() const { return static_cast<int>(variables.size()); }
+	hkxEnvironmentVariable GetVar(int id) const { return  { variables[id].name.c_str(), variables[id].value.c_str() }; }
 };

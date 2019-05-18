@@ -134,7 +134,7 @@ int IhkPackFile::ExportXML(const wchar_t *fileName, hkXMLToolsets toolsetVersion
 		PointerToString(cls->GetPointer(), _buffer);
 
 		addrAttr.set_value(_buffer.c_str());
-		classNode.append_attribute(_hkClass).set_value(cls->namePtr);
+		classNode.append_attribute(_hkClass).set_value(cls->GetClassName(toolsetVersion));
 
 		if (cls->superHash == hkRootLevelContainer::HASH && propRef.flags[xmlToolsetProp::TopLevelObject])
 			master.append_attribute("toplevelobject").set_value(addrAttr.as_string());

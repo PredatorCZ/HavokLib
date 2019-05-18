@@ -24,6 +24,7 @@
 #include "hkaWaveletCompressedAnimation.h"
 #include "hkaInterleavedAnimation.h"
 #include "hkaAnimationBinding.h"
+#include "hkxEnvironment.h"
 
 #define hkRegisterClass(classname) { classname::HASH, &hkCreateDerivedClass<classname> },
 #define hkRegisterClassID(classname)const JenHash classname::HASH = JenkinsHash(#classname, sizeof(#classname) - 1);
@@ -100,6 +101,15 @@ hkRegisterVersionedClassID(hkaAnimationBinding, 2012)
 hkRegisterVersionedClassID(hkaAnimationBinding, 2013)
 hkRegisterVersionedClassID(hkaAnimationBinding, 2014)
 
+hkRegisterVersionedClassID(hkxEnvironment, 550)
+hkRegisterVersionedClassID(hkxEnvironment, 660)
+hkRegisterVersionedClassID(hkxEnvironment, 710)
+hkRegisterVersionedClassID(hkxEnvironment, 2010)
+hkRegisterVersionedClassID(hkxEnvironment, 2011)
+hkRegisterVersionedClassID(hkxEnvironment, 2012)
+hkRegisterVersionedClassID(hkxEnvironment, 2013)
+hkRegisterVersionedClassID(hkxEnvironment, 2014)
+
 template<class C> hkVirtualClass *hkCreateDerivedClass() { return new C{}; }
 
 static const std::map<JenHash, hkVirtualClass *(*)()> hkClassStorage =
@@ -116,6 +126,7 @@ static const std::map<JenHash, hkVirtualClass *(*)()> hkClassStorage =
 	StaticForArgID(hkRegisterVersionedClassEval, hkaInterleavedUncompressedAnimation, 660, 710, 2010, 2011, 2012, 2013, 2014)
 
 	StaticForArgID(hkRegisterVersionedClassEval, hkaAnimationBinding, 550, 660, 710, 2010, 2011, 2012, 2013, 2014)
+	StaticForArgID(hkRegisterVersionedClassEval, hkxEnvironment, 550, 660, 710, 2010, 2011, 2012, 2013, 2014)
 };
 
 hkVirtualClass *IhkPackFile::ConstructClass(JenHash hash)

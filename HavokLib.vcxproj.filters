@@ -75,6 +75,9 @@
     <ClInclude Include="source\hkaAnimationBinding.h">
       <Filter>Headers\Packfile In</Filter>
     </ClInclude>
+    <ClInclude Include="source\hkxEnvironment.h">
+      <Filter>Headers\Packfile In</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\hkaDeltaDecompressor.cpp">

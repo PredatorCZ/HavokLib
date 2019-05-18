@@ -120,17 +120,16 @@ struct IhkVirtualClass
 	virtual ~IhkVirtualClass() {}
 };
 
-#pragma warning(disable : 4324)
 __declspec(align(16))struct hkQTransform
 {
-	Vector position;
-	__declspec(align(16)) Vector4 rotation;
-	Vector scale;
+	Vector4 position;
+	Vector4 rotation;
+	Vector4 scale;
 
 	std::string ToString() const;
 
-	hkQTransform() : position(0.0f, 0.0f, 0.0f), rotation(0.0f, 0.0f, 0.0f, 1.0f), scale(1.0f, 1.0f, 1.0f) {}
-	hkQTransform(Vector pos, Vector4 rot, Vector scl) : position(pos), rotation(rot), scale(scl) {}
+	hkQTransform() : position(0.0f, 0.0f, 0.0f, 1.0f), rotation(0.0f, 0.0f, 0.0f, 1.0f), scale(1.0f, 1.0f, 1.0f, 0.0f) {}
+	hkQTransform(Vector4 pos, Vector4 rot, Vector4 scl) : position(pos), rotation(rot), scale(scl) {}
 
 	bool operator== (const hkQTransform &o) const
 	{
@@ -138,7 +137,6 @@ __declspec(align(16))struct hkQTransform
 	}
 	bool operator!= (const hkQTransform &o) const { return !(*this == o); }
 };
-#pragma warning(default : 4324)
 
 struct hkLocalFrameOnBone
 {
@@ -316,7 +314,31 @@ struct hkaAnnotationTrack : IhkVirtualClass
 	operator const char *() const { return GetName(); }
 };
 
-typedef std::auto_ptr<hkaAnnotationTrack> hkaAnnotationTrackPtr;
+template<class C>
+struct _hkHybridPtr
+{
+	C *ptr;
+	mutable bool created;
+
+	ES_FORCEINLINE C *get() { return ptr; }
+	_hkHybridPtr(C *in, bool made = true) : ptr(in), created(made) {}
+	_hkHybridPtr() = delete;
+	void operator=(const _hkHybridPtr &ref) = delete;
+	_hkHybridPtr(const _hkHybridPtr &ref)
+	{
+		ptr = ref.ptr;
+		created = ref.created;
+		ref.created = false;
+	}
+	~_hkHybridPtr()
+	{
+		if (created)
+			delete ptr;
+	}
+
+};
+
+typedef _hkHybridPtr<hkaAnnotationTrack> hkaAnnotationTrackPtr;
 struct hkaAnimation : IhkVirtualClass
 {
 	DECLARE_HKCLASS(hkaAnimation)
@@ -336,18 +358,71 @@ struct hkaAnimation : IhkVirtualClass
 	virtual const hkaAnimatedReferenceFrame *GetExtractedMotion() const = 0;
 	virtual const int GetNumAnnotations() const = 0;
 	virtual hkaAnnotationTrackPtr GetAnnotation(int id) const = 0;
-
+	virtual bool IsDecoderSupported() const { return false; }
 	virtual bool IsTrackStatic(int trackID, TrackType type) const = 0;
+	
+private:
 	virtual void GetTrack(int trackID, int frame, TrackType type, Vector4 &out) const = 0;
 	virtual void GetTransform(int trackID, int frame, hkQTransform &out) const = 0;
+	static Vector4 Lerp(Vector4 v1, Vector4 v2, float delta)
+	{
+		return v1 + (v2 - v1) * delta;
+	}
+public:
+	void GetTransform(int trackID, float time, float frameRate, hkQTransform &out) const
+	{
+		int frame;
+		float delta;
+		GetFrameDelta(time, frameRate, frame, delta);
+
+		if (delta > 0.0f)
+		{
+			hkQTransform start;
+			GetTransform(trackID, frame++, start);
+			hkQTransform end;
+			GetTransform(trackID, frame, end);
+			
+			Lerp(start.position, end.position, delta);
+			Lerp(start.rotation, end.rotation, delta);
+			Lerp(start.scale, end.scale, delta);
+
+		}
+		else
+		{
+			GetTransform(trackID, frame, out);
+		}
+	}
+
+
+	ES_INLINE void GetFrameDelta(float time, float frameRate, int &frame, float &delta) const
+	{
+		frame = static_cast<int>(time * frameRate);
+		delta = time >= GetDuration() ? 0.0f : time - (frame * frameRate);
+	}
 
 	typedef hkIterProxy<hkaAnimation, &GetNumAnnotations, hkaAnnotationTrackPtr, &GetAnnotation> interatorAnnotation;
 
 	const interatorAnnotation Annotations() const { return interatorAnnotation(this); }
-
-
 };
 
+struct hkxEnvironmentVariable
+{
+	const char *name;
+	const char *value;
+};
+
+struct hkxEnvironment : IhkVirtualClass
+{
+	DECLARE_HKCLASS(hkxEnvironment)
+
+	virtual const int GetNumVars() const = 0;
+	virtual hkxEnvironmentVariable GetVar(int id) const = 0;
+
+	typedef hkInter<hkxEnvironment, &GetNumVars, hkxEnvironmentVariable, &GetVar> interator;
+
+	const interator begin() const { return interator(this, 0); }
+	const interator end() const { return interator(this); }
+};
 
 struct hkaAnimatedReferenceFrame : IhkVirtualClass {};
 struct hkaBoneAttachment : IhkVirtualClass {};

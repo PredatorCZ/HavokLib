@@ -38,6 +38,7 @@
     <ClInclude Include="source\hkObjectBase.h" />
     <ClInclude Include="source\hkReflectorUtil.h" />
     <ClInclude Include="source\hkRootLevelContainer.h" />
+    <ClInclude Include="source\hkxEnvironment.h" />
     <ClInclude Include="source\hkXML.h" />
   </ItemGroup>
   <ItemGroup>

@@ -169,12 +169,12 @@ std::string hkQTransform::ToString() const
 {
 	std::string buffer;
 	buffer += '(';
-	buffer += position.ToString() + ')';
+	buffer += reinterpret_cast<const Vector &>(position).ToString() + ')';
 
 	buffer += '(';
 	buffer += rotation.ToString() + ')';
 
-	return buffer + '(' + scale.ToString() + ')';
+	return buffer + '(' + reinterpret_cast<const Vector &>(scale).ToString() + ')';
 }
 
 void hkaSkeletonInternalInterface::ToXML(XMLHandle hdl) const
@@ -375,7 +375,7 @@ void hkaAnnotationTrackInternalInterface::ToXML(XMLHandle hdl) const
 	std::string _buff;
 
 	pugi::xml_node tracksNode = hdl.node->append_child(_hkParam);
-	tracksNode.append_attribute(_hkName).set_value("trackName");
+	tracksNode.append_attribute(_hkName).set_value(hdl.toolset == HK550 ? _hkName : "trackName");
 	tracksNode.append_buffer(GetName(), strlen(GetName()));
 
 	pugi::xml_node annotsNode = hdl.node->append_child(_hkParam);
@@ -656,4 +656,23 @@ void hkaAnimationBindingInternalInterface::ToXML(XMLHandle hdl) const
 
 	blendNode.append_buffer(blendName, strlen(blendName));
 
+}
+
+void hkxEnvironmentInternalInterface::ToXML(XMLHandle hdl) const
+{
+	pugi::xml_node varsNode = hdl.node->append_child(_hkParam);
+	varsNode.append_attribute(_hkName).set_value("variables");
+	varsNode.append_attribute(_hkNumElements).set_value(GetNumVars());
+
+	for (auto &v : *this)
+	{
+		pugi::xml_node varNode = varsNode.append_child(_hkObject);
+		pugi::xml_node nameNode = varNode.append_child(_hkParam);
+		nameNode.append_attribute(_hkName).set_value(_hkName);
+		nameNode.append_buffer(v.name, strlen(v.name));
+
+		pugi::xml_node valueNode = varNode.append_child(_hkParam);
+		valueNode.append_attribute(_hkName).set_value("value");
+		valueNode.append_buffer(v.value, strlen(v.value));
+	}
 }
