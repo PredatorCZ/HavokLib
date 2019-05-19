@@ -80,15 +80,39 @@ template<
 	enablehkArray(annotations) GetNumAnnotations() const { return annotations.count; }
 	enablePtrPairRef(annotations) GetNumAnnotations() { return numAnnotations; }
 	enablehkArrayRef(annotations) GetNumAnnotations() { return annotations.count; }
-	
+
 	typedef typename _parent<_ipointer, AniType>::annot_type annot_type;
 	
-	ES_FORCEINLINE hkaAnnotationTrackPtr GetAnnotation(char *masterbuffer, int id) const
+	enablePtrPairArg(annotations, hkaAnnotationTrackPtr) GetAnnotation(char *masterbuffer, int id) const
 	{
 		hkaAnnotation_t<annot_type> *ano = new hkaAnnotation_t<annot_type>;
 		ano->SetDataPointer(annotations.GetData(masterbuffer)[id].GetData(masterbuffer));
 		ano->masterBuffer = masterbuffer;
 		return hkaAnnotationTrackPtr(ano);
+	}
+
+	enablehkArrayArg(annotations, hkaAnnotationTrackPtr) GetAnnotation(char *masterbuffer, int id) const
+	{
+		hkaAnnotation_t<annot_type> *ano = new hkaAnnotation_t<annot_type>;
+		ano->SetDataPointer(&annotations.GetData(masterbuffer)[id]);
+		ano->masterBuffer = masterbuffer;
+		return hkaAnnotationTrackPtr(ano);
+	}
+
+	enablePtrPairArg(annotations, void) SwapAnnotations(char *masterBuffer)
+	{
+		for (int a = 0; a < GetNumAnnotations(); a++)
+		{
+			annotations.GetData(masterBuffer)[a].GetData(masterBuffer)->SwapEndian(masterBuffer);
+		}
+	}
+
+	enablehkArrayArg(annotations, void) SwapAnnotations(char *masterBuffer)
+	{
+		for (int a = 0; a < GetNumAnnotations(); a++)
+		{
+			annotations.GetData(masterBuffer)[a].SwapEndian(masterBuffer);
+		}
 	}
 
 	ES_FORCEINLINE void SwapEndian(char *masterbuffer)
@@ -98,11 +122,7 @@ template<
 		FByteswapper(numOfFloatTracks);
 		FByteswapper(numOfTransformTracks);
 		FByteswapper(GetNumAnnotations());
-
-		for (int a = 0; a < GetNumAnnotations(); a++)
-		{
-			annotations.GetData(masterbuffer)[a].GetData(masterbuffer)->SwapEndian(masterbuffer);
-		}
+		SwapAnnotations(masterbuffer);
 	}
 };
 
@@ -131,6 +151,19 @@ template<template<class C>class _ipointer, class AniType>struct hkaSkeletalAnima
 	mutable _ipointer<_ipointer<annot_type>> annotations;
 	int numAnnotations;
 };
+
+template<class AniType>struct hkaSkeletalAnimation550_rp_t_data<hkPointerX64, AniType> : hkReferenceObject_rp<hkPointerX64>
+{
+	hkEnum<typename AniType::AnimationType, int> animationType;
+	float duration;
+	int numOfTransformTracks;
+	int numOfFloatTracks;
+	int _padding;
+	hkPointerX64<hkaAnimatedReferenceFrame> extractedMotion;
+	typedef hkaAnnotation_t_shared<hkPointerX64, hkaAnnotationTrack1> annot_type;
+	mutable hkPointerX64<hkPointerX64<annot_type>> annotations;
+	int numAnnotations;
+};
 #pragma pack()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// hkaAnimation2k_t
@@ -145,7 +178,7 @@ template<
 	int numOfFloatTracks;
 	_ipointer<hkaAnimatedReferenceFrame> extractedMotion;
 	typedef hkaAnnotation_t_shared<_ipointer, hkaAnnotationTrack2> annot_type;
-	mutable hkArray<_ipointer<annot_type>, _ipointer> annotations;
+	mutable hkArray<annot_type, _ipointer> annotations;
 };
 
 template<template<class C>class _ipointer, class AniType>using hkaAnimation2k_t = hkaAnimation2k_sharedData_t<_ipointer, AniType, hkReferenceObject>;

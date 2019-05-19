@@ -105,8 +105,10 @@ template<template<class C>class _ipointer, template<template<class C>class __ipo
 };
 
 template<template<class C>class _ipointer> using hkaInterleavedAnimation550_t_sharedData = hkaInterleavedAnimation550_tt<_ipointer, hkaSkeletalAnimation550_t>;
+template<template<class C>class _ipointer> using hkaInterleavedAnimation550_rp_t_sharedData = hkaInterleavedAnimation550_tt<_ipointer, hkaSkeletalAnimation550_rp_t>;
+
 template<template<class C>class _ipointer> using hkaInterleavedSkeletalAnimation550_t = hkaInterleavedAnimation_t_shared<_ipointer, hkaInterleavedAnimation550_t_sharedData>;
-template<template<class C>class _ipointer> struct hkaInterleavedSkeletalAnimation550_rp_t : hkaInterleavedSkeletalAnimation550_t<_ipointer> {};
+template<template<class C>class _ipointer> using hkaInterleavedSkeletalAnimation550_rp_t = hkaInterleavedAnimation_t_shared<_ipointer, hkaInterleavedAnimation550_rp_t_sharedData>;
 
 template<template<class C>class _ipointer> struct hkaInterleavedUncompressedAnimation660_t : hkaInterleavedSkeletalAnimation550_t<_ipointer> {};
 template<template<class C>class _ipointer> struct hkaInterleavedUncompressedAnimation660_rp_t : hkaInterleavedSkeletalAnimation550_rp_t<_ipointer> {};
@@ -120,8 +122,10 @@ template<template<class C>class _ipointer, template<template<class C>class __ipo
 };
 
 template<template<class C>class _ipointer> using hkaInterleavedAnimation710_t_sharedData = hkaInterleavedAnimation710_tt<_ipointer, hkaAnimation710_t>;
+template<template<class C>class _ipointer> using hkaInterleavedAnimation710_rp_t_sharedData = hkaInterleavedAnimation710_tt<_ipointer, hkaAnimation710_rp_t>;
+
 template<template<class C>class _ipointer> using hkaInterleavedUncompressedAnimation710_t = hkaInterleavedAnimation_t_shared<_ipointer, hkaInterleavedAnimation710_t_sharedData>;
-template<template<class C>class _ipointer> struct hkaInterleavedUncompressedAnimation710_rp_t : hkaInterleavedUncompressedAnimation710_t<_ipointer> {};
+template<template<class C>class _ipointer> using hkaInterleavedUncompressedAnimation710_rp_t = hkaInterleavedAnimation_t_shared<_ipointer, hkaInterleavedAnimation710_rp_t_sharedData>;
 
 template<template<class C>class _ipointer> struct hkaInterleavedUncompressedAnimation2010_t : hkaInterleavedUncompressedAnimation710_t<_ipointer> {};
 template<template<class C>class _ipointer> struct hkaInterleavedUncompressedAnimation2010_rp_t : hkaInterleavedUncompressedAnimation710_rp_t<_ipointer> {};

@@ -42,6 +42,7 @@ template<class C> struct hkaWaveletCompressedAnimation_t : hkaSkeletalAnimation_
 	bool IsTrackStatic(int trackID, TrackType type) const { return false; }
 	void GetTrack(int trackID, int frame, TrackType type, Vector4 &out) const {}
 	void GetTransform(int trackID, int frame, hkQTransform &out) const {}
+	int GetNumInternalFrames() const { return 0; }
 };
 
 template<class C> using hkaWaveletCompressedSkeletalAnimation_t = hkaWaveletCompressedAnimation_t<C>;

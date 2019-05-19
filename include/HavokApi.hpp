@@ -368,6 +368,7 @@ private:
 	{
 		return v1 + (v2 - v1) * delta;
 	}
+	virtual int GetNumInternalFrames() const = 0;
 public:
 	void GetTransform(int trackID, float time, float frameRate, hkQTransform &out) const
 	{
@@ -382,9 +383,9 @@ public:
 			hkQTransform end;
 			GetTransform(trackID, frame, end);
 			
-			Lerp(start.position, end.position, delta);
-			Lerp(start.rotation, end.rotation, delta);
-			Lerp(start.scale, end.scale, delta);
+			out.position = Lerp(start.position, end.position, delta);
+			out.rotation = Lerp(start.rotation, end.rotation, delta);
+			out.scale = Lerp(start.scale, end.scale, delta);
 
 		}
 		else
@@ -393,11 +394,16 @@ public:
 		}
 	}
 
+	float ComputeFrameRate() const
+	{
+		return static_cast<float>(static_cast<int>(GetNumInternalFrames() / GetDuration()));
+	}
 
 	ES_INLINE void GetFrameDelta(float time, float frameRate, int &frame, float &delta) const
 	{
-		frame = static_cast<int>(time * frameRate);
-		delta = time >= GetDuration() ? 0.0f : time - (frame * frameRate);
+		const float frameFull = time * frameRate;
+		frame = static_cast<int>(frameFull);
+		delta = time >= GetDuration() ? 0.0f : frameFull - frame;
 	}
 
 	typedef hkIterProxy<hkaAnimation, &GetNumAnnotations, hkaAnnotationTrackPtr, &GetAnnotation> interatorAnnotation;

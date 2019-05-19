@@ -221,7 +221,7 @@ int chITEMRead(BinReader * rd, hkChunk *holder, hkxNewHeader *root)
 
 ES_INLINE std::string _hkGenerateClassnameNew(hkxNewHeader *hdr, std::string className)
 {
-	return className + "_t<" + className + hdr->contentsVersionStripped + "_t<" + (ES_X64 ? "hkRealPointer" : "hkFakePointer") + ">>";
+	return className + "_t<" + className + hdr->contentsVersionStripped + "_t<" + "hkPointerX64" + ">>";
 }
 
 int chPTCHRead(BinReader * rd, hkChunk *holder, hkxNewHeader *root)

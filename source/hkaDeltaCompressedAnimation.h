@@ -44,6 +44,7 @@ template<class C> struct hkaDeltaCompressedAnimation_t : hkaDeltaCompressedAnima
 	bool IsTrackStatic(int trackID, TrackType type) const { return decomp.IsTrackStatic(trackID, type); }
 	void GetTrack(int trackID, int frame, TrackType type, Vector4 &out) const { decomp.GetTrack(trackID, frame, type, out); }
 	void GetTransform(int trackID, int frame, hkQTransform &out) const { decomp.GetTransform(trackID, frame, out); }
+	int GetNumInternalFrames() const { return decomp.GetNumInternalFrames(); }
 };
 
 template<class C> using hkaDeltaCompressedSkeletalAnimation_t = hkaDeltaCompressedAnimation_t<C>;

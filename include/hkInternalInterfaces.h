@@ -75,6 +75,7 @@ struct hkaInterleavedAnimationInternalInterface : virtual hkaAnimationInternalIn
 	//TODO floats
 
 	bool IsTrackStatic(int trackID, TrackType type) const { return false; }
+	int GetNumInternalFrames() const { return GetNumTransforms() / GetNumOfTransformTracks(); }
 
 	void ToXML(XMLHandle hdl) const;
 };

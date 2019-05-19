@@ -37,6 +37,7 @@ public:
 	bool IsTrackStatic(int trackID, hkaAnimation::TrackType type) const;
 	void GetTrack(int trackID, int frame, hkaAnimation::TrackType type, Vector4 &out) const;
 	void GetTransform(int trackID, int frame, hkQTransform &out) const;
+	int GetNumInternalFrames() const;
 	~hkaDeltaDecompressor();
 };
 
@@ -79,4 +80,25 @@ ES_INLINE void hkaDeltaDecompressor::GetTransform(int trackID, int frame, hkQTra
 	out.rotation = tracks[trackID]->rotation->GetVector(frame);
 	reinterpret_cast<Vector &>(out.position) = tracks[trackID]->pos->GetVector(frame);
 	reinterpret_cast<Vector &>(out.scale) = tracks[trackID]->scale->GetVector(frame);
+}
+
+inline int hkaDeltaDecompressor::GetNumInternalFrames() const
+{
+	for (auto &t : tracks)
+	{
+		int numPosFrames = t->pos->NumFrames();
+		int numRotFrames = t->rotation->NumFrames();
+		int numSclFrames = t->scale->NumFrames();
+
+		if (numPosFrames > 1)
+			return numPosFrames;
+
+		if (numRotFrames > 1)
+			return numRotFrames;
+
+		if (numSclFrames > 1)
+			return numSclFrames;
+	}
+
+	return 1;
 }

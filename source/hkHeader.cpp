@@ -70,14 +70,6 @@ int hkxHeader::Load(BinReader & rd)
 		cc++;
 	}
 
-
-	/*
-	1 = from 32 bit to 64
-	-1 = from 64 bit to 32
-	0 = unchanged
-	*/
-	swapway = !ES_X64 && layout.bytesInPointer == 8 ? -1 : (ES_X64 && layout.bytesInPointer == 4 ? 1 : 0);
-
 	sections.resize(numSections);
 
 	for (auto &s : sections)
@@ -98,7 +90,7 @@ int hkxHeader::Load(BinReader & rd)
 	for (auto &s : sections)
 		s.LoadBuffer(&rd);
 
-	if (swapway == 1)
+	if (ES_X64 && layout.bytesInPointer == 4)
 	{
 		for (auto &s : sections)
 			s.LinkBuffer86();
@@ -171,125 +163,10 @@ int hkxSectionHeader::LoadBuffer(BinReader * rd)
 
 	const bool containsFixups = localFixups.size() + globalFixups.size() + virtualFixups.size() > 0;
 
-	/*if (header->swapway < 0 || !containsFixups)
-	{*/
 	sectionBufferSize = localFixupsOffset;
 	sectionBuffer = static_cast<char*>(malloc(sectionBufferSize));
 	memset(sectionBuffer, 0, sectionBufferSize);
 	rd->ReadBuffer(sectionBuffer, sectionBufferSize);
-
-	// Unfortunetly this code will not work in all cases, for exaple if middle pointer fixup is not applied, it will cause shift for structure mapping :(
-	/*}
-	else
-	{
-		const int delta = 4 * header->swapway;
-		int deltaCount = 0;
-
-		std::vector<hkFixupSorter> sortedFixups;
-		sortedFixups.reserve(localFixups.size() * 2 + globalFixups.size() * 2 + virtualFixups.size() + 1);
-
-		for (auto &lf : localFixups)
-			if (lf.pointer != -1)
-			{
-				hkFixupSorter sr;
-				sr.value = &lf.pointer;
-				sr.type = 0;
-				sortedFixups.push_back(sr);
-				deltaCount++;
-
-				sr.value = &lf.destination;
-				sr.type = 1;
-				sortedFixups.push_back(sr);
-			}
-
-		for (auto &gf : globalFixups)
-			if (gf.pointer != -1)
-			{
-				hkFixupSorter sr;
-				sr.value = &gf.pointer;
-				sr.type = 0;
-				sortedFixups.push_back(sr);
-				deltaCount++;
-
-				if (gf.sectionid == sectionID)
-				{
-					sr.value = &gf.destination;
-					sr.type = 1;
-					sortedFixups.push_back(sr);
-				}
-			}
-
-		for (auto &vf : virtualFixups)
-			if (vf.dataoffset != -1)
-			{
-				hkFixupSorter sr;
-				sr.value = &vf.dataoffset;
-				sr.type = 1;
-				sortedFixups.push_back(sr);
-			}
-
-		for (auto &s : header->sections)
-			if (&s != this)
-				for (auto &gf : s.globalFixups)
-					if (gf.sectionid == sectionID)
-					{
-						hkFixupSorter sr;
-						sr.value = &gf.destination;
-						sr.type = 1;
-						sortedFixups.push_back(sr);
-					}
-
-
-		std::sort(sortedFixups.begin(), sortedFixups.end(), [=](hkFixupSorter &fst, hkFixupSorter &lst) {return *fst.value == *lst.value ? fst.type > lst.type : *fst.value < *lst.value; });
-
-		const int deltaSize = deltaCount * delta;
-
-		hkFixupSorter sr;
-		sr.value = &localFixupsOffset;
-		sr.type = -1;
-		sortedFixups.push_back(sr);
-
-		sectionBufferSize = localFixupsOffset + deltaSize;
-
-		sectionBuffer = static_cast<char*>(malloc(sectionBufferSize));
-		memset(sectionBuffer, 0, sectionBufferSize);
-		int curDelta = 0;
-		int bufferPosition = 0;
-
-		hkFixupSorter *prevFixup = nullptr;
-
-		for (int fid = 0; fid < sortedFixups.size(); fid++)
-		{
-			auto &fx1 = sortedFixups[fid];
-
-			if (fx1.type < 1)
-			{
-				curDelta += delta;
-				if (prevFixup == nullptr)
-				{
-					prevFixup = &fx1;
-					continue;
-				}
-				else
-				{
-
-					const int readsize = *fx1.value - *prevFixup->value;
-					*prevFixup->value = bufferPosition;
-					bufferPosition += delta;
-
-					rd->BaseStream->read(sectionBuffer + bufferPosition, readsize);
-
-					bufferPosition += readsize;
-
-					prevFixup = &fx1;
-				}
-			}
-			else
-			{
-				*fx1.value += curDelta;
-			}
-		}
-	}*/
 
 	return 0;
 }
@@ -303,19 +180,10 @@ ES_FORCEINLINE std::string _hkGenerateClassname(hkxHeader *header, std::string c
 
 	compiledClassname.append("_t<");
 
-	switch (header->swapway)
-	{
-	case -1:
-		compiledClassname.append("hkFakePointer");
-		break;
-
-	case 1:
-		compiledClassname.append("hkStripPointer");
-		break;
-	default:
-		compiledClassname.append("hkRealPointer");
-		break;
-	}
+	if (header->layout.bytesInPointer > 4)
+		compiledClassname.append("hkPointerX64");
+	else
+		compiledClassname.append("hkPointerX86");
 
 	compiledClassname.append(">>");
 

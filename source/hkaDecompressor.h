@@ -82,12 +82,14 @@ public:
 struct ILineTrack
 {
 	virtual float &GetFrame(int frame) = 0;
+	virtual int NumFrames() const { return 1; }
 };
 
 struct LineDynamicTrack : ILineTrack
 {
 	std::vector<float> items;
 	float &GetFrame(int frame) { return items[frame]; }
+	int NumFrames() const { return static_cast<int>(items.size()); }
 };
 
 struct LineStaticTrack : ILineTrack
@@ -102,6 +104,7 @@ template<class C> struct IVectorTrack
 {
 	virtual C GetVector(int frame) = 0;
 	virtual bool IsStatic() = 0;
+	virtual int NumFrames() const { return 1; }
 	virtual ~IVectorTrack() {}
 };
 
@@ -111,6 +114,7 @@ template<class C> struct VectorDynamicTrack : IVectorTrack<C>
 	ILineTrack *tracks[numComponents];
 
 	C GetVector(int frame);
+	int NumFrames() const;
 	VectorDynamicTrack(StaticMask &mask, StaticMask::FlagOffset offset, MasterTrack &master);
 	~VectorDynamicTrack();
 	bool IsStatic() { return false; }
@@ -151,6 +155,16 @@ ES_INLINE C VectorDynamicTrack<C>::GetVector(int frame)
 	}
 
 	return retval;
+}
+
+template<class C>
+ES_INLINE int VectorDynamicTrack<C>::NumFrames() const
+{
+	for (int t = 0; t < numComponents; t++)
+		if (tracks[t]->NumFrames() > 1)
+			return tracks[t]->NumFrames();
+
+	return 1;
 }
 
 template<class C>

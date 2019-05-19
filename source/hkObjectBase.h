@@ -42,35 +42,46 @@ template<template<class C>class _ipointer> struct hkReferenceObject_rp
 };
 #pragma pack()
 
-template <class C> union hkFakePointer
+template <class C> union hkPointerX64
 {
 	typedef C value_type;
 private:
-	C *Data;
+	C *pointer;
 	long long bound;
 public:
-	ES_FORCEINLINE C *GetData(char *) { return Data; }
-	ES_FORCEINLINE const C *GetData(char *) const { return Data; }
+	ES_FORCEINLINE C *GetData(char *) { return pointer; }
+	ES_FORCEINLINE const C *GetData(char *) const { return pointer; }
 };
 
-template <class C> union hkRealPointer
+template <class C> struct hkPointerX86
 {
 	typedef C value_type;
 private:
-	C *Data;
+	uint varPtr;
 public:
-	ES_FORCEINLINE C *GetData(char *) { return Data; }
-	ES_FORCEINLINE const C *GetData(char *) const { return Data; }
-};
+	template<bool enabled = ES_X64>
+	ES_FORCEINLINE typename std::enable_if<enabled, C *>::type GetData(char *masterBuffer)
+	{
+		return reinterpret_cast<C *>(masterBuffer + varPtr);
+	}
 
-template <class C> union hkStripPointer
-{
-	typedef C value_type;
-private:
-	int Offset;
-public:
-	ES_FORCEINLINE C *GetData(char *Data) { return reinterpret_cast<C*>(Data + Offset); }
-	ES_FORCEINLINE const C *GetData(char *Data) const { return reinterpret_cast<C*>(Data + Offset); }
+	template<bool enabled = ES_X64>
+	ES_FORCEINLINE typename std::enable_if<!enabled, C *>::type GetData(char *)
+	{
+		return reinterpret_cast<C *>(varPtr);
+	}
+
+	template<bool enabled = ES_X64>
+	ES_FORCEINLINE typename std::enable_if<enabled, const C *>::type GetData(char *masterBuffer) const
+	{
+		return reinterpret_cast<const C *>(masterBuffer + varPtr);
+	}
+
+	template<bool enabled = ES_X64>
+	ES_FORCEINLINE typename std::enable_if<!enabled, const C *>::type GetData(char *) const
+	{
+		return reinterpret_cast<const C *>(varPtr);
+	}
 };
 
 template <class C, template<class _C>class _ipointer> struct hkArray

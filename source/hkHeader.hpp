@@ -153,12 +153,7 @@ struct hkxHeader : IhkPackFile
 		predicateArraySizePlusPadding;
 
 	char contentsVersionStripped[5];
-	/*
-	1 = from 32 bit to 64
-	-1 = from 64 bit to 32
-	0 = unchanged
-	*/
-	int swapway;
+
 	std::vector<hkxSectionHeader> sections;
 
 	int Load(BinReader &rd);
