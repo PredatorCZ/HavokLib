@@ -396,14 +396,15 @@ public:
 
 	float ComputeFrameRate() const
 	{
-		return static_cast<float>(static_cast<int>(GetNumInternalFrames() / GetDuration()));
+		const int numFrames = GetNumInternalFrames() - 1;
+		return std::roundf(numFrames / GetDuration());
 	}
 
 	ES_INLINE void GetFrameDelta(float time, float frameRate, int &frame, float &delta) const
 	{
 		const float frameFull = time * frameRate;
 		frame = static_cast<int>(frameFull);
-		delta = time >= GetDuration() ? 0.0f : frameFull - frame;
+		delta = frameFull >= GetDuration() * frameRate ? 0.0f : frameFull - frame;
 	}
 
 	typedef hkIterProxy<hkaAnimation, &GetNumAnnotations, hkaAnnotationTrackPtr, &GetAnnotation> interatorAnnotation;

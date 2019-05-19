@@ -82,7 +82,7 @@ public:
 struct ILineTrack
 {
 	virtual float &GetFrame(int frame) = 0;
-	virtual int NumFrames() const { return 1; }
+	virtual int NumFrames() const { return 2; }
 };
 
 struct LineDynamicTrack : ILineTrack
@@ -104,7 +104,7 @@ template<class C> struct IVectorTrack
 {
 	virtual C GetVector(int frame) = 0;
 	virtual bool IsStatic() = 0;
-	virtual int NumFrames() const { return 1; }
+	virtual int NumFrames() const { return 2; }
 	virtual ~IVectorTrack() {}
 };
 
@@ -161,10 +161,10 @@ template<class C>
 ES_INLINE int VectorDynamicTrack<C>::NumFrames() const
 {
 	for (int t = 0; t < numComponents; t++)
-		if (tracks[t]->NumFrames() > 1)
+		if (tracks[t]->NumFrames() > 2)
 			return tracks[t]->NumFrames();
 
-	return 1;
+	return 2;
 }
 
 template<class C>
