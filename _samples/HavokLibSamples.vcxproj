@@ -178,6 +178,7 @@
     <ClCompile Include="HavokLibSamples.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="InterleavedTesting.h" />
     <ClInclude Include="SkeletonTesting.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

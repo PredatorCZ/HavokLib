@@ -26,6 +26,7 @@ NOTE: this library was created mostly for reading hkaSkeleton classes
 * hkaAnnotationTrack: 5.5.0 - 2014.1
 * hkaInterleavedAnimation: 5.5.0 - 2014.1
 * hkaAnimationBinding: 5.5.0 - 2014.1
+* hkxEnvironment: 5.5.0 - 2014.1
 
 ## Supported XML classes
 * hkRootLevelContainer
@@ -34,6 +35,7 @@ NOTE: this library was created mostly for reading hkaSkeleton classes
 * hkaAnnotationTrack
 * hkaInterleavedAnimation
 * hkaAnimationBinding
+* hkxEnvironment
 
 ## Testing/samples and usage
 HavokLibSamples project contains code for testing and usage of library.

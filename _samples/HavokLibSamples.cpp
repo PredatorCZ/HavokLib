@@ -3,15 +3,15 @@
 
 #include <cstdio>
 #include <tchar.h>
-#include <array>
 #include "HavokApi.hpp"
 #include "datas/masterprinter.hpp"
 #include "datas/fileinfo.hpp"
+#include "hkInternalInterfaces.h"
 
 #define MyAssert(thing) if (thing) printline(#thing, << _T(" :") << __FUNCTION__ <<_T(" at:") <<__LINE__)
 #define MyAssertLoop(thing, i) if (thing) printline(#thing, << _T(" :") << __FUNCTION__ <<_T(" at:") <<__LINE__<< _T(" loop:") << i)
 
-static const std::array<const wchar_t *, 8>compiledFlags = 
+static const wchar_t *compiledFlags[] =
 {
 	L"[4001].hkx",
 	L"[4011].hkx",
@@ -23,7 +23,7 @@ static const std::array<const wchar_t *, 8>compiledFlags =
 	L"[8111].hkx",
 };
 
-static const std::array<const wchar_t *, 9>versions =
+static const wchar_t *versions[] =
 {
 	L"550/",
 	L"660/",
@@ -36,7 +36,16 @@ static const std::array<const wchar_t *, 9>versions =
 	L"2014_1/",
 };
 
+static const wchar_t *versions_delta[] =
+{
+	L"550/",
+	L"660/",
+	L"710/",
+	L"2010_1/",
+};
+
 #include "SkeletonTesting.h"
+#include "InterleavedTesting.h"
 
 int _tmain(const int argc, const TCHAR *argv[])
 {
@@ -47,6 +56,7 @@ int _tmain(const int argc, const TCHAR *argv[])
 	std::wstring testingPath = info.GetPath() + L"rc/";
 
 	TestAllosaurSkeleton(testingPath);
-	
+	TestAllosaurInterleaved(testingPath);
+	TestAllosaurDelta(testingPath);
 	return 0;
 }

@@ -130,10 +130,11 @@ __declspec(align(16))struct hkQTransform
 
 	hkQTransform() : position(0.0f, 0.0f, 0.0f, 1.0f), rotation(0.0f, 0.0f, 0.0f, 1.0f), scale(1.0f, 1.0f, 1.0f, 0.0f) {}
 	hkQTransform(Vector4 pos, Vector4 rot, Vector4 scl) : position(pos), rotation(rot), scale(scl) {}
+	hkQTransform(Vector pos, Vector4 rot, Vector scl) : position(pos.X, pos.Y, pos.Z, 1.0f), rotation(rot), scale(scl.X, scl.Y, scl.Z, 0.0f) {}
 
 	bool operator== (const hkQTransform &o) const
 	{
-		return position == o.position && rotation == o.rotation && scale == o.scale;
+		return reinterpret_cast<const Vector &>(position) == reinterpret_cast<const Vector &>(o.position) && rotation == o.rotation && scale == o.scale;
 	}
 	bool operator!= (const hkQTransform &o) const { return !(*this == o); }
 };
