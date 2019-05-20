@@ -370,12 +370,14 @@ private:
 		return v1 + (v2 - v1) * delta;
 	}
 	virtual int GetNumInternalFrames() const = 0;
+	mutable int numFrames;
+	mutable float frameRate;
 public:
-	void GetTransform(int trackID, float time, float frameRate, hkQTransform &out) const
+	void GetTransform(int trackID, float time, hkQTransform &out) const
 	{
 		int frame;
 		float delta;
-		GetFrameDelta(time, frameRate, frame, delta);
+		GetFrameDelta(time, frame, delta);
 
 		if (delta > 0.0f)
 		{
@@ -395,16 +397,20 @@ public:
 		}
 	}
 
-	float ComputeFrameRate() const
+	void ComputeFrameRate() const
 	{
-		const int numFrames = GetNumInternalFrames() - 1;
-		return std::roundf(numFrames / GetDuration());
+		numFrames = GetNumInternalFrames() - 1;
+		frameRate = numFrames / GetDuration();
 	}
 
-	ES_INLINE void GetFrameDelta(float time, float frameRate, int &frame, float &delta) const
+	ES_INLINE void GetFrameDelta(float time, int &frame, float &delta) const
 	{
 		const float frameFull = time * frameRate;
 		frame = static_cast<int>(frameFull);
+
+		if (frame > numFrames)
+			frame--;
+
 		delta = frameFull >= GetDuration() * frameRate ? 0.0f : frameFull - frame;
 	}
 
