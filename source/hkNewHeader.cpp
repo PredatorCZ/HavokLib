@@ -207,6 +207,11 @@ int chTNAMRead(BinReader * rd, hkChunk *holder, hkxNewHeader *root)
 	return 0;
 }
 
+int chTNA1Read(BinReader *rd, hkChunk *holder, hkxNewHeader *root)
+{
+	return chTNAMRead(rd, holder, root);
+}
+
 int chITEMRead(BinReader * rd, hkChunk *holder, hkxNewHeader *root)
 {
 	if (!holder || !root)
@@ -229,6 +234,12 @@ int chPTCHRead(BinReader * rd, hkChunk *holder, hkxNewHeader *root)
 	if (!holder || !root)
 		return 1;
 
+	if (!root->weldedClassNames.size())
+	{
+		printerror("[Havok] File is missing type infos.");
+		return 2;
+	}
+
 	const size_t endPos = rd->Tell() + holder->Size();
 
 	while (rd->Tell() < endPos)
@@ -239,6 +250,7 @@ int chPTCHRead(BinReader * rd, hkChunk *holder, hkxNewHeader *root)
 		const char *toclassname = root->weldedClassNames[classNameIndex-1].className;
 
 		bool isHKArray = !strcmp(toclassname, "hkArray");
+		bool isHKRelArray = !strcmp(toclassname, "hkRelArray");
 
 		int numPointers;
 		rd->Read(numPointers);
@@ -248,14 +260,25 @@ int chPTCHRead(BinReader * rd, hkChunk *holder, hkxNewHeader *root)
 			int cPointer;
 			rd->Read(cPointer);
 			
-			uint64 *retarget = reinterpret_cast<uint64 *>(root->dataBuffer + cPointer);
-			const classEntryFixup &xfix = root->classEntries[*retarget];
-			
-			*retarget = reinterpret_cast<uint64>(xfix.tag.hash + root->dataBuffer);
+			if (isHKRelArray)
+			{
+				uint *retarget = reinterpret_cast<uint *>(root->dataBuffer + cPointer);
+				const classEntryFixup & xfix = root->classEntries[*retarget];
 
-			if (isHKArray)
-				*(retarget + 1) = xfix.count;
+				ushort *relRetarget = reinterpret_cast<ushort *>(retarget);
+				*relRetarget = xfix.tag.hash - cPointer;
+				*(relRetarget + 1) = xfix.count;
+			}
+			else
+			{
+				uint64 *retarget = reinterpret_cast<uint64 *>(root->dataBuffer + cPointer);
+				const classEntryFixup & xfix = root->classEntries[*retarget];
 
+				*retarget = reinterpret_cast<uint64>(xfix.tag.hash + root->dataBuffer);
+
+				if (isHKArray)
+					* (retarget + 1) = xfix.count;
+			}
 		}
 	}
 	
@@ -307,7 +330,7 @@ int ReadBlankChunkNoSkip(BinReader *, hkChunk *, hkxNewHeader *) { return 0; }
 
 static const std::map<const uint, int(*)(BinReader *, hkChunk *, hkxNewHeader *)> hkChunkRegistry = 
 {
-	StaticFor(chunkRegister, chSDKVRead, chDATARead, chTSTRRead, chFSTRRead, chTNAMRead, chITEMRead, chPTCHRead)
+	StaticFor(chunkRegister, chSDKVRead, chDATARead, chTSTRRead, chFSTRRead, chTNAMRead, chITEMRead, chPTCHRead, chTNA1Read)
 	StaticFor(chunkRegisterBlank, chTAG0, chTPTR, chTPAD, chTHSH)
 	StaticFor(chunkRegisterBlankNoskip, chTYPE, chINDX)
 };
