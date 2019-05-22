@@ -40,8 +40,8 @@ template<class C> struct hkaWaveletCompressedAnimation_t : hkaSkeletalAnimation_
 	const int GetScalesOffset() const { return static_cast<value_type*>(Data)->GetScalesOffset(); }
 	const int GetNumPreserved() const { return static_cast<value_type*>(Data)->GetNumPreserved(); }
 	bool IsTrackStatic(int trackID, TrackType type) const { return false; }
-	void GetTrack(int trackID, int frame, TrackType type, Vector4 &out) const {}
-	void GetTransform(int trackID, int frame, hkQTransform &out) const {}
+	void GetTrack(int trackID, int frame, float delta, TrackType type, Vector4 &out) const {}
+	void GetTransform(int trackID, int frame, float delta, hkQTransform &out) const {}
 	int GetNumInternalFrames() const { return 0; }
 };
 

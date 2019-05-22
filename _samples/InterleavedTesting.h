@@ -117,3 +117,138 @@ void TestAllosaurDelta(const std::wstring testingPath)
 			MyAssert(iterAnim->GetNumPreserved() != 1);
 		}
 }
+
+void TestAllosaurSpline1(const std::wstring testingPath)
+{
+	for (auto &v : versions_delta)
+		for (auto &t : compiledFlags)
+		{
+			std::wstring fleName = testingPath;
+			fleName.append(v);
+			fleName.append(L"allosaur_run_S32_V16_B255_D1");
+			fleName.append(t);
+
+			printline("testing: ", << fleName);
+			IhkPackFile *hdr = IhkPackFile::Create(fleName.c_str());
+
+			if (!hdr)
+			{
+				printerror("testing failed!");
+				continue;
+			}
+
+			hkRootLevelContainer *rcont = hdr->GetRootLevelContainer();
+
+			if (!rcont)
+			{
+				printerror("Couldn't find hkRootLevelContainer!");
+				continue;
+			}
+
+			const hkaAnimationContainer *aniCont = rcont->GetVariant(0);
+
+			TestBinding(aniCont);
+
+			const hkaAnimation *anim = aniCont->GetAnimation(0);
+
+			MyAssert(!FLTCMP(anim->GetDuration(), 3.33354211));
+			MyAssert(anim->GetNumAnnotations() != 93);
+
+			for (int cAnnot = 0; cAnnot < anim->GetNumAnnotations(); cAnnot++)
+			{
+				MyAssertLoop(strcmp(anim->GetAnnotation(cAnnot).get()->GetName(), boneNames[cAnnot]), cAnnot);
+			}
+
+			// Add some further testing here?
+		}
+}
+
+void TestAllosaurSpline2(const std::wstring testingPath)
+{
+	for (auto &v : versions_delta)
+		for (auto &t : compiledFlags)
+		{
+			std::wstring fleName = testingPath;
+			fleName.append(v);
+			fleName.append(L"allosaur_run_S40_V16_B25_D3");
+			fleName.append(t);
+
+			printline("testing: ", << fleName);
+			IhkPackFile *hdr = IhkPackFile::Create(fleName.c_str());
+
+			if (!hdr)
+			{
+				printerror("testing failed!");
+				continue;
+			}
+
+			hkRootLevelContainer *rcont = hdr->GetRootLevelContainer();
+
+			if (!rcont)
+			{
+				printerror("Couldn't find hkRootLevelContainer!");
+				continue;
+			}
+
+			const hkaAnimationContainer *aniCont = rcont->GetVariant(0);
+
+			TestBinding(aniCont);
+
+			const hkaAnimation *anim = aniCont->GetAnimation(0);
+
+			MyAssert(!FLTCMP(anim->GetDuration(), 3.33354211));
+			MyAssert(anim->GetNumAnnotations() != 93);
+
+			for (int cAnnot = 0; cAnnot < anim->GetNumAnnotations(); cAnnot++)
+			{
+				MyAssertLoop(strcmp(anim->GetAnnotation(cAnnot).get()->GetName(), boneNames[cAnnot]), cAnnot);
+			}
+
+			// Add some further testing here?
+		}
+}
+
+void TestAllosaurSpline3(const std::wstring testingPath)
+{
+	for (auto &v : versions_delta)
+		for (auto &t : compiledFlags)
+		{
+			std::wstring fleName = testingPath;
+			fleName.append(v);
+			fleName.append(L"allosaur_run_S48_V8_B255_D2");
+			fleName.append(t);
+
+			printline("testing: ", << fleName);
+			IhkPackFile *hdr = IhkPackFile::Create(fleName.c_str());
+
+			if (!hdr)
+			{
+				printerror("testing failed!");
+				continue;
+			}
+
+			hkRootLevelContainer *rcont = hdr->GetRootLevelContainer();
+
+			if (!rcont)
+			{
+				printerror("Couldn't find hkRootLevelContainer!");
+				continue;
+			}
+
+			const hkaAnimationContainer *aniCont = rcont->GetVariant(0);
+
+			TestBinding(aniCont);
+
+			const hkaAnimation *anim = aniCont->GetAnimation(0);
+
+			MyAssert(!FLTCMP(anim->GetDuration(), 3.33354211));
+			MyAssert(anim->GetNumAnnotations() != 93);
+
+			for (int cAnnot = 0; cAnnot < anim->GetNumAnnotations(); cAnnot++)
+			{
+				MyAssertLoop(strcmp(anim->GetAnnotation(cAnnot).get()->GetName(), boneNames[cAnnot]), cAnnot);
+			}
+
+			// Add some further testing here?
+		}
+}

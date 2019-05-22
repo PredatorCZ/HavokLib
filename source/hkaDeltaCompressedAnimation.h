@@ -16,7 +16,6 @@
 */
 
 #pragma once
-#pragma warning(disable : 4250)
 #include "HavokApi.hpp"
 #include "hkObjectBase.h"
 #include "hkaAnimation.h"
@@ -42,8 +41,8 @@ template<class C> struct hkaDeltaCompressedAnimation_t : hkaDeltaCompressedAnima
 	const int GetScalesOffset() const { return static_cast<value_type*>(Data)->GetScalesOffset(); }
 	const int GetNumPreserved() const { return static_cast<value_type*>(Data)->GetNumPreserved(); }
 	bool IsTrackStatic(int trackID, TrackType type) const { return decomp.IsTrackStatic(trackID, type); }
-	void GetTrack(int trackID, int frame, TrackType type, Vector4 &out) const { decomp.GetTrack(trackID, frame, type, out); }
-	void GetTransform(int trackID, int frame, hkQTransform &out) const { decomp.GetTransform(trackID, frame, out); }
+	void GetTrack(int trackID, int frame, float delta, TrackType type, Vector4 &out) const { decomp.GetTrack(trackID, frame, type, out); }
+	void GetTransform(int trackID, int frame, float delta, hkQTransform &out) const { decomp.GetTransform(trackID, frame, out); }
 	int GetNumInternalFrames() const { return decomp.GetNumInternalFrames(); }
 };
 

@@ -27,7 +27,7 @@ template<class C> struct hkaInterleavedUncompressedAnimation_t : hkaInterleavedA
 	hkClassConstructor(hkaInterleavedUncompressedAnimation_t);
 	void SwapEndian() { hkaSkeletalAnimation_t<typename C::parentClass>::SwapEndian(); static_cast<value_type *>(Data)->SwapEndian(masterBuffer); }
 
-	void GetTrack(int trackID, int frame, TrackType type, Vector4 &out) const 
+	void GetTrack(int trackID, int frame, float delta, TrackType type, Vector4 &out) const 
 	{
 		const hkQTransform *ctr = GetTransform(frame * GetNumOfTransformTracks() + trackID);
 
@@ -47,7 +47,7 @@ template<class C> struct hkaInterleavedUncompressedAnimation_t : hkaInterleavedA
 		}
 	}
 
-	void GetTransform(int trackID, int frame, hkQTransform &out) const { out = *GetTransform(frame * GetNumOfTransformTracks() + trackID); }
+	void GetTransform(int trackID, int frame, float delta, hkQTransform &out) const { out = *GetTransform(frame * GetNumOfTransformTracks() + trackID); }
 
 	int GetNumTransforms() const { return static_cast<value_type *>(Data)->NumTransforms(); }
 	int GetNumFloats() const { return static_cast<value_type *>(Data)->NumFloats(); }

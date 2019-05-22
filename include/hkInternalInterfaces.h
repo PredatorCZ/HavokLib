@@ -34,6 +34,12 @@ struct hkVirtualClass : IhkVirtualClass
 	virtual void ToXML(XMLHandle hdl) const {};
 };
 
+template<class C>
+struct hkRealArray
+{
+	const C *data;
+	int count;
+};
 
 struct hkRootLevelContainerInternalInterface : hkRootLevelContainer, hkVirtualClass
 {
@@ -97,6 +103,13 @@ struct hkaDeltaCompressedAnimationInternalInterface : virtual hkaAnimationIntern
 	//void ToXML(XMLHandle hdl) const;
 };
 
+struct hkaSplineCompressedAnimationInternalInterface : virtual hkaAnimationInternalInterface
+{
+	virtual char *GetData() const = 0;
+	virtual hkRealArray<uint> GetBlockOffsets() const = 0;
+
+	//void ToXML(XMLHandle hdl) const;
+};
 struct hkxEnvironmentInternalInterface : hkxEnvironment, hkVirtualClass
 {
 	void ToXML(XMLHandle hdl) const;

@@ -31,6 +31,8 @@
     <ClInclude Include="source\hkaDeltaDecompressor.h" />
     <ClInclude Include="source\hkaInterleavedAnimation.h" />
     <ClInclude Include="source\hkaSkeleton.h" />
+    <ClInclude Include="source\hkaSplineCompressedAnimation.h" />
+    <ClInclude Include="source\hkaSplineDecompressor.h" />
     <ClInclude Include="source\hkaWaveletCompressedAnimation.h" />
     <ClInclude Include="source\hkaWaveletDecompressor.h" />
     <ClInclude Include="source\hkHeader.hpp" />
@@ -46,6 +48,7 @@
     <ClCompile Include="3rd_party\PreCore\datas\reflector.cpp" />
     <ClCompile Include="3rd_party\PugiXml\src\pugixml.cpp" />
     <ClCompile Include="source\hkaDeltaDecompressor.cpp" />
+    <ClCompile Include="source\hkaSplineDecompressor.cpp" />
     <ClCompile Include="source\hkBin2XML.cpp" />
     <ClCompile Include="source\hkCore.cpp" />
     <ClCompile Include="source\hkHeader.cpp" />

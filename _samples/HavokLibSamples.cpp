@@ -8,8 +8,8 @@
 #include "datas/fileinfo.hpp"
 #include "hkInternalInterfaces.h"
 
-#define MyAssert(thing) if (thing) printline(#thing, << _T(" :") << __FUNCTION__ <<_T(" at:") <<__LINE__)
-#define MyAssertLoop(thing, i) if (thing) printline(#thing, << _T(" :") << __FUNCTION__ <<_T(" at:") <<__LINE__<< _T(" loop:") << i)
+#define MyAssert(thing) if (thing) printerror(#thing, << _T(" :") << __FUNCTION__ <<_T(" at:") <<__LINE__)
+#define MyAssertLoop(thing, i) if (thing) printerror(#thing, << _T(" :") << __FUNCTION__ <<_T(" at:") <<__LINE__<< _T(" loop:") << i)
 
 static const wchar_t *compiledFlags[] =
 {
@@ -58,5 +58,8 @@ int _tmain(const int argc, const TCHAR *argv[])
 	TestAllosaurSkeleton(testingPath);
 	TestAllosaurInterleaved(testingPath);
 	TestAllosaurDelta(testingPath);
+	TestAllosaurSpline1(testingPath);
+	TestAllosaurSpline2(testingPath);
+	TestAllosaurSpline3(testingPath);
 	return 0;
 }

@@ -83,6 +83,7 @@ struct ILineTrack
 {
 	virtual float &GetFrame(int frame) = 0;
 	virtual int NumFrames() const { return 2; }
+	virtual ~ILineTrack() {}
 };
 
 struct LineDynamicTrack : ILineTrack

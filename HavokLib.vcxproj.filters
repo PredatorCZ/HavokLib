@@ -78,6 +78,12 @@
     <ClInclude Include="source\hkxEnvironment.h">
       <Filter>Headers\Packfile In</Filter>
     </ClInclude>
+    <ClInclude Include="source\hkaSplineCompressedAnimation.h">
+      <Filter>Headers\Packfile In</Filter>
+    </ClInclude>
+    <ClInclude Include="source\hkaSplineDecompressor.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\hkaDeltaDecompressor.cpp">
@@ -105,6 +111,9 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="3rd_party\PreCore\datas\reflector.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\hkaSplineDecompressor.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

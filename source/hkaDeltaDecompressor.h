@@ -82,7 +82,7 @@ ES_INLINE void hkaDeltaDecompressor::GetTransform(int trackID, int frame, hkQTra
 	reinterpret_cast<Vector &>(out.scale) = tracks[trackID]->scale->GetVector(frame);
 }
 
-inline int hkaDeltaDecompressor::GetNumInternalFrames() const
+ES_INLINE int hkaDeltaDecompressor::GetNumInternalFrames() const
 {
 	for (auto &t : tracks)
 	{
@@ -90,15 +90,15 @@ inline int hkaDeltaDecompressor::GetNumInternalFrames() const
 		int numRotFrames = t->rotation->NumFrames();
 		int numSclFrames = t->scale->NumFrames();
 
-		if (numPosFrames > 1)
+		if (numPosFrames > 2)
 			return numPosFrames;
 
-		if (numRotFrames > 1)
+		if (numRotFrames > 2)
 			return numRotFrames;
 
-		if (numSclFrames > 1)
+		if (numSclFrames > 2)
 			return numSclFrames;
 	}
 
-	return 1;
+	return 2;
 }

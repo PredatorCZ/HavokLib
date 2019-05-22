@@ -363,8 +363,8 @@ struct hkaAnimation : IhkVirtualClass
 	virtual bool IsTrackStatic(int trackID, TrackType type) const = 0;
 	
 private:
-	virtual void GetTrack(int trackID, int frame, TrackType type, Vector4 &out) const = 0;
-	virtual void GetTransform(int trackID, int frame, hkQTransform &out) const = 0;
+	virtual void GetTrack(int trackID, int frame, float delta, TrackType type, Vector4 &out) const = 0;
+	virtual void GetTransform(int trackID, int frame, float delta, hkQTransform &out) const = 0;
 	static Vector4 Lerp(Vector4 v1, Vector4 v2, float delta)
 	{
 		return v1 + (v2 - v1) * delta;
@@ -379,21 +379,20 @@ public:
 		float delta;
 		GetFrameDelta(time, frame, delta);
 
-		if (delta > 0.0f)
+		if (delta > 0.0f && GetAnimationType() != HK_SPLINE_COMPRESSED_ANIMATION)
 		{
 			hkQTransform start;
-			GetTransform(trackID, frame++, start);
+			GetTransform(trackID, frame++, 0.0f, start);
 			hkQTransform end;
-			GetTransform(trackID, frame, end);
+			GetTransform(trackID, frame, 0.0f, end);
 			
 			out.position = Lerp(start.position, end.position, delta);
 			out.rotation = Lerp(start.rotation, end.rotation, delta);
 			out.scale = Lerp(start.scale, end.scale, delta);
-
 		}
 		else
 		{
-			GetTransform(trackID, frame, out);
+			GetTransform(trackID, frame, delta, out);
 		}
 	}
 

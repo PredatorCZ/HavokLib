@@ -187,7 +187,7 @@ public:
 			return "hkaInterleavedUncompressedAnimation";
 	}
 
-	void GetTrack(int trackID, int frame, TrackType type, Vector4 &out) const
+	void GetTrack(int trackID, int frame, float, TrackType type, Vector4 &out) const
 	{
 		switch (type)
 		{
@@ -205,7 +205,7 @@ public:
 		}
 	}
 
-	void GetTransform(int trackID, int frame, hkQTransform &out) const { out = transforms[trackID]->at(frame); }
+	void GetTransform(int trackID, int frame, float, hkQTransform &out) const { out = transforms[trackID]->at(frame); }
 
 	int GetNumTransforms() const
 	{
