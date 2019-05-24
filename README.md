@@ -15,8 +15,6 @@ It also supports both endians, both x86 and x64 platforms and files compiled for
 Version 2016 is only tested under x64 MSVC Little-endian.
 
 ## Supported classes
-NOTE: this library was created mostly for reading hkaSkeleton classes
-
 * hkaSkeleton: 5.5.0 - 2014.1, 2016
 * hkRootLevelContainer: 5.5.0 - 2014.1, 2016
 * hkaAnimationContainer: 5.5.0 - 2014.1, 2016
@@ -27,6 +25,7 @@ NOTE: this library was created mostly for reading hkaSkeleton classes
 * hkaInterleavedAnimation: 5.5.0 - 2014.1
 * hkaAnimationBinding: 5.5.0 - 2014.1
 * hkxEnvironment: 5.5.0 - 2014.1
+* hkaSplineCompressedAnimation: 5.5.0 - 2014.1
 
 ## Supported XML classes
 * hkRootLevelContainer
