@@ -246,5 +246,6 @@ void TestAllosaurSkeleton(const std::wstring testingPath)
 				cBone++;
 			}
 
+			delete hdr;
 		}
 }

@@ -59,6 +59,8 @@ void TestAllosaurInterleaved(const std::wstring testingPath)
 
 			MyAssert(iterAnim->GetNumTransforms() != 9393);
 			MyAssert(iterAnim->GetNumFloats() != 0);
+
+			delete hdr;
 		}
 }
 
@@ -115,6 +117,8 @@ void TestAllosaurDelta(const std::wstring testingPath)
 			MyAssert(iterAnim->GetBitWidthOffset() != 3612);
 			MyAssert(iterAnim->GetScalesOffset() != 2772);
 			MyAssert(iterAnim->GetNumPreserved() != 1);
+
+			delete hdr;
 		}
 }
 
@@ -160,6 +164,8 @@ void TestAllosaurSpline1(const std::wstring testingPath)
 			}
 
 			// Add some further testing here?
+
+			delete hdr;
 		}
 }
 
@@ -205,6 +211,8 @@ void TestAllosaurSpline2(const std::wstring testingPath)
 			}
 
 			// Add some further testing here?
+
+			delete hdr;
 		}
 }
 
@@ -250,5 +258,7 @@ void TestAllosaurSpline3(const std::wstring testingPath)
 			}
 
 			// Add some further testing here?
+
+			delete hdr;
 		}
 }

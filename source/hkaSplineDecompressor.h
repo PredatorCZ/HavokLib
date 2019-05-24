@@ -90,6 +90,8 @@ struct TransformMask
 		case ttScaleZ:
 			return scaleTypes[staticZ] ? STT_STATIC : (scaleTypes[splineZ] ? STT_DYNAMIC : STT_IDENTITY);
 		}
+
+		return STT_IDENTITY; //Warning fodder
 	}
 };
 
@@ -134,6 +136,8 @@ struct TransformTrack
 	ISplineTrack<Vector> *pos;
 	ISplineTrack<Vector4> *rotation;
 	ISplineTrack<Vector> *scale;
+
+	~TransformTrack();
 };
 
 struct TransformSplineBlock

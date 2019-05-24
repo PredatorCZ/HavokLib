@@ -195,7 +195,7 @@ int chTNAMRead(BinReader * rd, hkChunk *holder, hkxNewHeader *root)
 		}		
 	}
 
-	const size_t diff = holder->Size() - (rd->Tell() - savepos);
+	const int diff = static_cast<int>(holder->Size()) - static_cast<int>(rd->Tell() - savepos);
 
 	if (diff < 0)
 	{

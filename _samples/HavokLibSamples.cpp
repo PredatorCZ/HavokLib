@@ -47,8 +47,20 @@ static const wchar_t *versions_delta[] =
 #include "SkeletonTesting.h"
 #include "InterleavedTesting.h"
 
+#ifdef _MSC_VER
+// Use Visual C++'s memory checking functionality
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+#endif // _MSC_VER
+
 int _tmain(const int argc, const TCHAR *argv[])
 {
+#ifdef _MSC_VER
+	//_crtBreakAlloc = 121467;
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif // _MSC_VER
+
+
 	printer.AddPrinterFunction(wprintf);
 
 	TFileInfo info(argv[0]);

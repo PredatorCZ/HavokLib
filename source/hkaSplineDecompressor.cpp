@@ -157,6 +157,8 @@ Vector4 ReadQuat(QuantizationType qType, char *&buffer)
 	case QT_48bit:
 		return Read48Quat(buffer);
 	}
+
+	return { 0.0f, 0.0f, 0.0f, 1.0f };
 }
 
 // Algorithm A2.1 The NURBS Book 2nd edition, page 68
@@ -616,4 +618,16 @@ void hkaSplineDecompressor::Assign(hkaSplineCompressedAnimationInternalInterface
 		cBlock++;
 	}
 
+}
+
+TransformTrack::~TransformTrack()
+{
+	if (pos)
+		delete pos;
+
+	if (scale)
+		delete scale;
+
+	if (rotation)
+		delete rotation;
 }
