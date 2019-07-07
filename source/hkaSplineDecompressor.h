@@ -147,7 +147,7 @@ private:
 	masks_type masks;
 	std::vector<TransformTrack> tracks;
 public:
-	void Assign(char *buffer, int numTracks);
+	void Assign(char *buffer, int numTracks, int numFloatTractks);
 	bool IsTrackStatic(int trackID, hkaAnimation::TrackType type) const;
 	void GetTrack(int trackID, float localFrame, hkaAnimation::TrackType type, Vector4 &out) const;
 	void GetTransform(int trackID, float localFrame, hkQTransform &out) const;

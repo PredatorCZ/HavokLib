@@ -274,10 +274,11 @@ struct TrackBBOX
 		max;
 };
 
-void TransformSplineBlock::Assign(char *buffer, int numTracks)
+void TransformSplineBlock::Assign(char *buffer, int numTracks, int numFloatTractks)
 {
 	TransformMask *trackStart = reinterpret_cast<TransformMask *>(buffer);
-	buffer += sizeof(TransformMask) * numTracks;
+	buffer += sizeof(TransformMask) * numTracks + numFloatTractks;
+	ApplyPadding(buffer);
 	int cTrack = 0;
 	masks = masks_type(trackStart, trackStart + numTracks, masks_type::allocator_type(trackStart));
 	tracks.resize(numTracks);
@@ -614,7 +615,7 @@ void hkaSplineDecompressor::Assign(hkaSplineCompressedAnimationInternalInterface
 
 	for (auto &b : blocks)
 	{
-		b.Assign(data + *(blockOffsets.data + cBlock), input->GetNumOfTransformTracks());
+		b.Assign(data + *(blockOffsets.data + cBlock), input->GetNumOfTransformTracks(), input->GetNumOfFloatTracks());
 		cBlock++;
 	}
 
