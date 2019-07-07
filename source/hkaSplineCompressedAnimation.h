@@ -166,3 +166,14 @@ template<template<class C>class _ipointer>struct hkaSplineCompressedAnimation201
 template<template<class C>class _ipointer>struct hkaSplineCompressedAnimation2013_rp_t : hkaSplineCompressedAnimation710_rp_t<_ipointer> {};
 template<template<class C>class _ipointer>struct hkaSplineCompressedAnimation2014_t : hkaSplineCompressedAnimation710_t<_ipointer> {};
 template<template<class C>class _ipointer>struct hkaSplineCompressedAnimation2014_rp_t : hkaSplineCompressedAnimation710_rp_t<_ipointer> {};
+template<template<class C>class _ipointer>struct hkaSplineCompressedAnimation2015_t : hkaSplineCompressedAnimation710_t<_ipointer> {};
+template<template<class C>class _ipointer>struct hkaSplineCompressedAnimation2015_rp_t : hkaSplineCompressedAnimation710_rp_t<_ipointer> {};
+
+template<template<class C>class _ipointer> using hkaSplineCompressedAnimation2016_t_sharedData = hkaSplineCompressedAnimation550_tt<_ipointer, hkaAnimation2016_t>;
+template<template<class C>class _ipointer> using hkaSplineCompressedAnimation2016_rp_t_sharedData = hkaSplineCompressedAnimation550_tt<_ipointer, hkaAnimation2016_rp_t>;
+
+template<template<class C>class _ipointer> using hkaSplineCompressedAnimation2016_t = hkaSplineCompressedSkeletalAnimation_t_shared<_ipointer, hkaSplineCompressedAnimation2016_t_sharedData>;
+template<template<class C>class _ipointer> using hkaSplineCompressedAnimation2016_rp_t = hkaSplineCompressedSkeletalAnimation_t_shared<_ipointer, hkaSplineCompressedAnimation2016_rp_t_sharedData>;
+
+template<template<class C>class _ipointer>struct hkaSplineCompressedAnimation2017_t : hkaSplineCompressedAnimation2016_t<_ipointer> {};
+template<template<class C>class _ipointer>struct hkaSplineCompressedAnimation2017_rp_t : hkaSplineCompressedAnimation2016_rp_t<_ipointer> {};

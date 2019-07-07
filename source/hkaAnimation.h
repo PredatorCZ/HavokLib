@@ -196,6 +196,7 @@ template<template<class C>class _ipointer>using hkaAnimation2011_t = hkaSkeletal
 template<template<class C>class _ipointer>using hkaAnimation2012_t = hkaSkeletalAnimation_t_shared<_ipointer, AnimationType2, hkaAnimation2k_t >;
 template<template<class C>class _ipointer>struct hkaAnimation2013_t : hkaAnimation2012_t<_ipointer> {};
 template<template<class C>class _ipointer>struct hkaAnimation2014_t : hkaAnimation2012_t<_ipointer> {};
+template<template<class C>class _ipointer>struct hkaAnimation2015_t : hkaAnimation2012_t<_ipointer> {};
 
 template<template<class C>class _ipointer>using hkaAnimation710_rp_t = hkaSkeletalAnimation_t_shared<_ipointer, AnimationType1, hkaAnimation2k_rp_t >;
 template<template<class C>class _ipointer>using hkaAnimation2010_rp_t = hkaSkeletalAnimation_t_shared<_ipointer, AnimationType2010, hkaAnimation2k_rp_t >;
@@ -203,3 +204,13 @@ template<template<class C>class _ipointer>using hkaAnimation2011_rp_t = hkaSkele
 template<template<class C>class _ipointer>using hkaAnimation2012_rp_t = hkaSkeletalAnimation_t_shared<_ipointer, AnimationType2, hkaAnimation2k_rp_t >;
 template<template<class C>class _ipointer>struct hkaAnimation2013_rp_t : hkaAnimation2012_rp_t<_ipointer> {};
 template<template<class C>class _ipointer>struct hkaAnimation2014_rp_t : hkaAnimation2012_rp_t<_ipointer> {};
+template<template<class C>class _ipointer>struct hkaAnimation2015_rp_t : hkaAnimation2012_rp_t<_ipointer> {};
+
+template<template<class C>class _ipointer, class AniType>using hkaAnimation2016_tt = hkaAnimation2k_sharedData_t<_ipointer, AniType, hkReferenceObject2016>;
+template<template<class C>class _ipointer, class AniType>using hkaAnimation2016_rp_tt = hkaAnimation2k_sharedData_t<_ipointer, AniType, hkReferenceObject2016_rp>;
+
+template<template<class C>class _ipointer>using hkaAnimation2016_t = hkaSkeletalAnimation_t_shared<_ipointer, AnimationType2, hkaAnimation2016_tt>;
+template<template<class C>class _ipointer>using hkaAnimation2016_rp_t = hkaSkeletalAnimation_t_shared<_ipointer, AnimationType2, hkaAnimation2016_rp_tt >;
+
+template<template<class C>class _ipointer>struct hkaAnimation2017_t : hkaAnimation2016_t<_ipointer> {};
+template<template<class C>class _ipointer>struct hkaAnimation2017_rp_t : hkaAnimation2016_rp_t<_ipointer> {};

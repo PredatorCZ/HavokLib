@@ -32,8 +32,15 @@ template<template<class C>class _ipointer> struct hkReferenceObject2016
 		referenceCount;
 };
 
-
 #pragma pack(4)
+template<template<class C>class _ipointer> struct hkReferenceObject2016_rp
+{
+	_ipointer<int> vtable;
+	_ipointer<int> unk1;
+	short memSizeAndFlags,
+		referenceCount;
+};
+
 template<template<class C>class _ipointer> struct hkReferenceObject_rp
 {
 	_ipointer<int> vtable;

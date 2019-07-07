@@ -162,3 +162,21 @@ template<template<class C>class _ipointer>struct hkaAnimationBinding2013_t : hka
 template<template<class C>class _ipointer>struct hkaAnimationBinding2013_rp_t : hkaAnimationBinding2012_rp_t<_ipointer> {};
 template<template<class C>class _ipointer>struct hkaAnimationBinding2014_t : hkaAnimationBinding2012_t<_ipointer> {};
 template<template<class C>class _ipointer>struct hkaAnimationBinding2014_rp_t : hkaAnimationBinding2012_rp_t<_ipointer> {};
+template<template<class C>class _ipointer>struct hkaAnimationBinding2015_t : hkaAnimationBinding2012_t<_ipointer> {};
+template<template<class C>class _ipointer>struct hkaAnimationBinding2015_rp_t : hkaAnimationBinding2012_rp_t<_ipointer> {};
+
+template<template<class C>class _ipointer>struct hkaAnimationBinding2016_t_data : hkReferenceObject2016<_ipointer>
+{
+	_ipointer<char> skeletonName;
+	_ipointer<hkaAnimation> animation;
+	hkArray<short, _ipointer> transformTrackToBoneIndices;
+	hkArray<short, _ipointer> floatTrackToFloatSlotIndices;
+	hkArray<short, _ipointer> partitionIndices;
+	hkEnum<BlendHint, char> blendHint;
+};
+
+template<template<class C>class _ipointer>using hkaAnimationBinding2016_t = hkaAnimationBinding_t_shared<_ipointer, hkaAnimationBinding2016_t_data>;
+template<template<class C>class _ipointer>struct hkaAnimationBinding2016_rp_t : hkaAnimationBinding2016_t<_ipointer> {};
+
+template<template<class C>class _ipointer>struct hkaAnimationBinding2017_t : hkaAnimationBinding2016_t<_ipointer> {};
+template<template<class C>class _ipointer>struct hkaAnimationBinding2017_rp_t : hkaAnimationBinding2016_rp_t<_ipointer> {};

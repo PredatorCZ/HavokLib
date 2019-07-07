@@ -96,5 +96,9 @@ template<template<class C>class _ipointer>struct hkRootLevelContainer2014_rp_t :
 template<template<class C>class _ipointer>struct hkRootLevelContainer550_t : hkRootLevelContainer660_t<_ipointer> {};
 template<template<class C>class _ipointer>struct hkRootLevelContainer550_rp_t : hkRootLevelContainer660_t<_ipointer> {};
 
+template<template<class C>class _ipointer>struct hkRootLevelContainer2015_t : hkRootLevelContainer710_t<_ipointer> {};
+template<template<class C>class _ipointer>struct hkRootLevelContainer2015_rp_t : hkRootLevelContainer710_t<_ipointer> {};
 template<template<class C>class _ipointer>struct hkRootLevelContainer2016_t : hkRootLevelContainer710_t<_ipointer> {};
 template<template<class C>class _ipointer>struct hkRootLevelContainer2016_rp_t : hkRootLevelContainer710_t<_ipointer> {};
+template<template<class C>class _ipointer>struct hkRootLevelContainer2017_t : hkRootLevelContainer710_t<_ipointer> {};
+template<template<class C>class _ipointer>struct hkRootLevelContainer2017_rp_t : hkRootLevelContainer710_t<_ipointer> {};

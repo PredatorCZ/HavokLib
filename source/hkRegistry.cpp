@@ -53,7 +53,9 @@ hkRegisterVersionedClassID(classname, 2011)\
 hkRegisterVersionedClassID(classname, 2012)\
 hkRegisterVersionedClassID(classname, 2013)\
 hkRegisterVersionedClassID(classname, 2014)\
-hkRegisterVersionedClassID(classname, 2016)
+hkRegisterVersionedClassID(classname, 2015)\
+hkRegisterVersionedClassID(classname, 2016)\
+hkRegisterVersionedClassID(classname, 2017)
 
 #define hkRegisterFullClass(classname)\
 hkRegisterVersionedClass(classname, 550)\
@@ -64,11 +66,14 @@ hkRegisterVersionedClass(classname, 2011)\
 hkRegisterVersionedClass(classname, 2012)\
 hkRegisterVersionedClass(classname, 2013)\
 hkRegisterVersionedClass(classname, 2014)\
-hkRegisterVersionedClass(classname, 2016)
+hkRegisterVersionedClass(classname, 2015)\
+hkRegisterVersionedClass(classname, 2016)\
+hkRegisterVersionedClass(classname, 2017)
 
 hkRegisterFullClassID(hkaSkeleton)
 hkRegisterFullClassID(hkRootLevelContainer)
 hkRegisterFullClassID(hkaAnimationContainer)
+hkRegisterFullClassID(hkaAnimationBinding)
 
 hkRegisterVersionedClassID(hkaDeltaCompressedSkeletalAnimation, 550)
 hkRegisterVersionedClassID(hkaDeltaCompressedAnimation, 660)
@@ -83,6 +88,9 @@ hkRegisterVersionedClassID(hkaSplineCompressedAnimation, 2011)
 hkRegisterVersionedClassID(hkaSplineCompressedAnimation, 2012)
 hkRegisterVersionedClassID(hkaSplineCompressedAnimation, 2013)
 hkRegisterVersionedClassID(hkaSplineCompressedAnimation, 2014)
+hkRegisterVersionedClassID(hkaSplineCompressedAnimation, 2015)
+hkRegisterVersionedClassID(hkaSplineCompressedAnimation, 2016)
+hkRegisterVersionedClassID(hkaSplineCompressedAnimation, 2017)
 
 hkRegisterVersionedClassID(hkaWaveletCompressedSkeletalAnimation, 550)
 hkRegisterVersionedClassID(hkaWaveletCompressedAnimation, 660)
@@ -97,15 +105,7 @@ hkRegisterVersionedClassID(hkaInterleavedUncompressedAnimation, 2011)
 hkRegisterVersionedClassID(hkaInterleavedUncompressedAnimation, 2012)
 hkRegisterVersionedClassID(hkaInterleavedUncompressedAnimation, 2013)
 hkRegisterVersionedClassID(hkaInterleavedUncompressedAnimation, 2014)
-
-hkRegisterVersionedClassID(hkaAnimationBinding, 550)
-hkRegisterVersionedClassID(hkaAnimationBinding, 660)
-hkRegisterVersionedClassID(hkaAnimationBinding, 710)
-hkRegisterVersionedClassID(hkaAnimationBinding, 2010)
-hkRegisterVersionedClassID(hkaAnimationBinding, 2011)
-hkRegisterVersionedClassID(hkaAnimationBinding, 2012)
-hkRegisterVersionedClassID(hkaAnimationBinding, 2013)
-hkRegisterVersionedClassID(hkaAnimationBinding, 2014)
+hkRegisterVersionedClassID(hkaInterleavedUncompressedAnimation, 2015)
 
 hkRegisterVersionedClassID(hkxEnvironment, 550)
 hkRegisterVersionedClassID(hkxEnvironment, 660)
@@ -120,7 +120,7 @@ template<class C> hkVirtualClass *hkCreateDerivedClass() { return new C{}; }
 
 static const std::map<JenHash, hkVirtualClass *(*)()> hkClassStorage =
 {
-	StaticFor(hkRegisterFullClass, hkaSkeleton, hkRootLevelContainer, hkaAnimationContainer)
+	StaticFor(hkRegisterFullClass, hkaSkeleton, hkRootLevelContainer, hkaAnimationContainer, hkaAnimationBinding)
 
 	hkRegisterVersionedClass(hkaDeltaCompressedSkeletalAnimation, 550)
 	StaticForArgID(hkRegisterVersionedClassEval, hkaDeltaCompressedAnimation, 660, 710, 2010)
@@ -129,13 +129,12 @@ static const std::map<JenHash, hkVirtualClass *(*)()> hkClassStorage =
 	StaticForArgID(hkRegisterVersionedClassEval, hkaWaveletCompressedAnimation, 660, 710, 2010)
 
 	hkRegisterVersionedClass(hkaInterleavedSkeletalAnimation, 550)
-	StaticForArgID(hkRegisterVersionedClassEval, hkaInterleavedUncompressedAnimation, 660, 710, 2010, 2011, 2012, 2013, 2014)
+	StaticForArgID(hkRegisterVersionedClassEval, hkaInterleavedUncompressedAnimation, 660, 710, 2010, 2011, 2012, 2013, 2014, 2015)
 
-	StaticForArgID(hkRegisterVersionedClassEval, hkaAnimationBinding, 550, 660, 710, 2010, 2011, 2012, 2013, 2014)
 	StaticForArgID(hkRegisterVersionedClassEval, hkxEnvironment, 550, 660, 710, 2010, 2011, 2012, 2013, 2014)
 
 	hkRegisterVersionedClass(hkaSplineSkeletalAnimation, 550)
-	StaticForArgID(hkRegisterVersionedClassEval, hkaSplineCompressedAnimation, 660, 710, 2010, 2011, 2012, 2013, 2014)
+	StaticForArgID(hkRegisterVersionedClassEval, hkaSplineCompressedAnimation, 660, 710, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017)
 };
 
 hkVirtualClass *IhkPackFile::ConstructClass(JenHash hash)

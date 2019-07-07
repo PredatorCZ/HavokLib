@@ -141,3 +141,6 @@ template<template<class C>class _ipointer> struct hkaInterleavedUncompressedAnim
 
 template<template<class C>class _ipointer> struct hkaInterleavedUncompressedAnimation2014_t : hkaInterleavedUncompressedAnimation710_t<_ipointer> {};
 template<template<class C>class _ipointer> struct hkaInterleavedUncompressedAnimation2014_rp_t : hkaInterleavedUncompressedAnimation710_rp_t<_ipointer> {};
+
+template<template<class C>class _ipointer> struct hkaInterleavedUncompressedAnimation2015_t : hkaInterleavedUncompressedAnimation710_t<_ipointer> {};
+template<template<class C>class _ipointer> struct hkaInterleavedUncompressedAnimation2015_rp_t : hkaInterleavedUncompressedAnimation710_rp_t<_ipointer> {};

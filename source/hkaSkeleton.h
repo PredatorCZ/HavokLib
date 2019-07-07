@@ -279,6 +279,8 @@ template<template<class C>class _ipointer>struct hkaSkeleton2013_t : hkaSkeleton
 template<template<class C>class _ipointer>struct hkaSkeleton2013_rp_t : hkaSkeleton2012_t<_ipointer> {};
 template<template<class C>class _ipointer>struct hkaSkeleton2014_t : hkaSkeleton2012_t<_ipointer> {};
 template<template<class C>class _ipointer>struct hkaSkeleton2014_rp_t : hkaSkeleton2012_t<_ipointer> {};
+template<template<class C>class _ipointer>struct hkaSkeleton2015_t : hkaSkeleton2012_t<_ipointer> {};
+template<template<class C>class _ipointer>struct hkaSkeleton2015_rp_t : hkaSkeleton2012_t<_ipointer> {};
 
 template<template<class C>class _ipointer>struct hkaSkeleton2016_t_sharedData : hkReferenceObject2016<_ipointer>
 {
@@ -293,6 +295,7 @@ template<template<class C>class _ipointer>struct hkaSkeleton2016_t_sharedData : 
 
 };
 
-
 template<template<class C>class _ipointer>using hkaSkeleton2016_t = hkaSkeleton_t_shared<_ipointer, hkaSkeleton2016_t_sharedData>;
 template<template<class C>class _ipointer>struct hkaSkeleton2016_rp_t : hkaSkeleton2016_t<_ipointer> {};
+template<template<class C>class _ipointer>struct hkaSkeleton2017_t : hkaSkeleton_t_shared<_ipointer, hkaSkeleton2016_t_sharedData> {};
+template<template<class C>class _ipointer>struct hkaSkeleton2017_rp_t : hkaSkeleton2016_t<_ipointer> {};

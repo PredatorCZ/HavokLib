@@ -121,6 +121,8 @@ template<template<class C>class _ipointer>struct hkaAnimationContainer2013_t : h
 template<template<class C>class _ipointer>struct hkaAnimationContainer2013_rp_t : hkaAnimationContainer710_t<_ipointer> {};
 template<template<class C>class _ipointer>struct hkaAnimationContainer2014_t : hkaAnimationContainer710_t<_ipointer> {};
 template<template<class C>class _ipointer>struct hkaAnimationContainer2014_rp_t : hkaAnimationContainer710_t<_ipointer> {};
+template<template<class C>class _ipointer>struct hkaAnimationContainer2015_t : hkaAnimationContainer710_t<_ipointer> {};
+template<template<class C>class _ipointer>struct hkaAnimationContainer2015_rp_t : hkaAnimationContainer710_t<_ipointer> {};
 
 template<template<class C>class _ipointer>struct hkaAnimationContainer550_t : hkaAnimationContainer660_t<_ipointer> {};
 template<template<class C>class _ipointer>struct hkaAnimationContainer550_rp_t : hkaAnimationContainer660_t<_ipointer> {};
@@ -136,3 +138,5 @@ template<template<class C>class _ipointer>struct hkaAnimationContainer2016_t_sha
 
 template<template<class C>class _ipointer>using hkaAnimationContainer2016_t = hkaAnimationContainer_t_shared<_ipointer, hkaAnimationContainer2016_t_sharedData>;
 template<template<class C>class _ipointer>struct hkaAnimationContainer2016_rp_t : hkaAnimationContainer710_t<_ipointer> {};
+template<template<class C>class _ipointer>struct hkaAnimationContainer2017_t : hkaAnimationContainer_t_shared<_ipointer, hkaAnimationContainer2016_t_sharedData> {};
+template<template<class C>class _ipointer>struct hkaAnimationContainer2017_rp_t : hkaAnimationContainer710_t<_ipointer> {};
