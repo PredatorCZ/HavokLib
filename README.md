@@ -8,24 +8,24 @@ In another addition, library can store classic data for XML direct export.
 Library is compilable under VS 2015, 2017, 2019.
 
 ## Supported formats/toolset versions
-Havok 5.5.0 - 2014.1, (2015?), 2016
+Havok 5.5.0 - 2014.1, 2015, 2016, 2017
 
 It also supports both endians, both x86 and x64 platforms and files compiled for all available compilers.
 
-Version 2016 is only tested under x64 MSVC Little-endian.
+Versions 2015, 2016, 2017 are only tested under x64 MSVC Little-endian and they aren't provided as samples.
 
 ## Supported classes
-* hkaSkeleton: 5.5.0 - 2014.1, 2016
-* hkRootLevelContainer: 5.5.0 - 2014.1, 2016
-* hkaAnimationContainer: 5.5.0 - 2014.1, 2016
-* hkaAnimation (not final): 5.5.0 - 2014.1
+* hkaSkeleton: 5.5.0 - 2017
+* hkRootLevelContainer: 5.5.0 - 2017
+* hkaAnimationContainer: 5.5.0 - 2017
+* hkaAnimation (not final): 5.5.0 - 2017
 * hkaDeltaCompressedAnimation: 5.5.0 - 2010
 * hkaWaveletCompressedAnimation: 5.5.0 - 2010
-* hkaAnnotationTrack: 5.5.0 - 2014.1
-* hkaInterleavedAnimation: 5.5.0 - 2014.1
-* hkaAnimationBinding: 5.5.0 - 2014.1
+* hkaAnnotationTrack: 5.5.0 - 2017
+* hkaInterleavedAnimation: 5.5.0 - 2015
+* hkaAnimationBinding: 5.5.0 - 2017
 * hkxEnvironment: 5.5.0 - 2014.1
-* hkaSplineCompressedAnimation: 5.5.0 - 2014.1
+* hkaSplineCompressedAnimation: 5.5.0 - 2017
 
 ## Supported XML classes
 * hkRootLevelContainer

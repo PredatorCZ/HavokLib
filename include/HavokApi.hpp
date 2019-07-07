@@ -105,6 +105,7 @@ enum hkXMLToolsets
 namespace pugi
 {
 	class xml_node;
+	class xml_document;
 };
 typedef pugi::xml_node XMLnode;
 
@@ -444,6 +445,15 @@ struct hkaMeshBinding : IhkVirtualClass {};
 struct IhkPackFile
 {
 	typedef std::vector<IhkVirtualClass *> VirtualClasses;
+private:
+	template<class _Ty>
+	static IhkPackFile *_Create(const _Ty *fileName, bool suppressErrors);
+
+	template<class _Ty>
+	int _ExportXML(const _Ty *fileName, hkXMLToolsets toolsetVersion);
+
+	void _GenerateXML(pugi::xml_document &doc, hkXMLToolsets toolsetVersion);
+public:
 	virtual VirtualClasses &GetAllClasses() = 0;
 	virtual int GetVersion() = 0;
 	virtual ~IhkPackFile() = 0;
@@ -453,8 +463,11 @@ struct IhkPackFile
 	VirtualClasses GetClasses(JenHash hash);
 	const IhkVirtualClass *GetClass(const void *ptr);
 
-	static IhkPackFile *Create(const wchar_t *fileName);
-	int ExportXML(const wchar_t *fileName, hkXMLToolsets toolsetVersion); 
+	ES_FORCEINLINE static IhkPackFile *Create(const wchar_t *fileName, bool suppressErrors = false) { return _Create(fileName, suppressErrors); }
+	ES_FORCEINLINE static IhkPackFile *Create(const char *fileName, bool suppressErrors = false) { return _Create(fileName, suppressErrors); }
+
+	ES_FORCEINLINE int ExportXML(const wchar_t *fileName, hkXMLToolsets toolsetVersion) { return _ExportXML(fileName, toolsetVersion); }
+	ES_FORCEINLINE int ExportXML(const char *fileName, hkXMLToolsets toolsetVersion) { return _ExportXML(fileName, toolsetVersion); }
 
 	//Internal use only
 	static hkVirtualClass *ConstructClass(JenHash hash);

@@ -27,25 +27,30 @@
 
 REFLECTOR_START_WNAMES(hkaPartition, name, startBoneIndex, numBones);
 
-IhkPackFile *IhkPackFile::Create(const wchar_t *fileName)
+template<class _Ty>
+IhkPackFile *IhkPackFile::_Create(const _Ty *fileName, bool suppressErrors)
 {
 	BinReader rd(fileName);
 
 	if (!rd.IsValid())
 	{
-		printerror("[hk] Cannot open file. ", << fileName);
+		if (!suppressErrors)
+		{
+			printerror("[Havok] Cannot open file. ", << fileName);
+		}
+
 		return nullptr;
 	}
 
-	struct 
+	struct
 	{
 		int ID1,
 			ID2;
 	} testerStruct;
-	
+
 	rd.Read(testerStruct);
 	rd.Seek(0);
-	
+
 	if (testerStruct.ID1 == hkMagic1 && testerStruct.ID2 == hkMagic2)
 	{
 		hkxHeader *hdr = new hkxHeader{};
@@ -68,13 +73,16 @@ IhkPackFile *IhkPackFile::Create(const wchar_t *fileName)
 		}
 		return hdr;
 	}
-	else
+	else if (!suppressErrors)
 	{
 		printerror("[Havok] Invalid packfile.");
 	}
 
 	return nullptr;
 }
+
+template IhkPackFile *IhkPackFile::_Create(const wchar_t *fileName, bool suppressErrors);
+template IhkPackFile *IhkPackFile::_Create(const char *fileName, bool suppressErrors);
 
 IhkPackFile::~IhkPackFile() {}
 
@@ -103,9 +111,8 @@ static const std::map<hkXMLToolsets, xmlToolsetProp> xmlToolsetProps =
 	{HK2014, {EnumFlags<uchar, xmlToolsetProp::xmlToolsetPropFlags>(xmlToolsetProp::TopLevelObject, xmlToolsetProp::MaxPredicate), "11", "hk_2014.1.0-r1"}},
 };
 
-int IhkPackFile::ExportXML(const wchar_t *fileName, hkXMLToolsets toolsetVersion)
+void IhkPackFile::_GenerateXML(pugi::xml_document &doc, hkXMLToolsets toolsetVersion)
 {
-	pugi::xml_document doc;
 	pugi::xml_node &master = doc.append_child("hkpackfile");
 
 	const xmlToolsetProp &propRef = xmlToolsetProps.at(toolsetVersion);
@@ -126,10 +133,10 @@ int IhkPackFile::ExportXML(const wchar_t *fileName, hkXMLToolsets toolsetVersion
 
 	for (auto &c : allClasses)
 	{
-		hkVirtualClass *cls = dynamic_cast<hkVirtualClass*>(c);
+		hkVirtualClass *cls = dynamic_cast<hkVirtualClass *>(c);
 		pugi::xml_node &classNode = dataSection.append_child(_hkObject);
 		pugi::xml_attribute &addrAttr = classNode.append_attribute(_hkName);
-		
+
 		std::string _buffer;
 		PointerToString(cls->GetPointer(), _buffer);
 
@@ -141,9 +148,19 @@ int IhkPackFile::ExportXML(const wchar_t *fileName, hkXMLToolsets toolsetVersion
 
 		cls->ToXML({ &classNode, toolsetVersion });
 	}
+}
+
+template<class _Ty>
+int IhkPackFile::_ExportXML(const _Ty *fileName, hkXMLToolsets toolsetVersion)
+{
+	pugi::xml_document doc;
+	_GenerateXML(doc, toolsetVersion);
 
 	return !doc.save_file(fileName);
 }
+
+template int IhkPackFile::_ExportXML(const wchar_t *fileName, hkXMLToolsets toolsetVersion);
+template int IhkPackFile::_ExportXML(const char *fileName, hkXMLToolsets toolsetVersion);
 
 const IhkVirtualClass *IhkPackFile::GetClass(const void *ptr)
 {
