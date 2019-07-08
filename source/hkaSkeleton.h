@@ -71,52 +71,78 @@ template<template<class C>class _ipointer> struct hkaPartition_t
 		numBones;
 };
 
+static int _dummy;
+
 template<
 	template<class C>class _ipointer,
 	template<template<class C>class __ipointer> class _parent
 >struct hkaSkeleton_t_shared : _parent<_ipointer>
 {
-	enablePtrPair(bones) GetNumBones() const { return numBones; }
-	enablehkArray(bones) GetNumBones() const { return bones.count; }
-	enablePtrPairRef(bones) GetNumBones() { return numBones; }
-	enablehkArrayRef(bones) GetNumBones() { return bones.count; }
+	typedef _parent<_ipointer> parent_class;
+	ADD_DISABLERS(parent_class, noPartitions, noReferenceFloats, noLocalFrames);
 
-	enablePtrPair(floatSlots) GetNumFloatSlots() const { return numFloatSlots; }
-	enablehkArray(floatSlots) GetNumFloatSlots() const { return floatSlots.count; }
-	enablePtrPairRef(floatSlots) GetNumFloatSlots() { return numFloatSlots; }
-	enablehkArrayRef(floatSlots) GetNumFloatSlots() { return floatSlots.count; }
+	enablePtrPair(bones) GetNumBones() const { return this->numBones; }
+	enablehkArray(bones) GetNumBones() const { return this->bones.count; }
+	enablePtrPairRef(bones) GetNumBones() { return this->numBones; }
+	enablehkArrayRef(bones) GetNumBones() { return this->bones.count; }
 
-	enablePtrPair(localFrames) GetNumLocalFrames() const { return numLocalFrames; }
-	enablehkArray(localFrames) GetNumLocalFrames() const { return localFrames.count; }
-	enablePtrPairRef(localFrames) GetNumLocalFrames() { return numLocalFrames; }
-	enablehkArrayRef(localFrames) GetNumLocalFrames() { return localFrames.count; }
-	disabledFunction(noLocalFrames, const int) ES_FORCEINLINE GetNumLocalFrames() const { return 0; }
+	disabledFunction(noLocalFrames, const int) ES_FORCEINLINE GetNumLocalFrames() const { return 0; };
+	enabledFunction(noLocalFrames, const int) ES_FORCEINLINE GetNumLocalFrames() const { return _GetNumLocalFrames(); };
 
-	enablePtrPairArg(bones, const char*) GetBoneName(char *masterBuffer, int id) const { return bones.GetData(masterBuffer)[id].GetData(masterBuffer)->name.GetData(masterBuffer); }
-	enablehkArrayArg(bones, const char*) GetBoneName(char *masterBuffer, int id) const { return bones.GetData(masterBuffer)[id].name.GetData(masterBuffer); }
+	disabledFunction(noLocalFrames, int&) ES_FORCEINLINE GetNumLocalFrames() { _dummy = 0; return _dummy; };
+	enabledFunction(noLocalFrames, int&) ES_FORCEINLINE GetNumLocalFrames() { return _GetNumLocalFrames(); };
 
-	ES_FORCEINLINE const hkQTransform *GetBoneTM(char *masterBuffer, int id) const { return &tranforms.GetData(masterBuffer)[id]; }
-	ES_FORCEINLINE const short GetBoneParentID(char *masterBuffer, int id) const { return parentIndicies.GetData(masterBuffer)[id]; }
-	ES_FORCEINLINE const char *GetSkeletonName(char *masterBuffer) const { return Name.GetData(masterBuffer); };
-	ES_FORCEINLINE const char *GetFloatSlot(char *masterBuffer, int id) const { return floatSlots.GetData(masterBuffer)[id].GetData(masterBuffer); };
+	enablePtrPair(floatSlots) GetNumFloatSlots() const { return this->numFloatSlots; }
+	enablehkArray(floatSlots) GetNumFloatSlots() const { return this->floatSlots.count; }
+	enablePtrPairRef(floatSlots) GetNumFloatSlots() { return this->numFloatSlots; }
+	enablehkArrayRef(floatSlots) GetNumFloatSlots() { return this->floatSlots.count; }
+
+	enablePtrPair(localFrames) _GetNumLocalFrames() const { return this->numLocalFrames; }
+	enablehkArray(localFrames) _GetNumLocalFrames() const { return this->localFrames.count; }
+	enablePtrPairRef(localFrames) _GetNumLocalFrames() { return this->numLocalFrames; }
+	enablehkArrayRef(localFrames) _GetNumLocalFrames() { return this->localFrames.count; }
+
+	enablePtrPairArg(bones, const char*) GetBoneName(char *masterBuffer, int id) const 
+	{ return this->bones.GetData(masterBuffer)[id].GetData(masterBuffer)->name.GetData(masterBuffer); }
+	enablehkArrayArg(bones, const char*) GetBoneName(char *masterBuffer, int id) const 
+	{ return this->bones.GetData(masterBuffer)[id].name.GetData(masterBuffer); }
+
+	ES_FORCEINLINE const hkQTransform *GetBoneTM(char *masterBuffer, int id) const { return &this->tranforms.GetData(masterBuffer)[id]; }
+	ES_FORCEINLINE const short GetBoneParentID(char *masterBuffer, int id) const { return this->parentIndicies.GetData(masterBuffer)[id]; }
+	ES_FORCEINLINE const char *GetSkeletonName(char *masterBuffer) const { return this->Name.GetData(masterBuffer); };
+	ES_FORCEINLINE const char *GetFloatSlot(char *masterBuffer, int id) const { return this->floatSlots.GetData(masterBuffer)[id].GetData(masterBuffer); };
 	
-	enabledFunction(noLocalFrames, const hkLocalFrameOnBone)ES_FORCEINLINE GetLocalFrame(char *masterBuffer, int id) const { return hkLocalFrameOnBone{ localFrames.GetData(masterBuffer)[id].localFrame.GetData(masterBuffer) ,localFrames.GetData(masterBuffer)[id].boneIndex }; };
-	disabledFunction(noLocalFrames, const hkLocalFrameOnBone)ES_FORCEINLINE GetLocalFrame(char *masterBuffer, int id) const { return hkLocalFrameOnBone{}; };
+	enabledFunction(noLocalFrames, const hkLocalFrameOnBone)ES_FORCEINLINE GetLocalFrame(char *masterBuffer, int id) const 
+	{ 
+		return hkLocalFrameOnBone{ 
+			this->localFrames.GetData(masterBuffer)[id].localFrame.GetData(masterBuffer),
+			this->localFrames.GetData(masterBuffer)[id].boneIndex 
+		}; 
+	};
 
-	ADD_DISABLERS(_parent<_ipointer>, noPartitions, noReferenceFloats, noLocalFrames);
+	disabledFunction(noLocalFrames, const hkLocalFrameOnBone)ES_FORCEINLINE GetLocalFrame(char *masterBuffer, int id) const 
+	{ return hkLocalFrameOnBone{}; };
 
 	disabledFunction(noPartitions, const int) ES_FORCEINLINE GetNumPartitions() const { return 0; }
 	enabledFunction(noPartitions, const int) ES_FORCEINLINE GetNumPartitions() const { return GetNumPartitions(); }
-	enabledFunction(noPartitions, int&) ES_FORCEINLINE GetNumPartitions() { return partitions.count; }
+	enabledFunction(noPartitions, int&) ES_FORCEINLINE GetNumPartitions() { return this->partitions.count; }
 
 	disabledFunction(noReferenceFloats, const int) ES_FORCEINLINE GetNumReferenceFloats() const { return 0; }
-	enabledFunction(noReferenceFloats, const int) ES_FORCEINLINE GetNumReferenceFloats() const { return referenceFloats.count; }
+	enabledFunction(noReferenceFloats, const int) ES_FORCEINLINE GetNumReferenceFloats() const { return this->referenceFloats.count; }
 
 	disabledFunction(noPartitions, const hkaPartition) ES_FORCEINLINE GetPartition(char *masterBuffer, int id) const { return hkaPartition{}; }
-	enabledFunction(noPartitions, const hkaPartition) ES_FORCEINLINE GetPartition(char *masterBuffer, int id) const { return hkaPartition{ partitions.GetData(masterBuffer)[id].Name.GetData(masterBuffer), partitions.GetData(masterBuffer)[id].startBoneIndex, partitions.GetData(masterBuffer)[id].numBones }; }
+	enabledFunction(noPartitions, const hkaPartition) ES_FORCEINLINE GetPartition(char *masterBuffer, int id) const 
+	{
+		return hkaPartition{
+			this->partitions.GetData(masterBuffer)[id].Name.GetData(masterBuffer), 
+			this->partitions.GetData(masterBuffer)[id].startBoneIndex, 
+			this->partitions.GetData(masterBuffer)[id].numBones 
+		};
+	}
 
 	disabledFunction(noReferenceFloats, const float) ES_FORCEINLINE GetReferenceFloat(char *masterBuffer, int id) const { return 0.0f; }
-	enabledFunction(noReferenceFloats, const float) ES_FORCEINLINE GetReferenceFloat(char *masterBuffer, int id) const { return referenceFloats.GetData(masterBuffer)[id]; }
+	enabledFunction(noReferenceFloats, const float) ES_FORCEINLINE GetReferenceFloat(char *masterBuffer, int id) const 
+	{ return this->referenceFloats.GetData(masterBuffer)[id]; }
 
 
 	disabledFunction(noLocalFrames, void) ES_FORCEINLINE SwapLocalFrames(char *masterBuffer){}
@@ -126,7 +152,7 @@ template<
 		const int numLocalFrames = GetNumLocalFrames();
 
 		for (int i = 0; i < numLocalFrames; i++)
-			FByteswapper(localFrames.GetData(masterBuffer)[i].boneIndex);
+			FByteswapper(this->localFrames.GetData(masterBuffer)[i].boneIndex);
 	}
 	disabledFunction(noReferenceFloats, void) ES_FORCEINLINE SwapRefFloats(char *masterBuffer) {}
 	enabledFunction(noReferenceFloats, void) ES_FORCEINLINE SwapRefFloats(char *masterBuffer)
@@ -135,7 +161,7 @@ template<
 		const int numRefFloats = GetNumFloatSlots();
 
 		for (int i = 0; i < numRefFloats; i++)
-			FByteswapper(referenceFloats.GetData(masterBuffer)[i]);
+			FByteswapper(this->referenceFloats.GetData(masterBuffer)[i]);
 	}
 	disabledFunction(noPartitions, void) ES_FORCEINLINE SwapPartitions(char *masterBuffer) {}
 	enabledFunction(noPartitions, void) ES_FORCEINLINE SwapPartitions(char *masterBuffer)
@@ -145,8 +171,8 @@ template<
 
 		for (int i = 0; i < numPartitions; i++)
 		{
-			FByteswapper(partitions.GetData(masterBuffer)[i].startBoneIndex);
-			FByteswapper(partitions.GetData(masterBuffer)[i].numBones);
+			FByteswapper(this->partitions.GetData(masterBuffer)[i].startBoneIndex);
+			FByteswapper(this->partitions.GetData(masterBuffer)[i].numBones);
 		}
 	}
 
@@ -156,13 +182,13 @@ template<
 		const int numBones = GetNumBones();
 
 		for (int i = 0; i < numBones; i++)
-			FByteswapper(parentIndicies.GetData(masterBuffer)[i]);
+			FByteswapper(this->parentIndicies.GetData(masterBuffer)[i]);
 
 		for (int i = 0; i < numBones; i++)
 		{
-			tranforms.GetData(masterBuffer)[i].position.SwapEndian();
-			tranforms.GetData(masterBuffer)[i].rotation.SwapEndian();
-			tranforms.GetData(masterBuffer)[i].scale.SwapEndian();
+			this->tranforms.GetData(masterBuffer)[i].position.SwapEndian();
+			this->tranforms.GetData(masterBuffer)[i].rotation.SwapEndian();
+			this->tranforms.GetData(masterBuffer)[i].scale.SwapEndian();
 		}
 		
 		SwapLocalFrames(masterBuffer);
@@ -182,6 +208,9 @@ template<template<class C>class _ipointer>struct hkaSkeleton550_t_sharedData
 	int numTranforms;
 	_ipointer<_ipointer<char>> floatSlots;
 	int numFloatSlots;
+	
+	//int numLocalFrames;
+	static _ipointer<hkLocalFrameOnBone_t<_ipointer>> localFrames;
 
 	void noPartitions();
 	void noReferenceFloats();

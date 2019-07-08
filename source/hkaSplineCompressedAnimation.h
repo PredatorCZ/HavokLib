@@ -24,21 +24,21 @@ template<class C> struct hkaSplineCompressedAnimation_t : hkaSplineCompressedAni
 	typedef C value_type;
 	typedef hkaSkeletalAnimation_t<typename C::parentClass> parent;
 	hkClassConstructor(hkaSplineCompressedAnimation_t);
-	void SwapEndian() { hkaSkeletalAnimation_t<typename C::parentClass>::SwapEndian(); static_cast<value_type *>(Data)->SwapEndian(masterBuffer); }
+	void SwapEndian() { hkaSkeletalAnimation_t<typename C::parentClass>::SwapEndian(); static_cast<value_type *>(this->Data)->SwapEndian(masterBuffer); }
 	void Process() { decomp.Assign(this); }
 	hkaSplineDecompressor decomp;
 
-	int GetNumFrames() const { return static_cast<value_type *>(Data)->GetNumFrames(); }
-	int GetNumBlocks() const { return static_cast<value_type *>(Data)->GetNumBlocks(); }
-	int GetMaxFramesPerBlock() const { return static_cast<value_type *>(Data)->GetMaxFramesPerBlock(); }
-	float GetBlockDuration() const { return static_cast<value_type *>(Data)->GetBlockDuration(); }
-	float GetBlockInverseDuration() const { return static_cast<value_type *>(Data)->GetBlockInverseDuration(); }
-	float GetFrameDuration() const { return static_cast<value_type *>(Data)->GetFrameDuration(); }
-	char *GetData() const { return static_cast<value_type *>(Data)->GetData(masterBuffer); }
-	hkRealArray<uint> GetBlockOffsets() const { return static_cast<value_type *>(Data)->GetBlockOffsets(masterBuffer); }
-	hkRealArray<uint> GetFloatBlockOffsets() const { return static_cast<value_type *>(Data)->GetFloatBlockOffsets(masterBuffer); }
-	hkRealArray<uint> GetTransformOffsets() const { return static_cast<value_type *>(Data)->GetTransformOffsets(masterBuffer); }
-	hkRealArray<uint> GetFloatOffsets() const { return static_cast<value_type *>(Data)->GetFloatOffsets(masterBuffer); }
+	int GetNumFrames() const { return static_cast<value_type *>(this->Data)->GetNumFrames(); }
+	int GetNumBlocks() const { return static_cast<value_type *>(this->Data)->GetNumBlocks(); }
+	int GetMaxFramesPerBlock() const { return static_cast<value_type *>(this->Data)->GetMaxFramesPerBlock(); }
+	float GetBlockDuration() const { return static_cast<value_type *>(this->Data)->GetBlockDuration(); }
+	float GetBlockInverseDuration() const { return static_cast<value_type *>(this->Data)->GetBlockInverseDuration(); }
+	float GetFrameDuration() const { return static_cast<value_type *>(this->Data)->GetFrameDuration(); }
+	char *GetData() const { return static_cast<value_type *>(this->Data)->GetData(masterBuffer); }
+	hkRealArray<uint> GetBlockOffsets() const { return static_cast<value_type *>(this->Data)->GetBlockOffsets(masterBuffer); }
+	hkRealArray<uint> GetFloatBlockOffsets() const { return static_cast<value_type *>(this->Data)->GetFloatBlockOffsets(masterBuffer); }
+	hkRealArray<uint> GetTransformOffsets() const { return static_cast<value_type *>(this->Data)->GetTransformOffsets(masterBuffer); }
+	hkRealArray<uint> GetFloatOffsets() const { return static_cast<value_type *>(this->Data)->GetFloatOffsets(masterBuffer); }
 	bool IsDecoderSupported() const { return true; }
 	ES_INLINE int GetLocalValues(int frame, float delta, float &localFrame) const
 	{
@@ -82,44 +82,48 @@ template<
 	template<template<class C>class __ipointer> class _parent
 >struct hkaSplineCompressedSkeletalAnimation_t_shared : _parent<_ipointer>
 {
-	ES_FORCEINLINE int GetNumFrames() const { return numFrames; }
-	ES_FORCEINLINE int GetNumBlocks() const { return numBlocks; }
-	ES_FORCEINLINE int GetMaxFramesPerBlock() const { return maxFramesPerBlock; }
-	ES_FORCEINLINE float GetBlockDuration() const { return blockDuration; }
-	ES_FORCEINLINE float GetBlockInverseDuration() const { return blockInverseDuration; }
-	ES_FORCEINLINE float GetFrameDuration() const { return frameDuration; }
-	ES_FORCEINLINE char *GetData(char *masterBuffer) { return data.GetData(masterBuffer); }
-	ES_FORCEINLINE hkRealArray<uint> GetBlockOffsets(char *masterBuffer) const { return { blockOffsets.GetData(masterBuffer), blockOffsets.count }; }
-	ES_FORCEINLINE hkRealArray<uint> GetFloatBlockOffsets(char *masterBuffer) const { return { floatBlockOffsets.GetData(masterBuffer), floatBlockOffsets.count }; }
-	ES_FORCEINLINE hkRealArray<uint> GetTransformOffsets(char *masterBuffer) const { return { transformOffsets.GetData(masterBuffer), transformOffsets.count }; }
-	ES_FORCEINLINE hkRealArray<uint> GetFloatOffsets(char *masterBuffer) const { return { floatOffsets.GetData(masterBuffer), floatOffsets.count }; }
+	ES_FORCEINLINE int GetNumFrames() const { return this->numFrames; }
+	ES_FORCEINLINE int GetNumBlocks() const { return this->numBlocks; }
+	ES_FORCEINLINE int GetMaxFramesPerBlock() const { return this->maxFramesPerBlock; }
+	ES_FORCEINLINE float GetBlockDuration() const { return this->blockDuration; }
+	ES_FORCEINLINE float GetBlockInverseDuration() const { return this->blockInverseDuration; }
+	ES_FORCEINLINE float GetFrameDuration() const { return this->frameDuration; }
+	ES_FORCEINLINE char *GetData(char *masterBuffer) { return this->data.GetData(masterBuffer); }
+	ES_FORCEINLINE hkRealArray<uint> GetBlockOffsets(char *masterBuffer) const 
+	{ return { this->blockOffsets.GetData(masterBuffer), this->blockOffsets.count }; }
+	ES_FORCEINLINE hkRealArray<uint> GetFloatBlockOffsets(char *masterBuffer) const 
+	{ return { this->floatBlockOffsets.GetData(masterBuffer), this->floatBlockOffsets.count }; }
+	ES_FORCEINLINE hkRealArray<uint> GetTransformOffsets(char *masterBuffer) const 
+	{ return { this->transformOffsets.GetData(masterBuffer), this->transformOffsets.count }; }
+	ES_FORCEINLINE hkRealArray<uint> GetFloatOffsets(char *masterBuffer) const 
+	{ return { this->floatOffsets.GetData(masterBuffer), this->floatOffsets.count }; }
 
 	void SwapEndian(char *masterBuffer)
 	{
-		FByteswapper(numFrames);
-		FByteswapper(numBlocks);
-		FByteswapper(maxFramesPerBlock);
-		FByteswapper(maskAndQuantizationSize);
-		FByteswapper(blockDuration);
-		FByteswapper(blockInverseDuration);
-		FByteswapper(frameDuration);
-		FByteswapper(endian);
-		FByteswapper(blockOffsets.count);
-		FByteswapper(floatBlockOffsets.count);
-		FByteswapper(transformOffsets.count);
-		FByteswapper(floatOffsets.count);
+		FByteswapper(this->numFrames);
+		FByteswapper(this->numBlocks);
+		FByteswapper(this->maxFramesPerBlock);
+		FByteswapper(this->maskAndQuantizationSize);
+		FByteswapper(this->blockDuration);
+		FByteswapper(this->blockInverseDuration);
+		FByteswapper(this->frameDuration);
+		FByteswapper(this->endian);
+		FByteswapper(this->blockOffsets.count);
+		FByteswapper(this->floatBlockOffsets.count);
+		FByteswapper(this->transformOffsets.count);
+		FByteswapper(this->floatOffsets.count);
 
-		for (int i = 0; i < blockOffsets.count; i++)
-			FByteswapper(blockOffsets.GetData(masterBuffer)[i]);
+		for (int i = 0; i < this->blockOffsets.count; i++)
+			FByteswapper(this->blockOffsets.GetData(masterBuffer)[i]);
 
-		for (int i = 0; i < floatBlockOffsets.count; i++)
-			FByteswapper(floatBlockOffsets.GetData(masterBuffer)[i]);
+		for (int i = 0; i < this->floatBlockOffsets.count; i++)
+			FByteswapper(this->floatBlockOffsets.GetData(masterBuffer)[i]);
 
-		for (int i = 0; i < transformOffsets.count; i++)
-			FByteswapper(transformOffsets.GetData(masterBuffer)[i]);
+		for (int i = 0; i < this->transformOffsets.count; i++)
+			FByteswapper(this->transformOffsets.GetData(masterBuffer)[i]);
 
-		for (int i = 0; i < floatOffsets.count; i++)
-			FByteswapper(floatOffsets.GetData(masterBuffer)[i]);
+		for (int i = 0; i < this->floatOffsets.count; i++)
+			FByteswapper(this->floatOffsets.GetData(masterBuffer)[i]);
 	}
 };
 

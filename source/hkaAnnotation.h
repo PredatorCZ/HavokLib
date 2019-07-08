@@ -54,17 +54,19 @@ template<
 	template<template<class C>class __ipointer> class _parent
 >struct hkaAnnotation_t_shared : _parent<_ipointer>
 {
-	ES_FORCEINLINE const char *GetName() const { return name.GetData(masterBuffer); }
+	typedef _parent<_ipointer> parent_class;
 
-	enablePtrPair(annotations) GetNumAnnotations() const { return numAnnotations; }
-	enablehkArray(annotations) GetNumAnnotations() const { return annotations.count; }
+	ES_FORCEINLINE const char *GetName() const { return this->name.GetData(this->masterBuffer); }
 
-	enablePtrPairRef(annotations) GetNumAnnotations() { return numAnnotations; }
-	enablehkArrayRef(annotations) GetNumAnnotations() { return annotations.count; }
+	enablePtrPair(annotations) GetNumAnnotations() const { return this->numAnnotations; }
+	enablehkArray(annotations) GetNumAnnotations() const { return this->annotations.count; }
+
+	enablePtrPairRef(annotations) GetNumAnnotations() { return this->numAnnotations; }
+	enablehkArrayRef(annotations) GetNumAnnotations() { return this->annotations.count; }
 
 	hkaAnnotationTrack::Annotation GetAnnotation(int id, char *masterBuffer) const
 	{
-		const hkaAnnotation<_ipointer> &ano = annotations.GetData(masterBuffer)[id];
+		const hkaAnnotation<_ipointer> &ano = this->annotations.GetData(masterBuffer)[id];
 		return hkaAnnotationTrack::Annotation{ ano.time, ano.text.GetData(masterBuffer) };
 	}
 
@@ -74,7 +76,7 @@ template<
 
 		for (int a = 0; a < GetNumAnnotations(); a++)
 		{
-			FByteswapper(annotations.GetData(masterBuffer)[a].time);
+			FByteswapper(this->annotations.GetData(masterBuffer)[a].time);
 		}
 	}
 

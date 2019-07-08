@@ -34,11 +34,11 @@ template<
 	template<template<class C>class __ipointer> class _parent
 >struct hkxEnvironment_t_shared : _parent<_ipointer>
 {
-	ES_FORCEINLINE const int GetNumVars() const { return variables.count; }
-	ES_FORCEINLINE hkxEnvironmentVariable GetVar(char *masterBuffer, int id) const { return variables.GetData(masterBuffer)[id]; }
+	ES_FORCEINLINE const int GetNumVars() const { return this->variables.count; }
+	ES_FORCEINLINE hkxEnvironmentVariable GetVar(char *masterBuffer, int id) const { return this->variables.GetData(masterBuffer)[id]; }
 	ES_FORCEINLINE void SwapEndian()
 	{
-		FByteswapper(variables.count);
+		FByteswapper(this->variables.count);
 	}
 };
 

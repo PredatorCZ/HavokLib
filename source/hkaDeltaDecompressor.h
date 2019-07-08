@@ -65,11 +65,11 @@ ES_INLINE void hkaDeltaDecompressor::GetTrack(int trackID, int frame, hkaAnimati
 		out = tracks[trackID]->rotation->GetVector(frame);
 		break;
 	case hkaAnimation::Position:
-		out = reinterpret_cast<Vector4 &>(tracks[trackID]->pos->GetVector(frame));
+		reinterpret_cast<Vector &>(out) = tracks[trackID]->pos->GetVector(frame);
 		out.W = 1.0f;
 		break;
 	case hkaAnimation::Scale:
-		out = reinterpret_cast<Vector4 &>(tracks[trackID]->scale->GetVector(frame));
+		reinterpret_cast<Vector &>(out) = tracks[trackID]->scale->GetVector(frame);
 		out.W = 0.0f;
 		break;
 	}

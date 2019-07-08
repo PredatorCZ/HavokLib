@@ -15,6 +15,7 @@
 	along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include <cmath>
 #include "hkaSplineDecompressor.h"
 
 Vector4 Read32Quat(char *&buffer)
@@ -42,7 +43,7 @@ Vector4 Read32Quat(char *&buffer)
 		phi = phiFrac * phi;
 	}
 
-	float magnitude = std::sqrtf(1.0f - R * R);
+	float magnitude = sqrtf(1.0f - R * R);
 
 	Vector4 retVal;
 	retVal.X = sinf(phi) * cosf(theta) * magnitude;
@@ -99,7 +100,7 @@ Vector4 Read40Quat(char *&buffer)
 	if (retval[resultShift] <= 0.0f)
 		retval[resultShift] = 0.0f;
 	else
-		retval[resultShift] = std::sqrtf(retval[resultShift]);
+		retval[resultShift] = sqrtf(retval[resultShift]);
 
 	if ((cVal >> 38) & 1)
 		retval[resultShift] *= -1;
@@ -137,7 +138,7 @@ Vector4 Read48Quat(char *&buffer)
 	if (retval[resultShift] <= 0.0f)
 		retval[resultShift] = 0.0f;
 	else
-		retval[resultShift] = std::sqrtf(retval[resultShift]);
+		retval[resultShift] = sqrtf(retval[resultShift]);
 
 	if (rSign)
 		retval[resultShift] *= -1;

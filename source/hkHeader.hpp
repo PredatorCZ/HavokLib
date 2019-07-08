@@ -132,7 +132,7 @@ struct hkxSectionHeader
 	int LinkBuffer86();
 
 	~hkxSectionHeader();
-	ES_FORCEINLINE void SwapEndian();
+	void SwapEndian();
 };
 
 struct hkxHeader : IhkPackFile
@@ -160,6 +160,6 @@ struct hkxHeader : IhkPackFile
 	ES_FORCEINLINE hkxSectionHeader *GetDataSection() { return &sections[contentsSectionIndex]; }
 	ES_FORCEINLINE VirtualClasses &GetAllClasses() { return GetDataSection()->virtualClasses; }
 	int GetVersion();
-	ES_FORCEINLINE void SwapEndian();
+	void SwapEndian();
 	~hkxHeader() {}
 };

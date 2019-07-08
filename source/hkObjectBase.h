@@ -17,11 +17,21 @@
 
 #pragma once
 
+#ifndef _MSC_VER
+#define MSC_RP_PACK(packingVal) pack()
+#define GNU_PADDING(x64Pad) char _padding[ES_REUSE_PADDING && sizeof(_ipointer<void>) == 8 ? x64Pad : 0]
+#else
+#define MSC_RP_PACK(packingVal) pack(packingVal)
+#define GNU_PADDING(x64Pad)
+#endif
+
 template<template<class C>class _ipointer> struct hkReferenceObject
 {
 	_ipointer<int> vtable;
 	short memSizeAndFlags,
 		referenceCount;
+
+	GNU_PADDING(4);
 };
 
 template<template<class C>class _ipointer> struct hkReferenceObject2016
@@ -30,9 +40,11 @@ template<template<class C>class _ipointer> struct hkReferenceObject2016
 	_ipointer<int> unk1;
 	short memSizeAndFlags,
 		referenceCount;
+
+	GNU_PADDING(4);
 };
 
-#pragma pack(4)
+#pragma MSC_RP_PACK(4)
 template<template<class C>class _ipointer> struct hkReferenceObject2016_rp
 {
 	_ipointer<int> vtable;
@@ -102,13 +114,14 @@ template <class C, template<class _C>class _ipointer> struct hkArray
 	//ES_FORCEINLINE typename std::enable_if<std::is_const<C>::value, C*>::type GetData(char *data) const { return Data.GetData(data); }
 };
 
-template<template<class C>class _ipointer, class _testValue> using is_hkArray = std::is_same<_testValue, hkArray<typename _testValue::value_type, _ipointer>>;
+template<template<class C>class _ipointer, class _testValue> 
+using is_hkArray = std::is_same<_testValue, hkArray<typename _testValue::value_type, _ipointer>>;
 
 
-#define enablehkArrayArg(_value, arg)template<class SC = decltype(_value)>\
+#define enablehkArrayArg(_value, arg)template<class SC = decltype(parent_class::_value)>\
 typename std::enable_if<is_hkArray<_ipointer, SC>::value, arg>::type ES_FORCEINLINE
 
-#define enablePtrPairArg(_value, arg)template<class SC = decltype(_value)>\
+#define enablePtrPairArg(_value, arg)template<class SC = decltype(parent_class::_value)>\
 typename std::enable_if<!is_hkArray<_ipointer, SC>::value, arg>::type ES_FORCEINLINE
 
 
@@ -142,5 +155,5 @@ public:
 	}
 };
 
-#define hkClassConstructor_nohash(classname,...) void SetDataPointer(void *Ptr){Data = reinterpret_cast<decltype(Data)>(Ptr); __VA_ARGS__} const void *GetPointer() const { return Data; }
-#define hkClassConstructor(classname,...) hkClassConstructor_nohash(classname, __VA_ARGS__) static const unsigned int HASH; classname(){hash = HASH;}
+#define hkClassConstructor_nohash(classname,...) void SetDataPointer(void *Ptr){this->Data = reinterpret_cast<decltype(this->Data)>(Ptr); __VA_ARGS__} const void *GetPointer() const { return this->Data; }
+#define hkClassConstructor(classname,...) hkClassConstructor_nohash(classname, __VA_ARGS__) static const unsigned int HASH; classname(){this->hash = HASH;}

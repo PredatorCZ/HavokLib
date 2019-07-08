@@ -14,14 +14,14 @@ void TestBinding(const hkaAnimationContainer *aniCont)
 	}
 }
 
-void TestAllosaurInterleaved(const std::wstring testingPath)
+void TestAllosaurInterleaved(const TSTRING testingPath)
 {
 	for (auto &v : versions)
 		for (auto &t : compiledFlags)
 		{
-			std::wstring fleName = testingPath;
+			TSTRING fleName = testingPath;
 			fleName.append(v);
-			fleName.append(L"allosaur_run");
+			fleName.append(_T("allosaur_run"));
 			fleName.append(t);
 
 			printline("testing: ", << fleName);
@@ -60,18 +60,18 @@ void TestAllosaurInterleaved(const std::wstring testingPath)
 			MyAssert(iterAnim->GetNumTransforms() != 9393);
 			MyAssert(iterAnim->GetNumFloats() != 0);
 
-			delete hdr;
+			//delete hdr;
 		}
 }
 
-void TestAllosaurDelta(const std::wstring testingPath)
+void TestAllosaurDelta(const TSTRING testingPath)
 {
 	for (auto &v : versions_delta)
 		for (auto &t : compiledFlags)
 		{
-			std::wstring fleName = testingPath;
+			TSTRING fleName = testingPath;
 			fleName.append(v);
-			fleName.append(L"allosaur_run_D12_8_3");
+			fleName.append(_T("allosaur_run_D12_8_3"));
 			fleName.append(t);
 
 			printline("testing: ", << fleName);
@@ -118,18 +118,18 @@ void TestAllosaurDelta(const std::wstring testingPath)
 			MyAssert(iterAnim->GetScalesOffset() != 2772);
 			MyAssert(iterAnim->GetNumPreserved() != 1);
 
-			delete hdr;
+			//delete hdr;
 		}
 }
 
-void TestAllosaurSpline1(const std::wstring testingPath)
+void TestAllosaurSpline1(const TSTRING testingPath)
 {
 	for (auto &v : versions_delta)
 		for (auto &t : compiledFlags)
 		{
-			std::wstring fleName = testingPath;
+			TSTRING fleName = testingPath;
 			fleName.append(v);
-			fleName.append(L"allosaur_run_S32_V16_B255_D1");
+			fleName.append(_T("allosaur_run_S32_V16_B255_D1"));
 			fleName.append(t);
 
 			printline("testing: ", << fleName);
@@ -165,18 +165,18 @@ void TestAllosaurSpline1(const std::wstring testingPath)
 
 			// Add some further testing here?
 
-			delete hdr;
+			//delete hdr;
 		}
 }
 
-void TestAllosaurSpline2(const std::wstring testingPath)
+void TestAllosaurSpline2(const TSTRING testingPath)
 {
 	for (auto &v : versions_delta)
 		for (auto &t : compiledFlags)
 		{
-			std::wstring fleName = testingPath;
+			TSTRING fleName = testingPath;
 			fleName.append(v);
-			fleName.append(L"allosaur_run_S40_V16_B25_D3");
+			fleName.append(_T("allosaur_run_S40_V16_B25_D3"));
 			fleName.append(t);
 
 			printline("testing: ", << fleName);
@@ -212,18 +212,18 @@ void TestAllosaurSpline2(const std::wstring testingPath)
 
 			// Add some further testing here?
 
-			delete hdr;
+			//delete hdr;
 		}
 }
 
-void TestAllosaurSpline3(const std::wstring testingPath)
+void TestAllosaurSpline3(const TSTRING testingPath)
 {
 	for (auto &v : versions_delta)
 		for (auto &t : compiledFlags)
 		{
-			std::wstring fleName = testingPath;
+			TSTRING fleName = testingPath;
 			fleName.append(v);
-			fleName.append(L"allosaur_run_S48_V8_B255_D2");
+			fleName.append(_T("allosaur_run_S48_V8_B255_D2"));
 			fleName.append(t);
 
 			printline("testing: ", << fleName);
@@ -259,6 +259,6 @@ void TestAllosaurSpline3(const std::wstring testingPath)
 
 			// Add some further testing here?
 
-			delete hdr;
+			//delete hdr;
 		}
 }

@@ -42,32 +42,39 @@ template<
 	template<template<class C>class __ipointer> class _parent
 >struct hkaAnimationBinding_t_shared : _parent<_ipointer>
 {
-	ES_FORCEINLINE const hkaAnimation *GetAnimation(IhkPackFile *header, char *masterBuffer) const { return dynamic_cast<const hkaAnimation *>(header->GetClass(animation.GetData(masterBuffer))); }
-	ES_FORCEINLINE BlendHint GetBlendHint() const { return blendHint; }
-	ES_FORCEINLINE const short GetTransformTrackToBoneIndex(char *masterBuffer, int id) const { return transformTrackToBoneIndices.GetData(masterBuffer)[id]; }
-	ES_FORCEINLINE const short GetFloatTrackToFloatSlotIndex(char *masterBuffer, int id) const { return floatTrackToFloatSlotIndices.GetData(masterBuffer)[id]; }
+	typedef _parent<_ipointer> parent_class;
+
+	ES_FORCEINLINE const hkaAnimation *GetAnimation(IhkPackFile *header, char *masterBuffer) const 
+	{ return dynamic_cast<const hkaAnimation *>(header->GetClass(this->animation.GetData(masterBuffer))); }
+	ES_FORCEINLINE BlendHint GetBlendHint() const { return this->blendHint; }
+	ES_FORCEINLINE const short GetTransformTrackToBoneIndex(char *masterBuffer, int id) const 
+	{ return this->transformTrackToBoneIndices.GetData(masterBuffer)[id]; }
+	ES_FORCEINLINE const short GetFloatTrackToFloatSlotIndex(char *masterBuffer, int id) const 
+	{ return this->floatTrackToFloatSlotIndices.GetData(masterBuffer)[id]; }
 
 	ADD_DISABLERS(_parent<_ipointer>, noPartitions, noSkeletonName);
 
-	enablePtrPair(transformTrackToBoneIndices) GetNumTransformTrackToBoneIndices() const { return numTransformTrackToBoneIndices; }
-	enablehkArray(transformTrackToBoneIndices) GetNumTransformTrackToBoneIndices() const { return transformTrackToBoneIndices.count; }
-	enablePtrPairRef(transformTrackToBoneIndices) GetNumTransformTrackToBoneIndices() { return numTransformTrackToBoneIndices; }
-	enablehkArrayRef(transformTrackToBoneIndices) GetNumTransformTrackToBoneIndices() { return transformTrackToBoneIndices.count; }
+	enablePtrPair(transformTrackToBoneIndices) GetNumTransformTrackToBoneIndices() const { return this->numTransformTrackToBoneIndices; }
+	enablehkArray(transformTrackToBoneIndices) GetNumTransformTrackToBoneIndices() const { return this->transformTrackToBoneIndices.count; }
+	enablePtrPairRef(transformTrackToBoneIndices) GetNumTransformTrackToBoneIndices() { return this->numTransformTrackToBoneIndices; }
+	enablehkArrayRef(transformTrackToBoneIndices) GetNumTransformTrackToBoneIndices() { return this->transformTrackToBoneIndices.count; }
 
-	enablePtrPair(floatTrackToFloatSlotIndices) GetNumFloatTrackToFloatSlotIndices() const { return numFloatTrackToFloatSlotIndices; }
-	enablehkArray(floatTrackToFloatSlotIndices) GetNumFloatTrackToFloatSlotIndices() const { return floatTrackToFloatSlotIndices.count; }
-	enablePtrPairRef(floatTrackToFloatSlotIndices) GetNumFloatTrackToFloatSlotIndices() { return numFloatTrackToFloatSlotIndices; }
-	enablehkArrayRef(floatTrackToFloatSlotIndices) GetNumFloatTrackToFloatSlotIndices() { return floatTrackToFloatSlotIndices.count; }
+	enablePtrPair(floatTrackToFloatSlotIndices) GetNumFloatTrackToFloatSlotIndices() const { return this->numFloatTrackToFloatSlotIndices; }
+	enablehkArray(floatTrackToFloatSlotIndices) GetNumFloatTrackToFloatSlotIndices() const { return this->floatTrackToFloatSlotIndices.count; }
+	enablePtrPairRef(floatTrackToFloatSlotIndices) GetNumFloatTrackToFloatSlotIndices() { return this->numFloatTrackToFloatSlotIndices; }
+	enablehkArrayRef(floatTrackToFloatSlotIndices) GetNumFloatTrackToFloatSlotIndices() { return this->floatTrackToFloatSlotIndices.count; }
 
 	disabledFunction(noPartitions, const int) ES_FORCEINLINE GetNumPartitionIndices() const { return 0; }
 	enabledFunction(noPartitions, const int) ES_FORCEINLINE GetNumPartitionIndices() const { return GetNumPartitionIndices(); }
-	enabledFunction(noPartitions, int &) ES_FORCEINLINE GetNumPartitionIndices() { return partitionIndices.count; }
+	enabledFunction(noPartitions, int &) ES_FORCEINLINE GetNumPartitionIndices() { return this->partitionIndices.count; }
 
 	disabledFunction(noPartitions, const short) ES_FORCEINLINE GetPartitionIndex(char *, int) const { return -1; }
-	enabledFunction(noPartitions, const short) ES_FORCEINLINE GetPartitionIndex(char *masterBuffer, int id) const { return partitionIndices.GetData(masterBuffer)[id]; }
+	enabledFunction(noPartitions, const short) ES_FORCEINLINE GetPartitionIndex(char *masterBuffer, int id) const 
+	{ return this->partitionIndices.GetData(masterBuffer)[id]; }
 
 	disabledFunction(noSkeletonName, const char*) ES_FORCEINLINE GetSkeletonName(char *) const { return nullptr; }
-	enabledFunction(noSkeletonName, const char *) ES_FORCEINLINE GetSkeletonName(char *masterBuffer) const { return skeletonName.GetData(masterBuffer); }
+	enabledFunction(noSkeletonName, const char *) ES_FORCEINLINE GetSkeletonName(char *masterBuffer) const 
+	{ return this->skeletonName.GetData(masterBuffer); }
 
 	disabledFunction(noPartitions, void) ES_FORCEINLINE SwapPartitionIndices(char *) {}
 	enabledFunction(noPartitions, void) ES_FORCEINLINE SwapPartitionIndices(char *masterBuffer)
@@ -76,7 +83,7 @@ template<
 		const int numPartitions = GetNumPartitionIndices();
 
 		for (int i = 0; i < numPartitions; i++)
-			FByteswapper(partitionIndices.GetData(masterBuffer)[i]);
+			FByteswapper(this->partitionIndices.GetData(masterBuffer)[i]);
 	}
 
 	void SwapEndian(char *masterBuffer)
@@ -85,13 +92,13 @@ template<
 		const int numTransformTrackToBoneIndices = GetNumTransformTrackToBoneIndices();
 
 		for (int i = 0; i < numTransformTrackToBoneIndices; i++)
-			FByteswapper(transformTrackToBoneIndices.GetData(masterBuffer)[i]);
+			FByteswapper(this->transformTrackToBoneIndices.GetData(masterBuffer)[i]);
 
 		FByteswapper(GetNumFloatTrackToFloatSlotIndices());
 		const int numFloatTrackToFloatSlotIndices = GetNumFloatTrackToFloatSlotIndices();
 
 		for (int i = 0; i < numFloatTrackToFloatSlotIndices; i++)
-			FByteswapper(floatTrackToFloatSlotIndices.GetData(masterBuffer)[i]);
+			FByteswapper(this->floatTrackToFloatSlotIndices.GetData(masterBuffer)[i]);
 
 		SwapPartitionIndices(masterBuffer);
 	}
