@@ -60,7 +60,7 @@ void TestAllosaurInterleaved(const TSTRING testingPath)
 			MyAssert(iterAnim->GetNumTransforms() != 9393);
 			MyAssert(iterAnim->GetNumFloats() != 0);
 
-			//delete hdr;
+			delete hdr;
 		}
 }
 
@@ -118,7 +118,7 @@ void TestAllosaurDelta(const TSTRING testingPath)
 			MyAssert(iterAnim->GetScalesOffset() != 2772);
 			MyAssert(iterAnim->GetNumPreserved() != 1);
 
-			//delete hdr;
+			delete hdr;
 		}
 }
 
@@ -165,7 +165,7 @@ void TestAllosaurSpline1(const TSTRING testingPath)
 
 			// Add some further testing here?
 
-			//delete hdr;
+			delete hdr;
 		}
 }
 
@@ -212,7 +212,7 @@ void TestAllosaurSpline2(const TSTRING testingPath)
 
 			// Add some further testing here?
 
-			//delete hdr;
+			delete hdr;
 		}
 }
 
@@ -259,6 +259,6 @@ void TestAllosaurSpline3(const TSTRING testingPath)
 
 			// Add some further testing here?
 
-			//delete hdr;
+			delete hdr;
 		}
 }
