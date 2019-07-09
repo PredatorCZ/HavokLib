@@ -78,7 +78,7 @@ int hkxHeader::Load(BinReader & rd)
 		rd.Read(s, s.PODSize);
 
 		if (Version > 9)
-			rd.Seek(16, std::ios_base::seekdir::_S_cur);
+			rd.Seek(16, std::ios_base::cur);
 
 		s.sectionID = currentSectionID;
 		currentSectionID++;
@@ -121,12 +121,6 @@ ES_INLINE void hkxHeader::SwapEndian()
 	FByteswapper(maxpredicate);
 	FByteswapper(predicateArraySizePlusPadding);
 }
-
-struct hkFixupSorter
-{
-	int *value;
-	int type; // 0 = source, 1 = destination
-};
 
 int hkxSectionHeader::Load(BinReader * rd)
 {

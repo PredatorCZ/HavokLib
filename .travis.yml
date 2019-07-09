@@ -5,6 +5,7 @@ matrix:
   fast_finish: true
   include:
     - os: linux
+      name: "Compiler GCC 6"
       addons:
         apt:
           sources:
@@ -15,6 +16,7 @@ matrix:
       env:
          - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
     - os: linux
+      name: "Compiler GCC 7"
       addons:
         apt:
           sources:
@@ -25,6 +27,7 @@ matrix:
       env:
          - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
     - os: linux
+      name: "Compiler GCC 8"
       addons:
         apt:
           sources:
@@ -35,6 +38,7 @@ matrix:
       env:
          - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
     - os: linux
+      name: "Compiler GCC 9"
       addons:
         apt:
           sources:

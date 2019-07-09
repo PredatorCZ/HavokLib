@@ -419,7 +419,7 @@ void hkxNewHeader::DumpClassNames(std::ostream &str)
 				str << "typename " << t.argName << " = " << t.argType->className << ", ";
 			}
 
-			str.seekp(-2, std::ios_base::seekdir::_S_cur);
+			str.seekp(-2, std::ios_base::cur);
 			str << '>';
 		}
 
