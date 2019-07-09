@@ -307,8 +307,11 @@ int chPTCHRead(BinReader * rd, hkChunk *holder, hkxNewHeader *root)
 			cls->Process();
 		}
 	}
-
+#ifdef _MSC_VER
 	root->classEntries.~vector();
+#else
+	root->classEntries.clear();
+#endif
 
 	return 0;
 }
@@ -416,7 +419,7 @@ void hkxNewHeader::DumpClassNames(std::ostream &str)
 				str << "typename " << t.argName << " = " << t.argType->className << ", ";
 			}
 
-			str.seekp(-2, SEEK_CUR);
+			str.seekp(-2, std::ios_base::cur);
 			str << '>';
 		}
 

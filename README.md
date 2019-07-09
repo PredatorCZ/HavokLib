@@ -1,11 +1,14 @@
 # HavokLib
+[![Build Status](https://travis-ci.org/PredatorCZ/HavokLib.svg?branch=master)](https://travis-ci.org/PredatorCZ/HavokLib)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
 HavokLib is an independent Havok packfile serialize and XML store library for C++.
 
 In addition, it can output packfile formats into XML under any available version. This library can possibly upgrade/downgrade between versions.
 
 In another addition, library can store classic data for XML direct export.
 
-Library is compilable under VS 2015, 2017, 2019.
+Library is compilable under VS 2015, 2017, 2019 and GCC 6, 7, 8, 9.
 
 ## Supported formats/toolset versions
 Havok 5.5.0 - 2014.1, 2015, 2016, 2017

@@ -2,46 +2,52 @@
 //
 
 #include <cstdio>
-#include <tchar.h>
 #include "HavokApi.hpp"
 #include "datas/masterprinter.hpp"
 #include "datas/fileinfo.hpp"
 #include "hkInternalInterfaces.h"
 
+#if _MSC_VER
+#include <tchar.h>
+#else
+#define _tmain main
+#define _TCHAR char
+#endif
+
 #define MyAssert(thing) if (thing) printerror(#thing, << _T(" :") << __FUNCTION__ <<_T(" at:") <<__LINE__)
 #define MyAssertLoop(thing, i) if (thing) printerror(#thing, << _T(" :") << __FUNCTION__ <<_T(" at:") <<__LINE__<< _T(" loop:") << i)
 
-static const wchar_t *compiledFlags[] =
+static const TCHAR *compiledFlags[] =
 {
-	L"[4001].hkx",
-	L"[4011].hkx",
-	L"[4101].hkx",
-	L"[4111].hkx",
-	L"[8001].hkx",
-	L"[8011].hkx",
-	L"[8101].hkx",
-	L"[8111].hkx",
+	_T("[4001].hkx"),
+	_T("[4011].hkx"),
+	_T("[4101].hkx"),
+	_T("[4111].hkx"),
+	_T("[8001].hkx"),
+	_T("[8011].hkx"),
+	_T("[8101].hkx"),
+	_T("[8111].hkx"),
 };
 
-static const wchar_t *versions[] =
+static const TCHAR *versions[] =
 {
-	L"550/",
-	L"660/",
-	L"710/",
-	L"2010_1/",
-	L"2011_1/",
-	L"2011_2/",
-	L"2012_2/",
-	L"2013_1/",
-	L"2014_1/",
+	_T("550/"),
+	_T("660/"),
+	_T("710/"),
+	_T("2010_1/"),
+	_T("2011_1/"),
+	_T("2011_2/"),
+	_T("2012_2/"),
+	_T("2013_1/"),
+	_T("2014_1/"),
 };
 
-static const wchar_t *versions_delta[] =
+static const TCHAR *versions_delta[] =
 {
-	L"550/",
-	L"660/",
-	L"710/",
-	L"2010_1/",
+	_T("550/"),
+	_T("660/"),
+	_T("710/"),
+	_T("2010_1/"),
 };
 
 #include "SkeletonTesting.h"
@@ -61,11 +67,16 @@ int _tmain(const int argc, const TCHAR *argv[])
 #endif // _MSC_VER
 
 
+#ifdef UNICODE
 	printer.AddPrinterFunction(wprintf);
+#else
+	printer.AddPrinterFunction(reinterpret_cast<void*>(printf));
+#endif
+
 
 	TFileInfo info(argv[0]);
 
-	std::wstring testingPath = info.GetPath() + L"rc/";
+	TSTRING testingPath = info.GetPath() + _T("rc/");
 
 	TestAllosaurSkeleton(testingPath);
 	TestAllosaurInterleaved(testingPath);

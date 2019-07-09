@@ -21,24 +21,24 @@
 #include "hkaAnimation.h"
 //#include "hkaWaveletDecompressor.h"
 
-template<class C> struct hkaWaveletCompressedAnimation_t : hkaSkeletalAnimation_t<typename C::parentClass>//, IhkaWaveletCompressed
+template<class C> struct hkaWaveletCompressedAnimation_t : hkaWaveletCompressedAnimationInternalInterface, hkaSkeletalAnimation_t<typename C::parentClass>
 {
 	typedef C value_type;
 	hkClassConstructor(hkaWaveletCompressedAnimation_t<C>);
-	void SwapEndian() { hkaSkeletalAnimation_t<typename C::parentClass>::SwapEndian(); static_cast<value_type*>(Data)->SwapEndian(masterBuffer); }
+	void SwapEndian() { hkaSkeletalAnimation_t<typename C::parentClass>::SwapEndian(); static_cast<value_type*>(this->Data)->SwapEndian(this->masterBuffer); }
 	void Process() {}//{ decomp.Assign(this); }
 	//hkaWaveletDecompressor decomp;
-	const int GetNumOfPoses() const { return static_cast<value_type*>(Data)->GetNumOfPoses(); }
-	const int GetBlockSize() const { return static_cast<value_type*>(Data)->GetBlockSize(); }
-	const int GetQuantizedDataOffset() const { return static_cast<value_type*>(Data)->GetQuantizedDataOffset(); }
-	const int GetStaticMaskOffset() const { return static_cast<value_type*>(Data)->GetStaticMaskOffset(); }
-	const int GetStaticDataOffset() const { return static_cast<value_type*>(Data)->GetStaticDataOffset(); }
-	const char *GetData() const { return static_cast<value_type*>(Data)->GetData(masterBuffer); }
-	const int GetNumDynamicTracks() const { return static_cast<value_type*>(Data)->GetNumDynamicTracks(); }
-	const int GetOffsetsOffset() const { return static_cast<value_type*>(Data)->GetOffsetsOffset(); }
-	const int GetBitWidthOffset() const { return static_cast<value_type*>(Data)->GetBitWidthOffset(); }
-	const int GetScalesOffset() const { return static_cast<value_type*>(Data)->GetScalesOffset(); }
-	const int GetNumPreserved() const { return static_cast<value_type*>(Data)->GetNumPreserved(); }
+	const int GetNumOfPoses() const { return static_cast<value_type*>(this->Data)->GetNumOfPoses(); }
+	const int GetBlockSize() const { return static_cast<value_type*>(this->Data)->GetBlockSize(); }
+	const int GetQuantizedDataOffset() const { return static_cast<value_type*>(this->Data)->GetQuantizedDataOffset(); }
+	const int GetStaticMaskOffset() const { return static_cast<value_type*>(this->Data)->GetStaticMaskOffset(); }
+	const int GetStaticDataOffset() const { return static_cast<value_type*>(this->Data)->GetStaticDataOffset(); }
+	const char *GetData() const { return static_cast<value_type*>(this->Data)->GetData(this->masterBuffer); }
+	const int GetNumDynamicTracks() const { return static_cast<value_type*>(this->Data)->GetNumDynamicTracks(); }
+	const int GetOffsetsOffset() const { return static_cast<value_type*>(this->Data)->GetOffsetsOffset(); }
+	const int GetBitWidthOffset() const { return static_cast<value_type*>(this->Data)->GetBitWidthOffset(); }
+	const int GetScalesOffset() const { return static_cast<value_type*>(this->Data)->GetScalesOffset(); }
+	const int GetNumPreserved() const { return static_cast<value_type*>(this->Data)->GetNumPreserved(); }
 	bool IsTrackStatic(int trackID, TrackType type) const { return false; }
 	void GetTrack(int trackID, int frame, float delta, TrackType type, Vector4 &out) const {}
 	void GetTransform(int trackID, int frame, float delta, hkQTransform &out) const {}
@@ -52,29 +52,29 @@ template<
 	template<template<class C>class __ipointer> class _parent
 >struct hkaWaveletCompressedSkeletalAnimation_t_shared : _parent<_ipointer>
 {
-	ES_FORCEINLINE const int GetNumOfPoses() const { return numberOfPoses; }
-	ES_FORCEINLINE const int GetBlockSize() const { return blockSize; }
-	ES_FORCEINLINE const int GetQuantizedDataOffset() const { return quantizedDataIdx; }
-	ES_FORCEINLINE const int GetStaticMaskOffset() const { return staticMaskIdx; }
-	ES_FORCEINLINE const int GetStaticDataOffset() const { return staticDOFsIdx; }
-	ES_FORCEINLINE const char *GetData(char *masterbuffer) const { return reinterpret_cast<const char*>(dataBuffer.GetData(masterbuffer)); }
-	ES_FORCEINLINE const int GetNumDynamicTracks() const { return qFormat.numD; }
-	ES_FORCEINLINE const int GetOffsetsOffset() const { return qFormat.offsetIdx; }
-	ES_FORCEINLINE const int GetBitWidthOffset() const { return qFormat.bitWidthIdx; }
-	ES_FORCEINLINE const int GetScalesOffset() const { return qFormat.scaleIdx; }
-	ES_FORCEINLINE const int GetNumPreserved() const { return qFormat.preserved; }
+	ES_FORCEINLINE const int GetNumOfPoses() const { return this->numberOfPoses; }
+	ES_FORCEINLINE const int GetBlockSize() const { return this->blockSize; }
+	ES_FORCEINLINE const int GetQuantizedDataOffset() const { return this->quantizedDataIdx; }
+	ES_FORCEINLINE const int GetStaticMaskOffset() const { return this->staticMaskIdx; }
+	ES_FORCEINLINE const int GetStaticDataOffset() const { return this->staticDOFsIdx; }
+	ES_FORCEINLINE const char *GetData(char *masterbuffer) const { return reinterpret_cast<const char*>(this->dataBuffer.GetData(masterbuffer)); }
+	ES_FORCEINLINE const int GetNumDynamicTracks() const { return this->qFormat.numD; }
+	ES_FORCEINLINE const int GetOffsetsOffset() const { return this->qFormat.offsetIdx; }
+	ES_FORCEINLINE const int GetBitWidthOffset() const { return this->qFormat.bitWidthIdx; }
+	ES_FORCEINLINE const int GetScalesOffset() const { return this->qFormat.scaleIdx; }
+	ES_FORCEINLINE const int GetNumPreserved() const { return this->qFormat.preserved; }
 
 	void SwapEndian(char *masterBuffer)
 	{
-		FByteswapper(numberOfPoses);
-		FByteswapper(blockSize);
-		FByteswapper(staticMaskIdx);
-		FByteswapper(staticDOFsIdx);
-		FByteswapper(blockIndexIdx);
-		FByteswapper(blockIndexSize);
-		FByteswapper(quantizedDataIdx);
-		FByteswapper(quantizedDataSize);
-		FByteswapper(qFormat);
+		FByteswapper(this->numberOfPoses);
+		FByteswapper(this->blockSize);
+		FByteswapper(this->staticMaskIdx);
+		FByteswapper(this->staticDOFsIdx);
+		FByteswapper(this->blockIndexIdx);
+		FByteswapper(this->blockIndexSize);
+		FByteswapper(this->quantizedDataIdx);
+		FByteswapper(this->quantizedDataSize);
+		FByteswapper(this->qFormat);
 	}
 };
 

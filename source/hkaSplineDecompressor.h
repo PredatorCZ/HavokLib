@@ -195,11 +195,11 @@ ES_INLINE void TransformSplineBlock::GetTrack(int trackID, float localFrame, hka
 		out = tracks[trackID].rotation->GetValue(localFrame);
 		break;
 	case hkaAnimation::Position:
-		out = reinterpret_cast<Vector4 &>(tracks[trackID].pos->GetValue(localFrame));
+		reinterpret_cast<Vector &>(out) = tracks[trackID].pos->GetValue(localFrame);
 		out.W = 1.0f;
 		break;
 	case hkaAnimation::Scale:
-		out = reinterpret_cast<Vector4 &>(tracks[trackID].scale->GetValue(localFrame));
+		reinterpret_cast<Vector &>(out) = tracks[trackID].scale->GetValue(localFrame);
 		out.W = 0.0f;
 		break;
 	}

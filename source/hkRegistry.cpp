@@ -28,19 +28,19 @@
 #include "hkaSplineCompressedAnimation.h"
 
 #define hkRegisterClass(classname) { classname::HASH, &hkCreateDerivedClass<classname> },
-#define hkRegisterClassID(classname)const JenHash classname::HASH = JenkinsHash(#classname, sizeof(#classname) - 1);
+#define hkRegisterClassID(classname) template<> const JenHash classname::HASH = JenkinsHash(#classname, sizeof(#classname) - 1);
 
 #define hkRegisterVersionedClassID(classname, version)\
-hkRegisterClassID(classname##_t<##classname##version##_t<hkPointerX64>>);\
-hkRegisterClassID(classname##_t<##classname##version##_t<hkPointerX86>>);\
-hkRegisterClassID(classname##_t<##classname##version##_rp_t<hkPointerX64>>);\
-hkRegisterClassID(classname##_t<##classname##version##_rp_t<hkPointerX86>>);
+hkRegisterClassID(classname##_t<classname##version##_t<hkPointerX64>>);\
+hkRegisterClassID(classname##_t<classname##version##_t<hkPointerX86>>);\
+hkRegisterClassID(classname##_t<classname##version##_rp_t<hkPointerX64>>);\
+hkRegisterClassID(classname##_t<classname##version##_rp_t<hkPointerX86>>);
 
 #define hkRegisterVersionedClass(classname, version)\
-hkRegisterClass(classname##_t<##classname##version##_t<hkPointerX64>>)\
-hkRegisterClass(classname##_t<##classname##version##_t<hkPointerX86>>)\
-hkRegisterClass(classname##_t<##classname##version##_rp_t<hkPointerX64>>)\
-hkRegisterClass(classname##_t<##classname##version##_rp_t<hkPointerX86>>)
+hkRegisterClass(classname##_t<classname##version##_t<hkPointerX64>>)\
+hkRegisterClass(classname##_t<classname##version##_t<hkPointerX86>>)\
+hkRegisterClass(classname##_t<classname##version##_rp_t<hkPointerX64>>)\
+hkRegisterClass(classname##_t<classname##version##_rp_t<hkPointerX86>>)
 
 #define hkRegisterVersionedClassEval(classname, id, version) hkRegisterVersionedClass(classname, version)
 

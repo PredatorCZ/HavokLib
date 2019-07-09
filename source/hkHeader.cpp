@@ -16,10 +16,10 @@
 */
 
 #include "hkHeader.hpp"
-#include "datas\endian.hpp"
-#include "datas\binreader.hpp"
-#include "datas\MasterPrinter.hpp"
-#include "datas\jenkinshash.hpp"
+#include "datas/endian.hpp"
+#include "datas/binreader.hpp"
+#include "datas/masterprinter.hpp"
+#include "datas/jenkinshash.hpp"
 #include <algorithm>
 #include <string>
 #include <ctype.h>
@@ -78,7 +78,7 @@ int hkxHeader::Load(BinReader & rd)
 		rd.Read(s, s.PODSize);
 
 		if (Version > 9)
-			rd.Seek(16, SEEK_CUR);
+			rd.Seek(16, std::ios_base::cur);
 
 		s.sectionID = currentSectionID;
 		currentSectionID++;
@@ -109,7 +109,7 @@ int hkxHeader::GetVersion()
 	return atoi(contentsVersionStripped);
 }
 
-void hkxHeader::SwapEndian()
+ES_INLINE void hkxHeader::SwapEndian()
 {
 	FByteswapper(Version);
 	FByteswapper(numSections);
@@ -121,12 +121,6 @@ void hkxHeader::SwapEndian()
 	FByteswapper(maxpredicate);
 	FByteswapper(predicateArraySizePlusPadding);
 }
-
-struct hkFixupSorter
-{
-	int *value;
-	int type; // 0 = source, 1 = destination
-};
 
 int hkxSectionHeader::Load(BinReader * rd)
 {
@@ -171,7 +165,7 @@ int hkxSectionHeader::LoadBuffer(BinReader * rd)
 	return 0;
 }
 
-ES_FORCEINLINE std::string _hkGenerateClassname(hkxHeader *header, std::string classname)
+ES_INLINE std::string _hkGenerateClassname(hkxHeader *header, std::string classname)
 {
 	std::string compiledClassname = classname + "_t<" + classname + header->contentsVersionStripped;
 
@@ -224,9 +218,15 @@ int hkxSectionHeader::LinkBuffer()
 			}
 		}
 
+#ifdef _MSC_VER
 	localFixups.~vector();
 	globalFixups.~vector();
 	virtualFixups.~vector();
+#else
+	localFixups.clear();
+	globalFixups.clear();
+	virtualFixups.clear();
+#endif
 
 	return 0;
 }
@@ -264,15 +264,20 @@ int hkxSectionHeader::LinkBuffer86()
 				cls->Process();
 			}
 		}
-
+#ifdef _MSC_VER
 	localFixups.~vector();
 	globalFixups.~vector();
 	virtualFixups.~vector();
+#else
+	localFixups.clear();
+	globalFixups.clear();
+	virtualFixups.clear();
+#endif
 
 	return 0;
 }
 
-void hkxSectionHeader::SwapEndian()
+ES_INLINE void hkxSectionHeader::SwapEndian()
 {
 	FByteswapper(absoluteDataStart);
 	FByteswapper(localFixupsOffset);

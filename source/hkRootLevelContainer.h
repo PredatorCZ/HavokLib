@@ -52,12 +52,15 @@ template<
 	template<template<class C>class __ipointer> class _parent
 >struct hkRootLevelContainer_t_shared : _parent<_ipointer>
 {
-	enablePtrPair(variants) GetNumVariants() const { return numVariants; }
-	enablehkArray(variants) GetNumVariants() const { return variants.count; }
-	enablePtrPairRef(variants) GetNumVariants() { return numVariants; }
-	enablehkArrayRef(variants) GetNumVariants() { return variants.count; }
+	typedef _parent<_ipointer> parent_class;
+	enablePtrPair(variants) GetNumVariants() const { return this->numVariants; }
+	enablehkArray(variants) GetNumVariants() const { return this->variants.count; }
+	enablePtrPairRef(variants) GetNumVariants() { return this->numVariants; }
+	enablehkArrayRef(variants) GetNumVariants() { return this->variants.count; }
 
-	ES_FORCEINLINE const hkNamedVariant GetVariant(IhkPackFile *header, char *masterBuffer, int id) const { return variants.GetData(masterBuffer)[id].GetVariant(masterBuffer, header); }
+	ES_FORCEINLINE const hkNamedVariant GetVariant(IhkPackFile *header, char *masterBuffer, int id) const 
+	{ return parent_class::variants.GetData(masterBuffer)[id].GetVariant(masterBuffer, header); }
+	
 	ES_FORCEINLINE void SwapEndian()
 	{
 		FByteswapper(GetNumVariants());

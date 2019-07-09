@@ -41,36 +41,43 @@ template<
 	template<template<class C>class __ipointer> class _parent
 >struct hkaAnimationContainer_t_shared : _parent<_ipointer>
 {
-	enablePtrPair(skeletons) GetNumSkeletons() const { return numSkeletons; }
-	enablehkArray(skeletons) GetNumSkeletons() const { return skeletons.count; }
-	enablePtrPairRef(skeletons) GetNumSkeletons() { return numSkeletons; }
-	enablehkArrayRef(skeletons) GetNumSkeletons() { return skeletons.count; }
+	typedef _parent<_ipointer> parent_class;
+	
+	enablePtrPair(skeletons) GetNumSkeletons() const { return this->numSkeletons; }
+	enablehkArray(skeletons) GetNumSkeletons() const { return this->skeletons.count; }
+	enablePtrPairRef(skeletons) GetNumSkeletons() { return this->numSkeletons; }
+	enablehkArrayRef(skeletons) GetNumSkeletons() { return this->skeletons.count; }
 
-	enablePtrPair(animations) GetNumAnimations() const { return numAnimations; }
-	enablehkArray(animations) GetNumAnimations() const { return animations.count; }
-	enablePtrPairRef(animations) GetNumAnimations() { return numAnimations; }
-	enablehkArrayRef(animations) GetNumAnimations() { return animations.count; }
+	enablePtrPair(animations) GetNumAnimations() const { return this->numAnimations; }
+	enablehkArray(animations) GetNumAnimations() const { return this->animations.count; }
+	enablePtrPairRef(animations) GetNumAnimations() { return this->numAnimations; }
+	enablehkArrayRef(animations) GetNumAnimations() { return this->animations.count; }
 
-	enablePtrPair(bindings) GetNumBindings() const { return numBindings; }
-	enablehkArray(bindings) GetNumBindings() const { return bindings.count; }
-	enablePtrPairRef(bindings) GetNumBindings() { return numBindings; }
-	enablehkArrayRef(bindings) GetNumBindings() { return bindings.count; }
+	enablePtrPair(bindings) GetNumBindings() const { return this->numBindings; }
+	enablehkArray(bindings) GetNumBindings() const { return this->bindings.count; }
+	enablePtrPairRef(bindings) GetNumBindings() { return this->numBindings; }
+	enablehkArrayRef(bindings) GetNumBindings() { return this->bindings.count; }
 
-	enablePtrPair(attachments) GetNumAttachments() const { return numAttachemts; }
-	enablehkArray(attachments) GetNumAttachments() const { return attachments.count; }
-	enablePtrPairRef(attachments) GetNumAttachments() { return numAttachemts; }
-	enablehkArrayRef(attachments) GetNumAttachments() { return attachments.count; }
+	enablePtrPair(attachments) GetNumAttachments() const { return this->numAttachemts; }
+	enablehkArray(attachments) GetNumAttachments() const { return this->attachments.count; }
+	enablePtrPairRef(attachments) GetNumAttachments() { return this->numAttachemts; }
+	enablehkArrayRef(attachments) GetNumAttachments() { return this->attachments.count; }
 
-	enablePtrPair(skins) GetNumSkins() const { return numSkins; }
-	enablehkArray(skins) GetNumSkins() const { return skins.count; }
-	enablePtrPairRef(skins) GetNumSkins() { return numSkins; }
-	enablehkArrayRef(skins) GetNumSkins() { return skins.count; }
+	enablePtrPair(skins) GetNumSkins() const { return this->numSkins; }
+	enablehkArray(skins) GetNumSkins() const { return this->skins.count; }
+	enablePtrPairRef(skins) GetNumSkins() { return this->numSkins; }
+	enablehkArrayRef(skins) GetNumSkins() { return this->skins.count; }
 
-	const hkaSkeleton *GetSkeleton(IhkPackFile *header, char *masterBuffer, int id) const { return dynamic_cast<const hkaSkeleton*>(header->GetClass(skeletons.GetData(masterBuffer)[id].GetData(masterBuffer))); };
-	const hkaAnimation *GetAnimation(IhkPackFile *header, char *masterBuffer, int id) const { return dynamic_cast<const hkaAnimation*>(header->GetClass(animations.GetData(masterBuffer)[id].GetData(masterBuffer))); };
-	const hkaAnimationBinding *GetBinding(IhkPackFile *header, char *masterBuffer, int id) const { return dynamic_cast<const hkaAnimationBinding*>(header->GetClass(bindings.GetData(masterBuffer)[id].GetData(masterBuffer))); };
-	const hkaBoneAttachment *GetAttachment(IhkPackFile *header, char *masterBuffer, int id) const { return dynamic_cast<const hkaBoneAttachment*>(header->GetClass(attachments.GetData(masterBuffer)[id].GetData(masterBuffer))); };
-	const hkaMeshBinding *GetSkin(IhkPackFile *header, char *masterBuffer, int id) const { return dynamic_cast<const hkaMeshBinding*>(header->GetClass(skins.GetData(masterBuffer)[id].GetData(masterBuffer))); };
+	const hkaSkeleton *GetSkeleton(IhkPackFile *header, char *masterBuffer, int id) const 
+	{ return dynamic_cast<const hkaSkeleton*>(header->GetClass(this->skeletons.GetData(masterBuffer)[id].GetData(masterBuffer))); };
+	const hkaAnimation *GetAnimation(IhkPackFile *header, char *masterBuffer, int id) const 
+	{ return dynamic_cast<const hkaAnimation*>(header->GetClass(this->animations.GetData(masterBuffer)[id].GetData(masterBuffer))); };
+	const hkaAnimationBinding *GetBinding(IhkPackFile *header, char *masterBuffer, int id) const 
+	{ return dynamic_cast<const hkaAnimationBinding*>(header->GetClass(this->bindings.GetData(masterBuffer)[id].GetData(masterBuffer))); };
+	const hkaBoneAttachment *GetAttachment(IhkPackFile *header, char *masterBuffer, int id) const 
+	{ return dynamic_cast<const hkaBoneAttachment*>(header->GetClass(this->attachments.GetData(masterBuffer)[id].GetData(masterBuffer))); };
+	const hkaMeshBinding *GetSkin(IhkPackFile *header, char *masterBuffer, int id) const 
+	{ return dynamic_cast<const hkaMeshBinding*>(header->GetClass(this->skins.GetData(masterBuffer)[id].GetData(masterBuffer))); };
 
 	void SwapEndian()
 	{

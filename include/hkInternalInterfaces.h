@@ -103,6 +103,11 @@ struct hkaDeltaCompressedAnimationInternalInterface : virtual hkaAnimationIntern
 	//void ToXML(XMLHandle hdl) const;
 };
 
+struct hkaWaveletCompressedAnimationInternalInterface : virtual hkaAnimationInternalInterface
+{
+	//void ToXML(XMLHandle hdl) const;
+};
+
 struct hkaSplineCompressedAnimationInternalInterface : virtual hkaAnimationInternalInterface
 {
 	virtual char *GetData() const = 0;

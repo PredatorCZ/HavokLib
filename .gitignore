@@ -35,5 +35,9 @@
 *.bat
 *hkaWaveletDecompressor*
 *.vs/*
-*/bin/rc/*
+*/[Bb]in/rc/*
 *.ilk
+.vscode/*
+*/build/*
+build/*
+*/.vscode/settings.json

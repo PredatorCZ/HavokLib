@@ -203,14 +203,14 @@ static const char *boneNames[] =
 	"AllosaurRLegPlatform",
 };
 
-void TestAllosaurSkeleton(const std::wstring testingPath)
+void TestAllosaurSkeleton(const TSTRING testingPath)
 {
 	for (auto &v : versions)
 		for (auto &t : compiledFlags)
 		{
-			std::wstring fleName = testingPath;
+			TSTRING fleName = testingPath;
 			fleName.append(v);
-			fleName.append(L"allosaur");
+			fleName.append(_T("allosaur"));
 			fleName.append(t);
 
 			printline("testing: ", << fleName);

@@ -19,6 +19,12 @@
 #include "hkInternalInterfaces.h"
 #include "hkObjectBase.h"
 
+template<template<class C>class _ipointer> struct hkxEnvironmentVariable_t
+{
+	_ipointer<const char> name;
+	_ipointer<const char> value;
+};
+
 template<class C> struct hkxEnvironment_t : hkxEnvironmentInternalInterface
 {
 	C *Data;
@@ -34,17 +40,21 @@ template<
 	template<template<class C>class __ipointer> class _parent
 >struct hkxEnvironment_t_shared : _parent<_ipointer>
 {
-	ES_FORCEINLINE const int GetNumVars() const { return variables.count; }
-	ES_FORCEINLINE hkxEnvironmentVariable GetVar(char *masterBuffer, int id) const { return variables.GetData(masterBuffer)[id]; }
+	ES_FORCEINLINE const int GetNumVars() const { return this->variables.count; }
+	ES_FORCEINLINE hkxEnvironmentVariable GetVar(char *masterBuffer, int id) const 
+	{ 
+		hkxEnvironmentVariable_t<_ipointer> tmpVal = this->variables.GetData(masterBuffer)[id];
+		return {tmpVal.name.GetData(masterBuffer), tmpVal.value.GetData(masterBuffer)};		
+	}
 	ES_FORCEINLINE void SwapEndian()
 	{
-		FByteswapper(variables.count);
+		FByteswapper(this->variables.count);
 	}
 };
 
 template<template<class C>class _ipointer>struct hkxEnvironment550_t_sharedData
 {
-	hkArray<hkxEnvironmentVariable, _ipointer> variables;
+	hkArray<hkxEnvironmentVariable_t<_ipointer>, _ipointer> variables;
 };
 
 template<template<class C>class _ipointer>using hkxEnvironment550_t = hkxEnvironment_t_shared<_ipointer, hkxEnvironment550_t_sharedData>;
@@ -55,7 +65,7 @@ template<template<class C>class _ipointer>struct hkxEnvironment660_rp_t : hkxEnv
 
 template<template<class C>class _ipointer>struct hkxEnvironment710_t_sharedData : hkReferenceObject<_ipointer>
 {
-	hkArray<hkxEnvironmentVariable, _ipointer> variables;
+	hkArray<hkxEnvironmentVariable_t<_ipointer>, _ipointer> variables;
 };
 
 template<template<class C>class _ipointer>using hkxEnvironment710_t = hkxEnvironment_t_shared<_ipointer, hkxEnvironment710_t_sharedData>;

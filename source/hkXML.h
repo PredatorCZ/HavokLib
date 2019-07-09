@@ -48,7 +48,7 @@ ES_INLINE void ExportReflectedClass(C &input, XMLnode &parent)
 	for (int t = 0; t < refl.GetNumReflectedValues(); t++)
 	{
 		Reflector::KVPair pair = refl.GetReflectedPair(t);
-		XMLnode &nameNode = parent.append_child(_hkParam);
+		XMLnode nameNode = parent.append_child(_hkParam);
 		nameNode.append_attribute(_hkName).set_value(pair.name);
 		nameNode.append_buffer(pair.value.c_str(), pair.value.size());
 	}

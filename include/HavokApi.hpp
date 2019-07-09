@@ -121,7 +121,7 @@ struct IhkVirtualClass
 	virtual ~IhkVirtualClass() {}
 };
 
-__declspec(align(16))struct hkQTransform
+struct alignas(16) hkQTransform
 {
 	Vector4 position;
 	Vector4 rotation;
@@ -182,14 +182,14 @@ struct hkaSkeleton : IhkVirtualClass
 	operator const char *() const { return GetSkeletonName(); }
 	hkFullBone GetFullBone(int id) const { return hkFullBone{ GetBoneName(id), GetBoneParentID(id), GetBoneTM(id) }; }
 
-	typedef hkIterProxy<hkaSkeleton, &GetNumFloatSlots, const char *, &GetFloatSlot> iteratorFloatSlots;
-	typedef hkIterProxy<hkaSkeleton, &GetNumLocalFrames, const hkLocalFrameOnBone, &GetLocalFrame> iteratorLocalFrames;
-	typedef hkIterProxy<hkaSkeleton, &GetNumPartitions, const hkaPartition, &GetPartition> iteratorPartitions;
-	typedef hkIterProxy<hkaSkeleton, &GetNumReferenceFloats, const float, &GetReferenceFloat> iteratorReferenceFloat;
-	typedef hkIterProxy<hkaSkeleton, &GetNumBones, const char *, &GetBoneName> iteratorBoneNames;
-	typedef hkIterProxy<hkaSkeleton, &GetNumBones, const hkQTransform *, &GetBoneTM> iteratorBoneTMs;
-	typedef hkIterProxy<hkaSkeleton, &GetNumBones, const short, &GetBoneParentID> iteratorBoneParentIDs;
-	typedef hkIterProxy<hkaSkeleton, &GetNumBones, hkFullBone, &GetFullBone> iteratorFullBones;
+	typedef hkIterProxy<hkaSkeleton, &hkaSkeleton::GetNumFloatSlots, const char *, &hkaSkeleton::GetFloatSlot> iteratorFloatSlots;
+	typedef hkIterProxy<hkaSkeleton, &hkaSkeleton::GetNumLocalFrames, const hkLocalFrameOnBone, &hkaSkeleton::GetLocalFrame> iteratorLocalFrames;
+	typedef hkIterProxy<hkaSkeleton, &hkaSkeleton::GetNumPartitions, const hkaPartition, &hkaSkeleton::GetPartition> iteratorPartitions;
+	typedef hkIterProxy<hkaSkeleton, &hkaSkeleton::GetNumReferenceFloats, const float, &hkaSkeleton::GetReferenceFloat> iteratorReferenceFloat;
+	typedef hkIterProxy<hkaSkeleton, &hkaSkeleton::GetNumBones, const char *, &hkaSkeleton::GetBoneName> iteratorBoneNames;
+	typedef hkIterProxy<hkaSkeleton, &hkaSkeleton::GetNumBones, const hkQTransform *, &hkaSkeleton::GetBoneTM> iteratorBoneTMs;
+	typedef hkIterProxy<hkaSkeleton, &hkaSkeleton::GetNumBones, const short, &hkaSkeleton::GetBoneParentID> iteratorBoneParentIDs;
+	typedef hkIterProxy<hkaSkeleton, &hkaSkeleton::GetNumBones, hkFullBone, &hkaSkeleton::GetFullBone> iteratorFullBones;
 
 	const iteratorFloatSlots FloatSlots() const { return iteratorFloatSlots(this); }
 	const iteratorLocalFrames LocalFrames() const { return iteratorLocalFrames(this); }
@@ -222,7 +222,8 @@ struct hkRootLevelContainer : IhkVirtualClass
 	virtual const int GetNumVariants() const = 0;
 	virtual const hkNamedVariant GetVariant(int id) const = 0;
 
-	typedef hkInter<hkRootLevelContainer, &GetNumVariants, const hkNamedVariant, &GetVariant> interatorVariant;
+	typedef hkInter<hkRootLevelContainer, &hkRootLevelContainer::GetNumVariants, 
+		const hkNamedVariant, &hkRootLevelContainer::GetVariant> interatorVariant;
 
 	const interatorVariant begin() const { return interatorVariant(this, 0); }
 	const interatorVariant end() const { return interatorVariant(this); }
@@ -244,11 +245,16 @@ struct hkaAnimationContainer : IhkVirtualClass
 	virtual const int GetNumSkins() const = 0;
 	virtual const hkaMeshBinding *GetSkin(int id) const = 0;
 
-	typedef hkIterProxy<hkaAnimationContainer, &GetNumSkeletons, const hkaSkeleton *, &GetSkeleton> iteratorSkeletons;
-	typedef hkIterProxy<hkaAnimationContainer, &GetNumAnimations, const hkaAnimation *, &GetAnimation> iteratorAnimations;
-	typedef hkIterProxy<hkaAnimationContainer, &GetNumBindings, const hkaAnimationBinding *, &GetBinding> iteratorBindings;
-	typedef hkIterProxy<hkaAnimationContainer, &GetNumAttachments, const hkaBoneAttachment *, &GetAttachment> iteratorAttachments;
-	typedef hkIterProxy<hkaAnimationContainer, &GetNumSkins, const hkaMeshBinding *, &GetSkin> iteratorMeshBinds;
+	typedef hkIterProxy<hkaAnimationContainer, &hkaAnimationContainer::GetNumSkeletons, 
+		const hkaSkeleton *, &hkaAnimationContainer::GetSkeleton> iteratorSkeletons;
+	typedef hkIterProxy<hkaAnimationContainer, &hkaAnimationContainer::GetNumAnimations, 
+		const hkaAnimation *, &hkaAnimationContainer::GetAnimation> iteratorAnimations;
+	typedef hkIterProxy<hkaAnimationContainer, &hkaAnimationContainer::GetNumBindings, 
+		const hkaAnimationBinding *, &hkaAnimationContainer::GetBinding> iteratorBindings;
+	typedef hkIterProxy<hkaAnimationContainer, &hkaAnimationContainer::GetNumAttachments, 
+		const hkaBoneAttachment *, &hkaAnimationContainer::GetAttachment> iteratorAttachments;
+	typedef hkIterProxy<hkaAnimationContainer, &hkaAnimationContainer::GetNumSkins, 
+		const hkaMeshBinding *, &hkaAnimationContainer::GetSkin> iteratorMeshBinds;
 
 	const iteratorSkeletons Skeletons() const { return iteratorSkeletons(this); }
 	const iteratorAnimations Animations() const { return iteratorAnimations(this); }
@@ -274,9 +280,12 @@ struct hkaAnimationBinding : IhkVirtualClass
 	virtual const int GetNumPartitionIndices() const = 0;
 	virtual const short GetPartitionIndex(int id) const = 0;
 
-	typedef hkIterProxy<hkaAnimationBinding, &GetNumTransformTrackToBoneIndices, const short, &GetTransformTrackToBoneIndex> iteratorTransformTrackToBoneIndices;
-	typedef hkIterProxy<hkaAnimationBinding, &GetNumFloatTrackToFloatSlotIndices, const short, &GetFloatTrackToFloatSlotIndex> iteratorFloatTrackToFloatSlotIndices;
-	typedef hkIterProxy<hkaAnimationBinding, &GetNumPartitionIndices, const short, &GetPartitionIndex> iteratorNumPartitionIndices;
+	typedef hkIterProxy<hkaAnimationBinding, &hkaAnimationBinding::GetNumTransformTrackToBoneIndices, 
+		const short, &hkaAnimationBinding::GetTransformTrackToBoneIndex> iteratorTransformTrackToBoneIndices;
+	typedef hkIterProxy<hkaAnimationBinding, &hkaAnimationBinding::GetNumFloatTrackToFloatSlotIndices, 
+		const short, &hkaAnimationBinding::GetFloatTrackToFloatSlotIndex> iteratorFloatTrackToFloatSlotIndices;
+	typedef hkIterProxy<hkaAnimationBinding, &hkaAnimationBinding::GetNumPartitionIndices, 
+		const short, &hkaAnimationBinding::GetPartitionIndex> iteratorNumPartitionIndices;
 
 	const iteratorTransformTrackToBoneIndices TransformTrackToBoneIndices() const { return iteratorTransformTrackToBoneIndices(this); }
 	const iteratorFloatTrackToFloatSlotIndices FloatTrackToFloatSlotIndices() const { return iteratorFloatTrackToFloatSlotIndices(this); }
@@ -308,7 +317,7 @@ struct hkaAnnotationTrack : IhkVirtualClass
 	virtual const int GetNumAnnotations() const = 0;
 	virtual Annotation GetAnnotation(int id) const = 0;
 
-	typedef hkInter<hkaAnnotationTrack, &GetNumAnnotations, Annotation, &GetAnnotation> interatorAnnotation;
+	typedef hkInter<hkaAnnotationTrack, &hkaAnnotationTrack::GetNumAnnotations, Annotation, &hkaAnnotationTrack::GetAnnotation> interatorAnnotation;
 
 	const interatorAnnotation begin() const { return interatorAnnotation(this, 0); }
 	const interatorAnnotation end() const { return interatorAnnotation(this); }
@@ -414,7 +423,7 @@ public:
 		delta = frameFull >= GetDuration() * frameRate ? 0.0f : frameFull - frame;
 	}
 
-	typedef hkIterProxy<hkaAnimation, &GetNumAnnotations, hkaAnnotationTrackPtr, &GetAnnotation> interatorAnnotation;
+	typedef hkIterProxy<hkaAnimation, &hkaAnimation::GetNumAnnotations, hkaAnnotationTrackPtr, &hkaAnimation::GetAnnotation> interatorAnnotation;
 
 	const interatorAnnotation Annotations() const { return interatorAnnotation(this); }
 };
@@ -432,7 +441,7 @@ struct hkxEnvironment : IhkVirtualClass
 	virtual const int GetNumVars() const = 0;
 	virtual hkxEnvironmentVariable GetVar(int id) const = 0;
 
-	typedef hkInter<hkxEnvironment, &GetNumVars, hkxEnvironmentVariable, &GetVar> interator;
+	typedef hkInter<hkxEnvironment, &hkxEnvironment::GetNumVars, hkxEnvironmentVariable, &hkxEnvironment::GetVar> interator;
 
 	const interator begin() const { return interator(this, 0); }
 	const interator end() const { return interator(this); }

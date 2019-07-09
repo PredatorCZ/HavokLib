@@ -25,7 +25,7 @@ template<class C> struct hkaInterleavedUncompressedAnimation_t : hkaInterleavedA
 	typedef C value_type;
 	typedef hkaSkeletalAnimation_t<typename C::parentClass> parent;
 	hkClassConstructor(hkaInterleavedUncompressedAnimation_t);
-	void SwapEndian() { hkaSkeletalAnimation_t<typename C::parentClass>::SwapEndian(); static_cast<value_type *>(Data)->SwapEndian(masterBuffer); }
+	void SwapEndian() { hkaSkeletalAnimation_t<typename C::parentClass>::SwapEndian(); static_cast<value_type *>(this->Data)->SwapEndian(masterBuffer); }
 
 	void GetTrack(int trackID, int frame, float delta, TrackType type, Vector4 &out) const 
 	{
@@ -49,11 +49,11 @@ template<class C> struct hkaInterleavedUncompressedAnimation_t : hkaInterleavedA
 
 	void GetTransform(int trackID, int frame, float delta, hkQTransform &out) const { out = *GetTransform(frame * GetNumOfTransformTracks() + trackID); }
 
-	int GetNumTransforms() const { return static_cast<value_type *>(Data)->NumTransforms(); }
-	int GetNumFloats() const { return static_cast<value_type *>(Data)->NumFloats(); }
+	int GetNumTransforms() const { return static_cast<value_type *>(this->Data)->NumTransforms(); }
+	int GetNumFloats() const { return static_cast<value_type *>(this->Data)->NumFloats(); }
 
-	const hkQTransform *GetTransform(int id) const { return static_cast<value_type *>(Data)->GetTransform(masterBuffer, id); }
-	float GetFloat(int id) const { return static_cast<value_type *>(Data)->GetFloat(masterBuffer, id); }
+	const hkQTransform *GetTransform(int id) const { return static_cast<value_type *>(this->Data)->GetTransform(masterBuffer, id); }
+	float GetFloat(int id) const { return static_cast<value_type *>(this->Data)->GetFloat(masterBuffer, id); }
 };
 
 template<class C> using hkaInterleavedSkeletalAnimation_t = hkaInterleavedUncompressedAnimation_t<C>;
@@ -63,18 +63,20 @@ template<
 	template<template<class C>class __ipointer> class _parent
 >struct hkaInterleavedAnimation_t_shared : _parent<_ipointer>
 {
-	enablePtrPair(transforms) NumTransforms() const { return numTransforms; }
-	enablehkArray(transforms) NumTransforms() const { return transforms.count; }
-	enablePtrPairRef(transforms) NumTransforms() { return numTransforms; }
-	enablehkArrayRef(transforms) NumTransforms() { return transforms.count; }
+	typedef _parent<_ipointer> parent_class;
+	
+	enablePtrPair(transforms) NumTransforms() const { return this->numTransforms; }
+	enablehkArray(transforms) NumTransforms() const { return this->transforms.count; }
+	enablePtrPairRef(transforms) NumTransforms() { return this->numTransforms; }
+	enablehkArrayRef(transforms) NumTransforms() { return this->transforms.count; }
 
-	enablePtrPair(floats) NumFloats() const { return numFloats; }
-	enablehkArray(floats) NumFloats() const { return floats.count; }
-	enablePtrPairRef(floats) NumFloats() { return numFloats; }
-	enablehkArrayRef(floats) NumFloats() { return floats.count; }
+	enablePtrPair(floats) NumFloats() const { return this->numFloats; }
+	enablehkArray(floats) NumFloats() const { return this->floats.count; }
+	enablePtrPairRef(floats) NumFloats() { return this->numFloats; }
+	enablehkArrayRef(floats) NumFloats() { return this->floats.count; }
 
-	ES_FORCEINLINE const hkQTransform *GetTransform(char *masterBuffer, int id) const { return &transforms.GetData(masterBuffer)[id]; }
-	ES_FORCEINLINE float GetFloat(char *masterBuffer, int id) const { return floats.GetData(masterBuffer)[id]; }
+	ES_FORCEINLINE const hkQTransform *GetTransform(char *masterBuffer, int id) const { return &this->transforms.GetData(masterBuffer)[id]; }
+	ES_FORCEINLINE float GetFloat(char *masterBuffer, int id) const { return this->floats.GetData(masterBuffer)[id]; }
 
 	ES_FORCEINLINE void SwapEndian(char *masterBuffer)
 	{
@@ -85,13 +87,13 @@ template<
 
 		for (int i = 0; i < numTransforms; i++)
 		{
-			transforms.GetData(masterBuffer)[i].position.SwapEndian();
-			transforms.GetData(masterBuffer)[i].rotation.SwapEndian();
-			transforms.GetData(masterBuffer)[i].scale.SwapEndian();
+			this->transforms.GetData(masterBuffer)[i].position.SwapEndian();
+			this->transforms.GetData(masterBuffer)[i].rotation.SwapEndian();
+			this->transforms.GetData(masterBuffer)[i].scale.SwapEndian();
 		}
 
 		for (int i = 0; i < numFloats; i++)
-			FByteswapper(floats.GetData(masterBuffer)[i]);
+			FByteswapper(this->floats.GetData(masterBuffer)[i]);
 	}
 };
 

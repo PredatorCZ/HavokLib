@@ -100,20 +100,20 @@ struct xmlToolsetProp
 
 static const std::map<hkXMLToolsets, xmlToolsetProp> xmlToolsetProps =
 {
-	{HK550, {{}, "5", "Havok-5.5.0-r1"}},
-	{HK660, {xmlToolsetProp::TopLevelObject, "7", "Havok-6.6.0-r1"}},
-	{HK710, {xmlToolsetProp::TopLevelObject, "7", "Havok-7.1.0-r1"}},
-	{HK2010_2, {xmlToolsetProp::TopLevelObject, "8", "hk_2010.2.0-r1"}},
-	{HK2011, {xmlToolsetProp::TopLevelObject, "9", "hk_2011.1.0-r1"}},
-	{HK2011_2, {xmlToolsetProp::TopLevelObject, "9", "hk_2011.2.0-r1"}},
-	{HK2012_2, {xmlToolsetProp::TopLevelObject, "9", "hk_2012.2.0-r1"}},
-	{HK2013, {xmlToolsetProp::TopLevelObject, "9", "hk_2013.1.0-r1"}},
-	{HK2014, {EnumFlags<uchar, xmlToolsetProp::xmlToolsetPropFlags>(xmlToolsetProp::TopLevelObject, xmlToolsetProp::MaxPredicate), "11", "hk_2014.1.0-r1"}},
+	{HK550, xmlToolsetProp{{}, "5", "Havok-5.5.0-r1"}},
+	{HK660, xmlToolsetProp{xmlToolsetProp::TopLevelObject, "7", "Havok-6.6.0-r1"}},
+	{HK710, xmlToolsetProp{xmlToolsetProp::TopLevelObject, "7", "Havok-7.1.0-r1"}},
+	{HK2010_2, xmlToolsetProp{xmlToolsetProp::TopLevelObject, "8", "hk_2010.2.0-r1"}},
+	{HK2011, xmlToolsetProp{xmlToolsetProp::TopLevelObject, "9", "hk_2011.1.0-r1"}},
+	{HK2011_2, xmlToolsetProp{xmlToolsetProp::TopLevelObject, "9", "hk_2011.2.0-r1"}},
+	{HK2012_2, xmlToolsetProp{xmlToolsetProp::TopLevelObject, "9", "hk_2012.2.0-r1"}},
+	{HK2013, xmlToolsetProp{xmlToolsetProp::TopLevelObject, "9", "hk_2013.1.0-r1"}},
+	{HK2014, xmlToolsetProp{EnumFlags<uchar, xmlToolsetProp::xmlToolsetPropFlags>(xmlToolsetProp::TopLevelObject, xmlToolsetProp::MaxPredicate), "11", "hk_2014.1.0-r1"}},
 };
 
 void IhkPackFile::_GenerateXML(pugi::xml_document &doc, hkXMLToolsets toolsetVersion)
 {
-	pugi::xml_node &master = doc.append_child("hkpackfile");
+	pugi::xml_node master = doc.append_child("hkpackfile");
 
 	const xmlToolsetProp &propRef = xmlToolsetProps.at(toolsetVersion);
 
@@ -126,7 +126,7 @@ void IhkPackFile::_GenerateXML(pugi::xml_document &doc, hkXMLToolsets toolsetVer
 		master.append_attribute("predicates");
 	}
 
-	pugi::xml_node &dataSection = master.append_child("hksection");
+	pugi::xml_node dataSection = master.append_child("hksection");
 	dataSection.append_attribute(_hkName).set_value("__data__");
 
 	VirtualClasses allClasses = GetAllClasses();
@@ -134,8 +134,8 @@ void IhkPackFile::_GenerateXML(pugi::xml_document &doc, hkXMLToolsets toolsetVer
 	for (auto &c : allClasses)
 	{
 		hkVirtualClass *cls = dynamic_cast<hkVirtualClass *>(c);
-		pugi::xml_node &classNode = dataSection.append_child(_hkObject);
-		pugi::xml_attribute &addrAttr = classNode.append_attribute(_hkName);
+		pugi::xml_node classNode = dataSection.append_child(_hkObject);
+		pugi::xml_attribute addrAttr = classNode.append_attribute(_hkName);
 
 		std::string _buffer;
 		PointerToString(cls->GetPointer(), _buffer);
