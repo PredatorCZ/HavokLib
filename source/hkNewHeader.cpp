@@ -307,8 +307,11 @@ int chPTCHRead(BinReader * rd, hkChunk *holder, hkxNewHeader *root)
 			cls->Process();
 		}
 	}
-
+#ifdef _MSC_VER
 	root->classEntries.~vector();
+#else
+	root->classEntries.clear();
+#endif
 
 	return 0;
 }

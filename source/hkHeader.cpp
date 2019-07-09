@@ -224,9 +224,15 @@ int hkxSectionHeader::LinkBuffer()
 			}
 		}
 
+#ifdef _MSC_VER
 	localFixups.~vector();
 	globalFixups.~vector();
 	virtualFixups.~vector();
+#else
+	localFixups.clear();
+	globalFixups.clear();
+	virtualFixups.clear();
+#endif
 
 	return 0;
 }
@@ -264,10 +270,15 @@ int hkxSectionHeader::LinkBuffer86()
 				cls->Process();
 			}
 		}
-
+#ifdef _MSC_VER
 	localFixups.~vector();
 	globalFixups.~vector();
 	virtualFixups.~vector();
+#else
+	localFixups.clear();
+	globalFixups.clear();
+	virtualFixups.clear();
+#endif
 
 	return 0;
 }
