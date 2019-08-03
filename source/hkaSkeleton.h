@@ -27,8 +27,20 @@ template<class C> struct hkaSkeleton_t : hkaSkeletonInternalInterface
 
 	const int GetNumBones() const { return Data->GetNumBones(); }
 	const char *GetBoneName(int id) const { return Data->GetBoneName(masterBuffer, id); }
-	const hkQTransform *GetBoneTM(int id) const { return Data->GetBoneTM(masterBuffer, id); }
-	const short GetBoneParentID(int id) const { return Data->GetBoneParentID(masterBuffer, id); }
+	const hkQTransform *GetBoneTM(int id) const 
+	{ 
+		if (id < Data->GetNumTransforms())
+			return Data->GetBoneTM(masterBuffer, id); 
+
+		return nullptr;
+	}
+	const short GetBoneParentID(int id) const 
+	{
+		if (id < Data->GetNumParentIndices())
+			return Data->GetBoneParentID(masterBuffer, id); 
+
+		return -1;
+	}
 
 	const char *GetSkeletonName() const { return Data->GetSkeletonName(masterBuffer); };
 	const int GetNumFloatSlots() const { return Data->GetNumFloatSlots(); };
@@ -85,6 +97,15 @@ template<
 	enablehkArray(bones) GetNumBones() const { return this->bones.count; }
 	enablePtrPairRef(bones) GetNumBones() { return this->numBones; }
 	enablehkArrayRef(bones) GetNumBones() { return this->bones.count; }
+	enablePtrPair(bones) GetNumParentIndices() const { return this->numParentIndicies; }
+	enablehkArray(bones) GetNumParentIndices() const { return this->parentIndicies.count; }
+	enablePtrPairRef(bones) GetNumParentIndices() { return this->numParentIndicies; }
+	enablehkArrayRef(bones) GetNumParentIndices() { return this->parentIndicies.count; }
+
+	enablePtrPair(bones) GetNumTransforms() const { return this->numTransforms; }
+	enablehkArray(bones) GetNumTransforms() const { return this->transforms.count; }
+	enablePtrPairRef(bones) GetNumTransforms() { return this->numTransforms; }
+	enablehkArrayRef(bones) GetNumTransforms() { return this->transforms.count; }
 
 	disabledFunction(noLocalFrames, const int) ES_FORCEINLINE GetNumLocalFrames() const { return 0; };
 	enabledFunction(noLocalFrames, const int) ES_FORCEINLINE GetNumLocalFrames() const { return _GetNumLocalFrames(); };
@@ -107,7 +128,7 @@ template<
 	enablehkArrayArg(bones, const char*) GetBoneName(char *masterBuffer, int id) const 
 	{ return this->bones.GetData(masterBuffer)[id].name.GetData(masterBuffer); }
 
-	ES_FORCEINLINE const hkQTransform *GetBoneTM(char *masterBuffer, int id) const { return &this->tranforms.GetData(masterBuffer)[id]; }
+	ES_FORCEINLINE const hkQTransform *GetBoneTM(char *masterBuffer, int id) const { return &this->transforms.GetData(masterBuffer)[id]; }
 	ES_FORCEINLINE const short GetBoneParentID(char *masterBuffer, int id) const { return this->parentIndicies.GetData(masterBuffer)[id]; }
 	ES_FORCEINLINE const char *GetSkeletonName(char *masterBuffer) const { return this->Name.GetData(masterBuffer); };
 	ES_FORCEINLINE const char *GetFloatSlot(char *masterBuffer, int id) const { return this->floatSlots.GetData(masterBuffer)[id].GetData(masterBuffer); };
@@ -179,6 +200,9 @@ template<
 	ES_FORCEINLINE void SwapEndian(char *masterBuffer)
 	{
 		FByteswapper(GetNumBones());	
+		FByteswapper(GetNumParentIndices());
+		FByteswapper(GetNumTransforms());
+
 		const int numBones = GetNumBones();
 
 		for (int i = 0; i < numBones; i++)
@@ -186,9 +210,9 @@ template<
 
 		for (int i = 0; i < numBones; i++)
 		{
-			this->tranforms.GetData(masterBuffer)[i].position.SwapEndian();
-			this->tranforms.GetData(masterBuffer)[i].rotation.SwapEndian();
-			this->tranforms.GetData(masterBuffer)[i].scale.SwapEndian();
+			this->transforms.GetData(masterBuffer)[i].position.SwapEndian();
+			this->transforms.GetData(masterBuffer)[i].rotation.SwapEndian();
+			this->transforms.GetData(masterBuffer)[i].scale.SwapEndian();
 		}
 		
 		SwapLocalFrames(masterBuffer);
@@ -204,8 +228,8 @@ template<template<class C>class _ipointer>struct hkaSkeleton550_t_sharedData
 	int numParentIndicies;
 	_ipointer<_ipointer<hkaBone_t<_ipointer>>> bones;
 	int numBones;
-	_ipointer<hkQTransform> tranforms;
-	int numTranforms;
+	_ipointer<hkQTransform> transforms;
+	int numTransforms;
 	_ipointer<_ipointer<char>> floatSlots;
 	int numFloatSlots;
 	
@@ -224,8 +248,8 @@ template<template<class C>class _ipointer>struct hkaSkeleton660_t_sharedData
 	int numParentIndicies;
 	_ipointer<_ipointer<hkaBone_t<_ipointer>>> bones;
 	int numBones;
-	_ipointer<hkQTransform> tranforms;
-	int numTranforms;
+	_ipointer<hkQTransform> transforms;
+	int numTransforms;
 	_ipointer<_ipointer<char>> floatSlots;
 	int numFloatSlots;
 	_ipointer<hkLocalFrameOnBone_t<_ipointer>> localFrames;
@@ -246,7 +270,7 @@ template<template<class C>class _ipointer>struct hkaSkeleton710_t_sharedData : h
 	_ipointer<char> Name;
 	hkArray<short, _ipointer> parentIndicies;
 	hkArray<hkaBone_t<_ipointer>, _ipointer> bones;
-	hkArray<hkQTransform, _ipointer> tranforms;
+	hkArray<hkQTransform, _ipointer> transforms;
 	hkArray<_ipointer<char>, _ipointer> floatSlots;
 	hkArray<hkLocalFrameOnBone_t<_ipointer>, _ipointer> localFrames;
 
@@ -262,7 +286,7 @@ template<template<class C>class _ipointer>struct hkaSkeleton2010_t_sharedData : 
 	_ipointer<char> Name;
 	hkArray<short, _ipointer> parentIndicies;
 	hkArray<hkaBone_t<_ipointer>, _ipointer> bones;
-	hkArray<hkQTransform, _ipointer> tranforms;
+	hkArray<hkQTransform, _ipointer> transforms;
 	hkArray<float, _ipointer> referenceFloats;
 	hkArray<_ipointer<char>, _ipointer> floatSlots;
 	hkArray<hkLocalFrameOnBone_t<_ipointer>, _ipointer> localFrames;
@@ -278,7 +302,7 @@ template<template<class C>class _ipointer>struct hkaSkeleton2011_t_sharedData : 
 	_ipointer<char> Name;
 	hkArray<short, _ipointer> parentIndicies;
 	hkArray<hkaBone_t<_ipointer>, _ipointer> bones;
-	hkArray<hkQTransform, _ipointer> tranforms;
+	hkArray<hkQTransform, _ipointer> transforms;
 	hkArray<float, _ipointer> referenceFloats;
 	hkArray<_ipointer<char>, _ipointer> floatSlots;
 	hkArray<hkLocalFrameOnBone2_t<_ipointer>, _ipointer> localFrames;
@@ -294,7 +318,7 @@ template<template<class C>class _ipointer>struct hkaSkeleton2012_t_sharedData : 
 	_ipointer<char> Name;
 	hkArray<short, _ipointer> parentIndicies;
 	hkArray<hkaBone_t<_ipointer>, _ipointer> bones;
-	hkArray<hkQTransform, _ipointer> tranforms;
+	hkArray<hkQTransform, _ipointer> transforms;
 	hkArray<float, _ipointer> referenceFloats;
 	hkArray<_ipointer<char>, _ipointer> floatSlots;
 	hkArray<hkLocalFrameOnBone2_t<_ipointer>, _ipointer> localFrames;
@@ -316,7 +340,7 @@ template<template<class C>class _ipointer>struct hkaSkeleton2016_t_sharedData : 
 	_ipointer<char> Name;
 	hkArray<short, _ipointer> parentIndicies;
 	hkArray<hkaBone_t<_ipointer>, _ipointer> bones;
-	hkArray<hkQTransform, _ipointer> tranforms;
+	hkArray<hkQTransform, _ipointer> transforms;
 	hkArray<float, _ipointer> referenceFloats;
 	hkArray<_ipointer<char>, _ipointer> floatSlots;
 	hkArray<hkLocalFrameOnBone2_t<_ipointer>, _ipointer> localFrames;
