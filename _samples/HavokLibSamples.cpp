@@ -49,7 +49,7 @@ static const TCHAR *versions_delta[] =
 	_T("710/"),
 	_T("2010_1/"),
 };
-
+#include "BaseTesting.h"
 #include "SkeletonTesting.h"
 #include "InterleavedTesting.h"
 
@@ -78,6 +78,7 @@ int _tmain(const int argc, const TCHAR *argv[])
 
 	TSTRING testingPath = info.GetPath() + _T("rc/");
 
+	TestAllosaurVariables(testingPath);
 	TestAllosaurSkeleton(testingPath);
 	TestAllosaurInterleaved(testingPath);
 	TestAllosaurDelta(testingPath);
