@@ -146,9 +146,6 @@ int hkxSectionHeader::LoadBuffer(BinReader *rd) {
 
   rd->Seek(absoluteDataStart);
 
-  const bool containsFixups =
-      localFixups.size() + globalFixups.size() + virtualFixups.size() > 0;
-
   sectionBufferSize = localFixupsOffset;
   sectionBuffer = static_cast<char *>(malloc(sectionBufferSize));
   memset(sectionBuffer, 0, sectionBufferSize);
@@ -158,7 +155,7 @@ int hkxSectionHeader::LoadBuffer(BinReader *rd) {
 }
 
 ES_INLINE std::string _hkGenerateClassname(hkxHeader *header,
-                                           std::string classname) {
+                                           const std::string &classname) {
   std::string compiledClassname =
       classname + "_t<" + classname + header->contentsVersionStripped;
 

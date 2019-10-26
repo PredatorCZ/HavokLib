@@ -17,10 +17,12 @@
 
 #pragma once
 #include "datas/VectorsSimd.hpp"
+#include "datas/deleter_hybrid.hpp"
 #include "datas/endian.hpp"
 #include "datas/jenkinshash.hpp"
 #include "datas/reflector.hpp"
 #include <functional>
+#include <memory>
 #include <vector>
 
 class BinReader;
@@ -86,7 +88,7 @@ class hkIterProxy {
   const containerClass *_clsPtr;
 
 public:
-  hkIterProxy(const containerClass *item) : _clsPtr(item) {}
+  explicit hkIterProxy(const containerClass *item) : _clsPtr(item) {}
   const _iter begin() const { return _iter(_clsPtr, 0); }
   const _iter end() const { return _iter(_clsPtr); }
 };
@@ -385,26 +387,9 @@ struct hkaAnnotationTrack : IhkVirtualClass {
   operator const char *() const { return GetName(); }
 };
 
-template <class C> struct _hkHybridPtr {
-  C *ptr;
-  mutable bool created;
+typedef std::unique_ptr<hkaAnnotationTrack, std::deleter_hybrid>
+    hkaAnnotationTrackPtr;
 
-  ES_FORCEINLINE C *get() { return ptr; }
-  _hkHybridPtr(C *in, bool made = true) : ptr(in), created(made) {}
-  _hkHybridPtr() = delete;
-  void operator=(const _hkHybridPtr &ref) = delete;
-  _hkHybridPtr(const _hkHybridPtr &ref) {
-    ptr = ref.ptr;
-    created = ref.created;
-    ref.created = false;
-  }
-  ~_hkHybridPtr() {
-    if (created)
-      delete ptr;
-  }
-};
-
-typedef _hkHybridPtr<hkaAnnotationTrack> hkaAnnotationTrackPtr;
 struct hkaAnimation : IhkVirtualClass {
   DECLARE_HKCLASS(hkaAnimation)
 
@@ -470,6 +455,8 @@ public:
 
     delta = frameFull >= GetDuration() * frameRate ? 0.0f : frameFull - frame;
   }
+
+  hkaAnimation() : numFrames(-1), frameRate(-1) {}
 
   typedef hkIterProxy<hkaAnimation, &hkaAnimation::GetNumAnnotations,
                       hkaAnnotationTrackPtr, &hkaAnimation::GetAnnotation>
