@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2019 Lukas Cone
+    Copyright(C) 2016-2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -23,27 +23,29 @@ template <class C>
 struct hkaAnimationContainer_t : hkaAnimationContainerInternalInterface {
   C *Data;
   hkClassConstructor(hkaAnimationContainer_t<C>);
-  const int GetNumSkeletons() const { return Data->GetNumSkeletons(); };
-  const hkaSkeleton *GetSkeleton(int id) const {
+  size_t GetNumSkeletons() const override { return Data->GetNumSkeletons(); };
+  const hkaSkeleton *GetSkeleton(size_t id) const override {
     return Data->GetSkeleton(header, id);
   };
-  const int GetNumAnimations() const { return Data->GetNumAnimations(); };
-  const hkaAnimation *GetAnimation(int id) const {
+  size_t GetNumAnimations() const override { return Data->GetNumAnimations(); };
+  const hkaAnimation *GetAnimation(size_t id) const override {
     return Data->GetAnimation(header, id);
   };
-  const int GetNumBindings() const { return Data->GetNumBindings(); };
-  const hkaAnimationBinding *GetBinding(int id) const {
+  size_t GetNumBindings() const override { return Data->GetNumBindings(); };
+  const hkaAnimationBinding *GetBinding(size_t id) const override {
     return Data->GetBinding(header, id);
   };
-  const int GetNumAttachments() const { return Data->GetNumAttachments(); };
-  const hkaBoneAttachment *GetAttachment(int id) const {
+  size_t GetNumAttachments() const override {
+    return Data->GetNumAttachments();
+  };
+  const hkaBoneAttachment *GetAttachment(size_t id) const override {
     return Data->GetAttachment(header, id);
   };
-  const int GetNumSkins() const { return Data->GetNumSkins(); };
-  const hkaMeshBinding *GetSkin(int id) const {
+  size_t GetNumSkins() const override { return Data->GetNumSkins(); };
+  const hkaMeshBinding *GetSkin(size_t id) const override {
     return Data->GetSkin(header, id);
   };
-  void SwapEndian() { Data->SwapEndian(); }
+  void SwapEndian() override { Data->SwapEndian(); }
 };
 
 template <template <class C> class _ipointer,
@@ -100,23 +102,23 @@ struct hkaAnimationContainer_t_shared : _parent<_ipointer> {
   enablePtrPairRef(skins) GetNumSkins() { return this->numSkins; }
   enablehkArrayRef(skins) GetNumSkins() { return this->skins.count; }
 
-  const hkaSkeleton *GetSkeleton(IhkPackFile *header, int id) const {
+  const hkaSkeleton *GetSkeleton(IhkPackFile *header, size_t id) const {
     return dynamic_cast<const hkaSkeleton *>(
         header->GetClass(this->skeletons[id]));
   };
-  const hkaAnimation *GetAnimation(IhkPackFile *header, int id) const {
+  const hkaAnimation *GetAnimation(IhkPackFile *header, size_t id) const {
     return dynamic_cast<const hkaAnimation *>(
         header->GetClass(this->animations[id]));
   };
-  const hkaAnimationBinding *GetBinding(IhkPackFile *header, int id) const {
+  const hkaAnimationBinding *GetBinding(IhkPackFile *header, size_t id) const {
     return dynamic_cast<const hkaAnimationBinding *>(
         header->GetClass(this->bindings[id]));
   };
-  const hkaBoneAttachment *GetAttachment(IhkPackFile *header, int id) const {
+  const hkaBoneAttachment *GetAttachment(IhkPackFile *header, size_t id) const {
     return dynamic_cast<const hkaBoneAttachment *>(
         header->GetClass(this->attachments[id]));
   };
-  const hkaMeshBinding *GetSkin(IhkPackFile *header, int id) const {
+  const hkaMeshBinding *GetSkin(IhkPackFile *header, size_t id) const {
     return dynamic_cast<const hkaMeshBinding *>(
         header->GetClass(this->skins[id]));
   };
@@ -133,15 +135,15 @@ struct hkaAnimationContainer_t_shared : _parent<_ipointer> {
 template <template <class C> class _ipointer>
 struct hkaAnimationContainer660_t_sharedData {
   _ipointer<_ipointer<hkaSkeleton>> skeletons;
-  int numSkeletons;
+  uint32 numSkeletons;
   _ipointer<_ipointer<hkaAnimation>> animations;
-  int numAnimations;
+  uint32 numAnimations;
   _ipointer<_ipointer<hkaAnimationBinding>> bindings;
-  int numBindings;
+  uint32 numBindings;
   _ipointer<_ipointer<hkaBoneAttachment>> attachments;
-  int numAttachemts;
+  uint32 numAttachemts;
   _ipointer<_ipointer<hkaMeshBinding>> skins;
-  int numSkins;
+  uint32 numSkins;
 };
 
 template <template <class C> class _ipointer>

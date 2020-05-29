@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2019 Lukas Cone
+    Copyright(C) 2016-2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -15,34 +15,39 @@
     along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
 
-// DO NOT FORMAT!!!
-
-#include "hkaSkeleton.h"
-#include "hkRootLevelContainer.h"
-#include "hkaAnimationContainer.h"
-#include "datas/macroLoop.hpp"
 #include "datas/jenkinshash.hpp"
-#include "hkaDeltaCompressedAnimation.h"
-#include "hkaWaveletCompressedAnimation.h"
-#include "hkaInterleavedAnimation.h"
+#include "datas/macroLoop.hpp"
+#include "hkRootLevelContainer.h"
 #include "hkaAnimationBinding.h"
-#include "hkxEnvironment.h"
+#include "hkaAnimationContainer.h"
+#include "hkaDeltaCompressedAnimation.h"
+#include "hkaInterleavedAnimation.h"
+#include "hkaSkeleton.h"
 #include "hkaSplineCompressedAnimation.h"
+#include "hkaWaveletCompressedAnimation.h"
+#include "hkxEnvironment.h"
+#include "hkaDefaultAnimatedReferenceFrame.h"
 
-#define hkRegisterClass(classname) { classname::HASH, &hkCreateDerivedClass<classname> },
-#define hkRegisterClassID(classname) template<> const JenHash classname::HASH = JenkinsHash(#classname, sizeof(#classname) - 1);
+#include <unordered_map>
 
-#define hkRegisterVersionedClassID(classname, version)\
-hkRegisterClassID(classname##_t<classname##version##_t<hkPointerX64>>);\
-hkRegisterClassID(classname##_t<classname##version##_t<hkPointerX86>>);\
-hkRegisterClassID(classname##_t<classname##version##_rp_t<hkPointerX64>>);\
-hkRegisterClassID(classname##_t<classname##version##_rp_t<hkPointerX86>>);
+#define hkRegisterClass(classname)                                             \
+  {classname::HASH, []() -> hkVirtualClass * { return new classname{}; }},
+#define hkRegisterClassID(classname)                                           \
+  template <> const JenHash classname::HASH = JenkinsHashC(#classname);
+
+#define hkRegisterVersionedClassID(classname, version)                         \
+  hkRegisterClassID(classname##_t<classname##version##_t<esPointerX64>>);      \
+  hkRegisterClassID(classname##_t<classname##version##_t<esPointerX86>>);      \
+  hkRegisterClassID(classname##_t<classname##version##_rp_t<esPointerX64>>);   \
+  hkRegisterClassID(classname##_t<classname##version##_rp_t<esPointerX86>>);
+
+// clang-format off
 
 #define hkRegisterVersionedClass(classname, version)\
-hkRegisterClass(classname##_t<classname##version##_t<hkPointerX64>>)\
-hkRegisterClass(classname##_t<classname##version##_t<hkPointerX86>>)\
-hkRegisterClass(classname##_t<classname##version##_rp_t<hkPointerX64>>)\
-hkRegisterClass(classname##_t<classname##version##_rp_t<hkPointerX86>>)
+hkRegisterClass(classname##_t<classname##version##_t<esPointerX64>>)\
+hkRegisterClass(classname##_t<classname##version##_t<esPointerX86>>)\
+hkRegisterClass(classname##_t<classname##version##_rp_t<esPointerX64>>)\
+hkRegisterClass(classname##_t<classname##version##_rp_t<esPointerX86>>)
 
 #define hkRegisterVersionedClassEval(classname, id, version) hkRegisterVersionedClass(classname, version)
 
@@ -76,6 +81,7 @@ hkRegisterFullClassID(hkaSkeleton)
 hkRegisterFullClassID(hkRootLevelContainer)
 hkRegisterFullClassID(hkaAnimationContainer)
 hkRegisterFullClassID(hkaAnimationBinding)
+
 
 hkRegisterVersionedClassID(hkaDeltaCompressedSkeletalAnimation, 550)
 hkRegisterVersionedClassID(hkaDeltaCompressedAnimation, 660)
@@ -118,31 +124,43 @@ hkRegisterVersionedClassID(hkxEnvironment, 2012)
 hkRegisterVersionedClassID(hkxEnvironment, 2013)
 hkRegisterVersionedClassID(hkxEnvironment, 2014)
 
-template<class C> hkVirtualClass *hkCreateDerivedClass() { return new C{}; }
+hkRegisterVersionedClassID(hkaDefaultAnimatedReferenceFrame, 550)
+hkRegisterVersionedClassID(hkaDefaultAnimatedReferenceFrame, 660)
+hkRegisterVersionedClassID(hkaDefaultAnimatedReferenceFrame, 710)
+hkRegisterVersionedClassID(hkaDefaultAnimatedReferenceFrame, 2010)
+hkRegisterVersionedClassID(hkaDefaultAnimatedReferenceFrame, 2011)
+hkRegisterVersionedClassID(hkaDefaultAnimatedReferenceFrame, 2012)
+hkRegisterVersionedClassID(hkaDefaultAnimatedReferenceFrame, 2013)
+hkRegisterVersionedClassID(hkaDefaultAnimatedReferenceFrame, 2014)
 
-static const std::map<JenHash, hkVirtualClass *(*)()> hkClassStorage =
+static const std::unordered_map<JenHash, hkVirtualClass *(*)()> hkClassStorage =
 {
-	StaticFor(hkRegisterFullClass, hkaSkeleton, hkRootLevelContainer, hkaAnimationContainer, hkaAnimationBinding)
-  
-	hkRegisterVersionedClass(hkaDeltaCompressedSkeletalAnimation, 550)
-	StaticForArgID(hkRegisterVersionedClassEval, hkaDeltaCompressedAnimation, 660, 710, 2010)
+  StaticFor(hkRegisterFullClass, hkaSkeleton, hkRootLevelContainer, hkaAnimationContainer, hkaAnimationBinding)
 
-	hkRegisterVersionedClass(hkaWaveletCompressedSkeletalAnimation, 550)
-	StaticForArgID(hkRegisterVersionedClassEval, hkaWaveletCompressedAnimation, 660, 710, 2010)
+  hkRegisterVersionedClass(hkaDeltaCompressedSkeletalAnimation, 550)
+  StaticForArgID(hkRegisterVersionedClassEval, hkaDeltaCompressedAnimation, 660, 710, 2010)
 
-	hkRegisterVersionedClass(hkaInterleavedSkeletalAnimation, 550)
-	StaticForArgID(hkRegisterVersionedClassEval, hkaInterleavedUncompressedAnimation, 660, 710, 2010, 2011, 2012, 2013, 2014, 2015)
+  hkRegisterVersionedClass(hkaWaveletCompressedSkeletalAnimation, 550)
+  StaticForArgID(hkRegisterVersionedClassEval, hkaWaveletCompressedAnimation, 660, 710, 2010)
 
-	StaticForArgID(hkRegisterVersionedClassEval, hkxEnvironment, 550, 660, 710, 2010, 2011, 2012, 2013, 2014)
+  hkRegisterVersionedClass(hkaInterleavedSkeletalAnimation, 550)
+  StaticForArgID(hkRegisterVersionedClassEval, hkaInterleavedUncompressedAnimation, 660, 710, 2010, 2011, 2012, 2013, 2014, 2015)
 
-	hkRegisterVersionedClass(hkaSplineSkeletalAnimation, 550)
-	StaticForArgID(hkRegisterVersionedClassEval, hkaSplineCompressedAnimation, 660, 710, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017)
+  StaticForArgID(hkRegisterVersionedClassEval, hkxEnvironment, 550, 660, 710, 2010, 2011, 2012, 2013, 2014)
+
+  hkRegisterVersionedClass(hkaSplineSkeletalAnimation, 550)
+  StaticForArgID(hkRegisterVersionedClassEval, hkaSplineCompressedAnimation, 660, 710, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017)
+
+  StaticForArgID(hkRegisterVersionedClassEval, hkaDefaultAnimatedReferenceFrame, 660, 710, 2010, 2011, 2012, 2013, 2014)
 };
 
-hkVirtualClass *IhkPackFile::ConstructClass(JenHash hash)
-{
-	if (hkClassStorage.count(hash))
-		return hkClassStorage.at(hash)();
+// clang-format on
 
-	return nullptr;
+hkVirtualClass *IhkPackFile::ConstructClass(JenHash hash) {
+  auto found = hkClassStorage.find(hash);
+
+  if (found == hkClassStorage.end())
+    return nullptr;
+
+  return found->second();
 }

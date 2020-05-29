@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2019 Lukas Cone
+    Copyright(C) 2016-2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -19,26 +19,22 @@
 #include "datas/endian.hpp"
 #include "datas/jenkinshash.hpp"
 #include "datas/masterprinter.hpp"
+#include "datas/pointer.hpp"
 #include <algorithm>
 #include <ctype.h>
 #include <string>
 
 #include "datas/binreader.hpp"
 
-const int hkxSectionHeader::PODSize =
-    offsetof(hkxSectionHeader, bufferSize) + 4;
-
 int hkxHeader::Load(BinReader &rd) {
-  const int podsize =
-      getBlockSize(hkxHeader, magic1, predicateArraySizePlusPadding);
-  rd.Read(magic1, podsize);
+  rd.Read<hkxHeaderData>(*this);
 
   if (magic1 != hkMagic1 || magic2 != hkMagic2) {
     printerror("[Havok] Invalid packfile.");
     return 1;
   }
 
-  int currentSectionID = 0;
+  uint32 currentSectionID = 0;
 
   layout.big_endian = 1 - layout.big_endian;
 
@@ -52,7 +48,7 @@ int hkxHeader::Load(BinReader &rd) {
 
   char *cs = contentsVersionStripped;
   char *cc = contentsVersion;
-  int numDots = 0, numChars = 0;
+  uint32 numDots = 0, numChars = 0;
 
   while (cc) {
     if (*cc == '.')
@@ -72,7 +68,7 @@ int hkxHeader::Load(BinReader &rd) {
 
   for (auto &s : sections) {
     s.header = this;
-    rd.Read(s, s.PODSize);
+    rd.Read<hkxSectionHeaderData>(s);
 
     if (Version > 9)
       rd.Seek(16, std::ios_base::cur);
@@ -98,9 +94,9 @@ int hkxHeader::Load(BinReader &rd) {
   return 0;
 }
 
-int hkxHeader::GetVersion() { return atoi(contentsVersionStripped); }
+int32 hkxHeader::GetVersion() const { return atoi(contentsVersionStripped); }
 
-ES_INLINE void hkxHeader::SwapEndian() {
+void hkxHeaderData::SwapEndian() {
   FByteswapper(Version);
   FByteswapper(numSections);
   FByteswapper(contentsSectionIndex);
@@ -115,12 +111,13 @@ ES_INLINE void hkxHeader::SwapEndian() {
 int hkxSectionHeader::Load(BinReader *rd) {
   rd->SetRelativeOrigin(absoluteDataStart);
 
-  const int virtualEOF = (exportsOffset == -1 ? importsOffset : exportsOffset);
-  const int circaNumLocalFixps =
+  const int32 virtualEOF =
+      (exportsOffset == -1 ? importsOffset : exportsOffset);
+  const int32 circaNumLocalFixps =
       (globalFixupsOffset - localFixupsOffset) / sizeof(hkxLocalFixup);
-  const int circaNumGlobalFixps =
+  const int32 circaNumGlobalFixps =
       (virtualFixupsOffset - globalFixupsOffset) / sizeof(hkxGlobalFixup);
-  const int circaNumVirtualFixps =
+  const int32 circaNumVirtualFixps =
       (virtualEOF - virtualFixupsOffset) / sizeof(hkxVirtualFixup);
 
   localFixups.reserve(circaNumLocalFixps);
@@ -145,17 +142,13 @@ int hkxSectionHeader::LoadBuffer(BinReader *rd) {
     return 0;
 
   rd->Seek(absoluteDataStart);
-
-  sectionBufferSize = localFixupsOffset;
-  sectionBuffer = static_cast<char *>(malloc(sectionBufferSize));
-  memset(sectionBuffer, 0, sectionBufferSize);
-  rd->ReadBuffer(sectionBuffer, sectionBufferSize);
+  rd->ReadContainer(buffer, localFixupsOffset);
 
   return 0;
 }
 
-ES_INLINE std::string _hkGenerateClassname(hkxHeader *header,
-                                           const std::string &classname) {
+std::string _hkGenerateClassname(hkxHeader *header,
+                                 const std::string &classname) {
   std::string compiledClassname =
       classname + "_t<" + classname + header->contentsVersionStripped;
 
@@ -165,9 +158,9 @@ ES_INLINE std::string _hkGenerateClassname(hkxHeader *header,
   compiledClassname.append("_t<");
 
   if (header->layout.bytesInPointer > 4)
-    compiledClassname.append("hkPointerX64");
+    compiledClassname.append("esPointerX64");
   else
-    compiledClassname.append("hkPointerX86");
+    compiledClassname.append("esPointerX86");
 
   compiledClassname.append(">>");
 
@@ -175,39 +168,45 @@ ES_INLINE std::string _hkGenerateClassname(hkxHeader *header,
 }
 
 int hkxSectionHeader::LinkBuffer() {
-  for (auto &lf : localFixups)
-    if (lf.pointer != -1)
-      *reinterpret_cast<intptr_t *>(sectionBuffer + lf.pointer) =
-          reinterpret_cast<intptr_t>(sectionBuffer + lf.destination);
+  char *sectionBuffer = &buffer[0];
+  using ptrType = esPointerX64<char>;
 
-  for (auto &gf : globalFixups)
-    if (gf.pointer != -1)
-      *reinterpret_cast<intptr_t *>(sectionBuffer + gf.pointer) =
-          reinterpret_cast<intptr_t>(
-              header->sections[gf.sectionid].sectionBuffer + gf.destination);
+  for (auto &lf : localFixups) {
+    if (lf.pointer != -1) {
+      ptrType *ptrPtr = reinterpret_cast<ptrType *>(sectionBuffer + lf.pointer);
+      *ptrPtr = sectionBuffer + lf.destination;
+    }
+  }
 
-  for (auto &vf : virtualFixups)
+  for (auto &gf : globalFixups) {
+    if (gf.pointer != -1) {
+      ptrType *ptrPtr = reinterpret_cast<ptrType *>(sectionBuffer + gf.pointer);
+      *ptrPtr = &header->sections[gf.sectionid].buffer[0] + gf.destination;
+    }
+  }
+
+  for (auto &vf : virtualFixups) {
     if (vf.dataoffset != -1) {
       const char *clName =
-          header->sections[vf.sectionid].sectionBuffer + vf.classnameoffset;
+          header->sections[vf.sectionid].buffer.data() + vf.classnameoffset;
       std::string classname = _hkGenerateClassname(header, clName);
 
-      const JenHash _chash =
-          JenkinsHash(classname.c_str(), static_cast<int>(classname.size()));
+      const JenHash _chash = JenkinsHash(classname.c_str());
 
       hkVirtualClass *cls = IhkPackFile::ConstructClass(_chash);
 
       if (cls) {
         cls->SetDataPointer(sectionBuffer + vf.dataoffset);
-        cls->namePtr = clName;
-        cls->superHash = JenkinsHash(clName, static_cast<int>(strlen(clName)));
+        cls->name = clName;
+        cls->superHash = JenkinsHash(clName);
         cls->header = header;
         if (header->layout.big_endian)
           cls->SwapEndian();
-        virtualClasses.push_back(cls);
+        virtualClasses.emplace_back(cls);
         cls->Process();
       }
     }
+  }
 
 #ifdef _MSC_VER
   localFixups.~vector();
@@ -223,44 +222,44 @@ int hkxSectionHeader::LinkBuffer() {
 }
 
 int hkxSectionHeader::LinkBuffer86() {
+  char *sectionBuffer = &buffer[0];
+  using ptrType = esPointerX86<char>;
+
   for (auto &lf : localFixups)
     if (lf.pointer != -1) {
-      int *ptrPtr = reinterpret_cast<int *>(sectionBuffer + lf.pointer);
-      uintptr_t ptrDest =
-          reinterpret_cast<uintptr_t>(sectionBuffer) + lf.destination;
-      *ptrPtr = ptrDest - reinterpret_cast<uintptr_t>(ptrPtr);
+      ptrType *ptrPtr = reinterpret_cast<ptrType *>(sectionBuffer + lf.pointer);
+      *ptrPtr = sectionBuffer + lf.destination;
     }
 
   for (auto &gf : globalFixups)
     if (gf.pointer != -1) {
-      int *ptrPtr = reinterpret_cast<int *>(sectionBuffer + gf.pointer);
-      uintptr_t ptrDest =
-          reinterpret_cast<uintptr_t>(sectionBuffer) + gf.destination;
-      *ptrPtr = ptrDest - reinterpret_cast<uintptr_t>(ptrPtr);
+      ptrType *ptrPtr = reinterpret_cast<ptrType *>(sectionBuffer + gf.pointer);
+      *ptrPtr = sectionBuffer + gf.destination;
     }
 
   for (auto &vf : virtualFixups)
     if (vf.dataoffset != -1) {
       const char *clName =
-          header->sections[vf.sectionid].sectionBuffer + vf.classnameoffset;
+          header->sections[vf.sectionid].buffer.data() + vf.classnameoffset;
       std::string classname = _hkGenerateClassname(header, clName);
 
-      const JenHash _chash =
-          JenkinsHash(classname.c_str(), static_cast<int>(classname.size()));
+      const JenHash _chash = JenkinsHash(classname.c_str());
 
       hkVirtualClass *cls = IhkPackFile::ConstructClass(_chash);
 
       if (cls) {
         cls->SetDataPointer(sectionBuffer + vf.dataoffset);
-        cls->namePtr = clName;
-        cls->superHash = JenkinsHash(clName, static_cast<int>(strlen(clName)));
+        cls->name = clName;
+        cls->superHash = JenkinsHash(clName);
         cls->header = header;
         if (header->layout.big_endian)
           cls->SwapEndian();
-        virtualClasses.push_back(cls);
+        virtualClasses.emplace_back(cls);
         cls->Process();
       }
     }
+
+    std::move(localFixups);
 #ifdef _MSC_VER
   localFixups.~vector();
   globalFixups.~vector();
@@ -274,7 +273,7 @@ int hkxSectionHeader::LinkBuffer86() {
   return 0;
 }
 
-ES_INLINE void hkxSectionHeader::SwapEndian() {
+void hkxSectionHeaderData::SwapEndian() {
   FByteswapper(absoluteDataStart);
   FByteswapper(localFixupsOffset);
   FByteswapper(globalFixupsOffset);
@@ -282,12 +281,4 @@ ES_INLINE void hkxSectionHeader::SwapEndian() {
   FByteswapper(exportsOffset);
   FByteswapper(importsOffset);
   FByteswapper(bufferSize);
-}
-
-hkxSectionHeader::~hkxSectionHeader() {
-  if (sectionBuffer)
-    free(sectionBuffer);
-
-  for (auto &v : virtualClasses)
-    delete v;
 }

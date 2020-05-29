@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2019 Lukas Cone
+    Copyright(C) 2016-2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -17,13 +17,11 @@
 
 #pragma once
 #include "datas/VectorsSimd.hpp"
-#include "datas/deleter_hybrid.hpp"
-#include "datas/endian.hpp"
 #include "datas/jenkinshash.hpp"
 #include "datas/reflector.hpp"
-#include <functional>
-#include <memory>
-#include <vector>
+#include "datas/string_view.hpp"
+#include "uni/motion.hpp"
+#include "uni/skeleton.hpp"
 
 class BinReader;
 struct IhkPackFile;
@@ -38,60 +36,7 @@ struct hkRootLevelContainer;
 struct hkVirtualClass;
 
 #define DECLARE_HKCLASS(classname)                                             \
-  static const JenHash HASH = JenkinsHash(#classname, sizeof(#classname) - 1);
-
-//////////////////////////////////////////////////////////////// Havok Iterators
-
-template <class containerClass, const int (containerClass::*Counter)() const,
-          class returnType, returnType (containerClass::*Accessor)(int) const>
-class hkInter {
-  const containerClass *tClass;
-  int iterPos;
-
-public:
-  explicit hkInter(const containerClass *cls, int _num = -1)
-      : iterPos(_num == -1 ? std::bind(Counter, tClass)() : _num), tClass(cls) {
-  }
-
-  hkInter &operator++() {
-    iterPos++;
-    return *this;
-  }
-  hkInter operator++(int) {
-    hkInter retval = *this;
-    ++(*this);
-    return retval;
-  }
-  bool operator==(hkInter input) const { return iterPos == input.iterPos; }
-  bool operator!=(hkInter input) const { return iterPos != input.iterPos; }
-
-  template <class ptrTest = returnType>
-  typename std::enable_if<
-      std::is_pointer<ptrTest>::value,
-      typename std::remove_pointer<returnType>::type &>::type
-  operator*() const {
-    return *std::bind(Accessor, tClass, iterPos)();
-  }
-
-  template <class ptrTest = returnType>
-  typename std::enable_if<!std::is_pointer<ptrTest>::value, returnType>::type
-  operator*() const {
-    return std::bind(Accessor, tClass, iterPos)();
-  }
-};
-
-template <class containerClass, const int (containerClass::*Counter)() const,
-          class returnType, returnType (containerClass::*Accessor)(int) const>
-class hkIterProxy {
-  typedef hkInter<containerClass, Counter, returnType, Accessor> _iter;
-
-  const containerClass *_clsPtr;
-
-public:
-  explicit hkIterProxy(const containerClass *item) : _clsPtr(item) {}
-  const _iter begin() const { return _iter(_clsPtr, 0); }
-  const _iter end() const { return _iter(_clsPtr); }
-};
+  static const JenHash HASH = JenkinsHashC(#classname);
 
 //////////////////////////////////////////////////////// Havok Interface Classes
 
@@ -124,30 +69,7 @@ struct IhkVirtualClass {
   virtual ~IhkVirtualClass() {}
 };
 
-struct hkQTransform {
-  Vector4A16 position;
-  Vector4A16 rotation;
-  Vector4A16 scale;
-
-  std::string ToString() const;
-
-  hkQTransform()
-      : position(0.0f), rotation(0.0f, 0.0f, 0.0f, 1.0f),
-        scale(1.0f, 1.0f, 1.0f, 0.0f) {}
-
-  hkQTransform(const Vector4A16 &pos, const Vector4A16 &rot,
-               const Vector4A16 &scl)
-      : position(pos), rotation(rot), scale(scl) {}
-
-  hkQTransform(const Vector &pos, const Vector4A16 &rot, const Vector &scl)
-      : position(pos, 0.0f), rotation(rot), scale(scl, 0.0f) {}
-
-  bool operator==(const hkQTransform &o) const {
-    return position == o.position && rotation == o.rotation && scale == o.scale;
-  }
-
-  bool operator!=(const hkQTransform &o) const { return !(*this == o); }
-};
+using hkQTransform = uni::RTSValue;
 
 struct hkLocalFrameOnBone {
   const hkLocalFrame *localFrame;
@@ -157,94 +79,73 @@ struct hkLocalFrameOnBone {
 struct hkaPartition {
   DECLARE_REFLECTOR;
   std::string name;
-  short startBoneIndex, numBones;
+  int16 startBoneIndex;
+  uint16 numBones;
 };
 
-struct hkFullBone {
-  const char *name;
-  short parentID;
-  const hkQTransform *transform;
-  operator const char *() const { return name; }
-};
-
-struct hkaSkeleton : IhkVirtualClass {
+struct hkaSkeleton : IhkVirtualClass, uni::Skeleton {
   DECLARE_HKCLASS(hkaSkeleton)
-  virtual const char *GetSkeletonName() const = 0;
-  virtual const int GetNumFloatSlots() const = 0;
-  virtual const char *GetFloatSlot(int id) const = 0;
-  virtual const int GetNumLocalFrames() const = 0;
-  virtual const hkLocalFrameOnBone GetLocalFrame(int id) const = 0;
-  virtual const int GetNumPartitions() const = 0;
-  virtual const hkaPartition GetPartition(int id) const = 0;
-  virtual const int GetNumBones() const = 0;
-  virtual const char *GetBoneName(int id) const = 0;
-  virtual const hkQTransform *GetBoneTM(int id) const = 0;
-  virtual const short GetBoneParentID(int id) const = 0;
-  virtual const int GetNumReferenceFloats() const = 0;
-  virtual const float GetReferenceFloat(int id) const = 0;
+  virtual size_t GetNumFloatSlots() const = 0;
+  virtual es::string_view GetFloatSlot(size_t id) const = 0;
+  virtual size_t GetNumLocalFrames() const = 0;
+  virtual hkLocalFrameOnBone GetLocalFrame(size_t id) const = 0;
+  virtual size_t GetNumPartitions() const = 0;
+  virtual hkaPartition GetPartition(size_t id) const = 0;
+  virtual size_t GetNumBones() const = 0;
+  virtual es::string_view GetBoneName(size_t id) const = 0;
+  virtual const hkQTransform *GetBoneTM(size_t id) const = 0;
+  virtual int16 GetBoneParentID(size_t id) const = 0;
+  virtual size_t GetNumReferenceFloats() const = 0;
+  virtual float GetReferenceFloat(size_t id) const = 0;
 
-  operator const char *() const { return GetSkeletonName(); }
-  hkFullBone GetFullBone(int id) const {
-    return hkFullBone{GetBoneName(id), GetBoneParentID(id), GetBoneTM(id)};
-  }
-
-  typedef hkIterProxy<hkaSkeleton, &hkaSkeleton::GetNumFloatSlots, const char *,
-                      &hkaSkeleton::GetFloatSlot>
+  typedef uni::VirtualIteratorProxy<hkaSkeleton, &hkaSkeleton::GetNumFloatSlots,
+                                    es::string_view, &hkaSkeleton::GetFloatSlot>
       iteratorFloatSlots;
-  typedef hkIterProxy<hkaSkeleton, &hkaSkeleton::GetNumLocalFrames,
-                      const hkLocalFrameOnBone, &hkaSkeleton::GetLocalFrame>
+  typedef uni::VirtualIteratorProxy<
+      hkaSkeleton, &hkaSkeleton::GetNumLocalFrames, hkLocalFrameOnBone,
+      &hkaSkeleton::GetLocalFrame>
       iteratorLocalFrames;
-  typedef hkIterProxy<hkaSkeleton, &hkaSkeleton::GetNumPartitions,
-                      const hkaPartition, &hkaSkeleton::GetPartition>
+  typedef uni::VirtualIteratorProxy<hkaSkeleton, &hkaSkeleton::GetNumPartitions,
+                                    hkaPartition, &hkaSkeleton::GetPartition>
       iteratorPartitions;
-  typedef hkIterProxy<hkaSkeleton, &hkaSkeleton::GetNumReferenceFloats,
-                      const float, &hkaSkeleton::GetReferenceFloat>
+  typedef uni::VirtualIteratorProxy<hkaSkeleton,
+                                    &hkaSkeleton::GetNumReferenceFloats, float,
+                                    &hkaSkeleton::GetReferenceFloat>
       iteratorReferenceFloat;
-  typedef hkIterProxy<hkaSkeleton, &hkaSkeleton::GetNumBones, const char *,
-                      &hkaSkeleton::GetBoneName>
+  typedef uni::VirtualIteratorProxy<hkaSkeleton, &hkaSkeleton::GetNumBones,
+                                    es::string_view, &hkaSkeleton::GetBoneName>
       iteratorBoneNames;
-  typedef hkIterProxy<hkaSkeleton, &hkaSkeleton::GetNumBones,
-                      const hkQTransform *, &hkaSkeleton::GetBoneTM>
+  typedef uni::VirtualIteratorProxy<hkaSkeleton, &hkaSkeleton::GetNumBones,
+                                    const hkQTransform *,
+                                    &hkaSkeleton::GetBoneTM>
       iteratorBoneTMs;
-  typedef hkIterProxy<hkaSkeleton, &hkaSkeleton::GetNumBones, const short,
-                      &hkaSkeleton::GetBoneParentID>
+  typedef uni::VirtualIteratorProxy<hkaSkeleton, &hkaSkeleton::GetNumBones,
+                                    int16, &hkaSkeleton::GetBoneParentID>
       iteratorBoneParentIDs;
-  typedef hkIterProxy<hkaSkeleton, &hkaSkeleton::GetNumBones, hkFullBone,
-                      &hkaSkeleton::GetFullBone>
-      iteratorFullBones;
 
-  const iteratorFloatSlots FloatSlots() const {
-    return iteratorFloatSlots(this);
-  }
-  const iteratorLocalFrames LocalFrames() const {
-    return iteratorLocalFrames(this);
-  }
-  const iteratorPartitions Partitions() const {
-    return iteratorPartitions(this);
-  }
-  const iteratorReferenceFloat ReferenceFloats() const {
+  iteratorFloatSlots FloatSlots() const { return iteratorFloatSlots(this); }
+  iteratorLocalFrames LocalFrames() const { return iteratorLocalFrames(this); }
+  iteratorPartitions Partitions() const { return iteratorPartitions(this); }
+  iteratorReferenceFloat ReferenceFloats() const {
     return iteratorReferenceFloat(this);
   }
-  const iteratorBoneNames BoneNames() const { return iteratorBoneNames(this); }
-  const iteratorBoneTMs BoneTransforms() const { return iteratorBoneTMs(this); }
-  const iteratorBoneParentIDs BoneParentIDs() const {
+  iteratorBoneNames BoneNames() const { return iteratorBoneNames(this); }
+  iteratorBoneTMs BoneTransforms() const { return iteratorBoneTMs(this); }
+  iteratorBoneParentIDs BoneParentIDs() const {
     return iteratorBoneParentIDs(this);
   }
-  const iteratorFullBones FullBones() const { return iteratorFullBones(this); }
 };
 
 struct hkNamedVariant {
-  const char *name;
-  const char *className;
+  es::string_view name;
+  es::string_view className;
   const IhkVirtualClass *pointer;
 
   template <class C> operator const C *() const {
     return dynamic_cast<const C *>(pointer);
   }
-  operator const char *() const { return name; }
-  operator JenHash() const {
-    return JenkinsHash(className, static_cast<const int>(strlen(className)));
-  }
+  operator es::string_view() const { return name; }
+  operator JenHash() const { return JenkinsHash(className); }
   bool operator==(const JenHash iHash) const {
     return static_cast<JenHash>(*this) == iHash;
   }
@@ -252,53 +153,43 @@ struct hkNamedVariant {
   void ToXML(XMLHandle hdl) const;
 };
 
-struct hkRootLevelContainer : IhkVirtualClass {
+struct hkRootLevelContainer : uni::Vector<hkNamedVariant>, IhkVirtualClass {
   DECLARE_HKCLASS(hkRootLevelContainer)
-
-  virtual const int GetNumVariants() const = 0;
-  virtual const hkNamedVariant GetVariant(int id) const = 0;
-
-  typedef hkInter<hkRootLevelContainer, &hkRootLevelContainer::GetNumVariants,
-                  const hkNamedVariant, &hkRootLevelContainer::GetVariant>
-      interatorVariant;
-
-  const interatorVariant begin() const { return interatorVariant(this, 0); }
-  const interatorVariant end() const { return interatorVariant(this); }
 };
 
 struct hkaAnimationContainer : IhkVirtualClass {
   DECLARE_HKCLASS(hkaAnimationContainer)
 
-  virtual const int GetNumSkeletons() const = 0;
-  virtual const hkaSkeleton *GetSkeleton(int id) const = 0;
-  virtual const int GetNumAnimations() const = 0;
-  virtual const hkaAnimation *GetAnimation(int id) const = 0;
-  virtual const int GetNumBindings() const = 0;
-  virtual const hkaAnimationBinding *GetBinding(int id) const = 0;
-  virtual const int GetNumAttachments() const = 0;
-  virtual const hkaBoneAttachment *GetAttachment(int id) const = 0;
-  virtual const int GetNumSkins() const = 0;
-  virtual const hkaMeshBinding *GetSkin(int id) const = 0;
+  virtual size_t GetNumSkeletons() const = 0;
+  virtual const hkaSkeleton *GetSkeleton(size_t id) const = 0;
+  virtual size_t GetNumAnimations() const = 0;
+  virtual const hkaAnimation *GetAnimation(size_t id) const = 0;
+  virtual size_t GetNumBindings() const = 0;
+  virtual const hkaAnimationBinding *GetBinding(size_t id) const = 0;
+  virtual size_t GetNumAttachments() const = 0;
+  virtual const hkaBoneAttachment *GetAttachment(size_t id) const = 0;
+  virtual size_t GetNumSkins() const = 0;
+  virtual const hkaMeshBinding *GetSkin(size_t id) const = 0;
 
-  typedef hkIterProxy<hkaAnimationContainer,
-                      &hkaAnimationContainer::GetNumSkeletons,
-                      const hkaSkeleton *, &hkaAnimationContainer::GetSkeleton>
+  typedef uni::VirtualIteratorProxy<
+      hkaAnimationContainer, &hkaAnimationContainer::GetNumSkeletons,
+      const hkaSkeleton *, &hkaAnimationContainer::GetSkeleton>
       iteratorSkeletons;
-  typedef hkIterProxy<
+  typedef uni::VirtualIteratorProxy<
       hkaAnimationContainer, &hkaAnimationContainer::GetNumAnimations,
       const hkaAnimation *, &hkaAnimationContainer::GetAnimation>
       iteratorAnimations;
-  typedef hkIterProxy<
+  typedef uni::VirtualIteratorProxy<
       hkaAnimationContainer, &hkaAnimationContainer::GetNumBindings,
       const hkaAnimationBinding *, &hkaAnimationContainer::GetBinding>
       iteratorBindings;
-  typedef hkIterProxy<
+  typedef uni::VirtualIteratorProxy<
       hkaAnimationContainer, &hkaAnimationContainer::GetNumAttachments,
       const hkaBoneAttachment *, &hkaAnimationContainer::GetAttachment>
       iteratorAttachments;
-  typedef hkIterProxy<hkaAnimationContainer,
-                      &hkaAnimationContainer::GetNumSkins,
-                      const hkaMeshBinding *, &hkaAnimationContainer::GetSkin>
+  typedef uni::VirtualIteratorProxy<
+      hkaAnimationContainer, &hkaAnimationContainer::GetNumSkins,
+      const hkaMeshBinding *, &hkaAnimationContainer::GetSkin>
       iteratorMeshBinds;
 
   const iteratorSkeletons Skeletons() const { return iteratorSkeletons(this); }
@@ -318,29 +209,29 @@ REFLECTOR_CREATE(BlendHint, ENUM, 1, 8, NORMAL, ADDITIVE_DEPRECATED, ADDITIVE)
 struct hkaAnimationBinding : IhkVirtualClass {
   DECLARE_HKCLASS(hkaAnimationBinding)
 
-  virtual const char *GetSkeletonName() const = 0;
+  virtual es::string_view GetSkeletonName() const = 0;
   virtual const hkaAnimation *GetAnimation() const = 0;
   virtual BlendHint GetBlendHint() const = 0;
-  virtual const int GetNumTransformTrackToBoneIndices() const = 0;
-  virtual const short GetTransformTrackToBoneIndex(int id) const = 0;
-  virtual const int GetNumFloatTrackToFloatSlotIndices() const = 0;
-  virtual const short GetFloatTrackToFloatSlotIndex(int id) const = 0;
-  virtual const int GetNumPartitionIndices() const = 0;
-  virtual const short GetPartitionIndex(int id) const = 0;
+  virtual size_t GetNumTransformTrackToBoneIndices() const = 0;
+  virtual int16 GetTransformTrackToBoneIndex(size_t id) const = 0;
+  virtual size_t GetNumFloatTrackToFloatSlotIndices() const = 0;
+  virtual int16 GetFloatTrackToFloatSlotIndex(size_t id) const = 0;
+  virtual size_t GetNumPartitionIndices() const = 0;
+  virtual int16 GetPartitionIndex(size_t id) const = 0;
 
-  typedef hkIterProxy<hkaAnimationBinding,
-                      &hkaAnimationBinding::GetNumTransformTrackToBoneIndices,
-                      const short,
-                      &hkaAnimationBinding::GetTransformTrackToBoneIndex>
+  typedef uni::VirtualIteratorProxy<
+      hkaAnimationBinding,
+      &hkaAnimationBinding::GetNumTransformTrackToBoneIndices, int16,
+      &hkaAnimationBinding::GetTransformTrackToBoneIndex>
       iteratorTransformTrackToBoneIndices;
-  typedef hkIterProxy<hkaAnimationBinding,
-                      &hkaAnimationBinding::GetNumFloatTrackToFloatSlotIndices,
-                      const short,
-                      &hkaAnimationBinding::GetFloatTrackToFloatSlotIndex>
+  typedef uni::VirtualIteratorProxy<
+      hkaAnimationBinding,
+      &hkaAnimationBinding::GetNumFloatTrackToFloatSlotIndices, int16,
+      &hkaAnimationBinding::GetFloatTrackToFloatSlotIndex>
       iteratorFloatTrackToFloatSlotIndices;
-  typedef hkIterProxy<hkaAnimationBinding,
-                      &hkaAnimationBinding::GetNumPartitionIndices, const short,
-                      &hkaAnimationBinding::GetPartitionIndex>
+  typedef uni::VirtualIteratorProxy<
+      hkaAnimationBinding, &hkaAnimationBinding::GetNumPartitionIndices, int16,
+      &hkaAnimationBinding::GetPartitionIndex>
       iteratorNumPartitionIndices;
 
   const iteratorTransformTrackToBoneIndices
@@ -364,101 +255,33 @@ REFLECTOR_CREATE(hkaAnimationType, ENUM, 0, HK_UNKNOWN_ANIMATION,
                  HK_PREDICTIVE_COMPRESSED_ANIMATION,
                  HK_REFERENCE_POSE_ANIMATION);
 
-struct hkaAnnotationTrack : IhkVirtualClass {
-  DECLARE_HKCLASS(hkaAnnotationTrack)
-
-  struct Annotation {
-    float time;
-    const char *text;
-  };
-  virtual const char *GetName() const = 0;
-  virtual const int GetNumAnnotations() const = 0;
-  virtual Annotation GetAnnotation(int id) const = 0;
-
-  typedef hkInter<hkaAnnotationTrack, &hkaAnnotationTrack::GetNumAnnotations,
-                  Annotation, &hkaAnnotationTrack::GetAnnotation>
-      interatorAnnotation;
-
-  const interatorAnnotation begin() const {
-    return interatorAnnotation(this, 0);
-  }
-  const interatorAnnotation end() const { return interatorAnnotation(this); }
-
-  operator const char *() const { return GetName(); }
+// event trigger
+struct hkaAnnotationFrame {
+  float time;
+  es::string_view text;
 };
 
-typedef std::unique_ptr<hkaAnnotationTrack, std::deleter_hybrid>
-    hkaAnnotationTrackPtr;
+struct hkaAnnotationTrack : uni::Vector<hkaAnnotationFrame>, IhkVirtualClass {
+  DECLARE_HKCLASS(hkaAnnotationTrack)
 
-struct hkaAnimation : IhkVirtualClass {
+  virtual es::string_view GetName() const = 0;
+  operator es::string_view() const { return GetName(); }
+};
+
+using hkaAnnotationTrackPtr = uni::Element<hkaAnnotationTrack>;
+
+struct hkaAnimation : uni::Motion, IhkVirtualClass {
   DECLARE_HKCLASS(hkaAnimation)
 
-  enum TrackType { Rotation, Position, Scale };
-
-  virtual const char *GetAnimationTypeName() const = 0;
-  virtual const hkaAnimationType GetAnimationType() const = 0;
-  virtual const float GetDuration() const = 0;
-  virtual const int GetNumOfTransformTracks() const = 0;
-  virtual const int GetNumOfFloatTracks() const = 0;
+  virtual es::string_view GetAnimationTypeName() const = 0;
+  virtual hkaAnimationType GetAnimationType() const = 0;
+  virtual size_t GetNumOfTransformTracks() const = 0;
+  virtual size_t GetNumOfFloatTracks() const = 0;
   virtual const hkaAnimatedReferenceFrame *GetExtractedMotion() const = 0;
-  virtual const int GetNumAnnotations() const = 0;
-  virtual hkaAnnotationTrackPtr GetAnnotation(int id) const = 0;
-  virtual bool IsDecoderSupported() const { return false; }
-  virtual bool IsTrackStatic(int trackID, TrackType type) const = 0;
+  virtual size_t GetNumAnnotations() const = 0;
+  virtual hkaAnnotationTrackPtr GetAnnotation(size_t id) const = 0;
 
-private:
-  virtual void GetTrack(int trackID, int frame, float delta, TrackType type,
-                        Vector4A16 &out) const = 0;
-  virtual void GetTransform(int trackID, int frame, float delta,
-                            hkQTransform &out) const = 0;
-
-  static Vector4A16 Lerp(const Vector4A16 &v1, const Vector4A16 &v2,
-                         float delta) {
-    return v1 + (v2 - v1) * delta;
-  }
-
-  virtual int GetNumInternalFrames() const = 0;
-  mutable int numFrames;
-  mutable float frameRate;
-
-public:
-  void GetTransform(int trackID, float time, hkQTransform &out) const {
-    int frame;
-    float delta;
-    GetFrameDelta(time, frame, delta);
-
-    if (delta > 0.0f && GetAnimationType() != HK_SPLINE_COMPRESSED_ANIMATION) {
-      hkQTransform start;
-      GetTransform(trackID, frame++, 0.0f, start);
-      hkQTransform end;
-      GetTransform(trackID, frame, 0.0f, end);
-
-      out.position = Lerp(start.position, end.position, delta);
-      out.rotation = Lerp(start.rotation, end.rotation, delta);
-      out.scale = Lerp(start.scale, end.scale, delta);
-    } else {
-      GetTransform(trackID, frame, delta, out);
-    }
-  }
-
-  void ComputeFrameRate() const {
-    numFrames = GetNumInternalFrames() - 1;
-    frameRate = numFrames / GetDuration();
-  }
-
-  ES_INLINE void GetFrameDelta(float time, int &frame, float &delta) const {
-    const float frameFull = time * frameRate;
-    frame = static_cast<int>(frameFull);
-
-    if (frame > numFrames)
-      frame--;
-
-    delta = frameFull >= GetDuration() * frameRate ? 0.0f : frameFull - frame;
-  }
-
-  hkaAnimation() : numFrames(-1), frameRate(-1) {}
-
-  typedef hkIterProxy<hkaAnimation, &hkaAnimation::GetNumAnnotations,
+  typedef uni::VirtualIteratorProxy<hkaAnimation, &hkaAnimation::GetNumAnnotations,
                       hkaAnnotationTrackPtr, &hkaAnimation::GetAnnotation>
       interatorAnnotation;
 
@@ -468,71 +291,67 @@ public:
 };
 
 struct hkxEnvironmentVariable {
-  const char *name;
-  const char *value;
+  es::string_view name;
+  es::string_view value;
 };
 
-struct hkxEnvironment : IhkVirtualClass {
+struct hkxEnvironment : IhkVirtualClass, virtual uni::Vector<hkxEnvironmentVariable> {
   DECLARE_HKCLASS(hkxEnvironment)
-
-  virtual const int GetNumVars() const = 0;
-  virtual hkxEnvironmentVariable GetVar(int id) const = 0;
-
-  typedef hkInter<hkxEnvironment, &hkxEnvironment::GetNumVars,
-                  hkxEnvironmentVariable, &hkxEnvironment::GetVar>
-      interator;
-
-  const interator begin() const { return interator(this, 0); }
-  const interator end() const { return interator(this); }
 };
 
-struct hkaAnimatedReferenceFrame : IhkVirtualClass {};
+enum class hkaAnimatedReferenceFrameType : uint8 {
+  UNKNOWN,
+  DEFAULT,
+  PARAMETRIC
+};
+
+struct hkaAnimatedReferenceFrame : IhkVirtualClass, uni::MotionTrack {
+  virtual Vector4 GetUp() const = 0;
+  virtual Vector4 GetForward() const = 0;
+  virtual hkaAnimatedReferenceFrameType GetType() const = 0;
+};
 struct hkaBoneAttachment : IhkVirtualClass {};
 struct hkaMeshBinding : IhkVirtualClass {};
 
 struct IhkPackFile {
-  typedef std::vector<IhkVirtualClass *> VirtualClasses;
+  typedef std::unique_ptr<IhkVirtualClass> VirtualClass;
+  typedef std::vector<VirtualClass> VirtualClasses;
+  typedef std::vector<IhkVirtualClass *> VirtualClassesRef;
 
 private:
-  template <class _Ty>
-  static IhkPackFile *_Create(const _Ty *fileName, bool suppressErrors);
-
   template <class _Ty>
   int _ExportXML(const _Ty *fileName, hkXMLToolsets toolsetVersion);
 
   void _GenerateXML(pugi::xml_document &doc, hkXMLToolsets toolsetVersion);
 
 public:
+  IhkPackFile();
   virtual VirtualClasses &GetAllClasses() = 0;
-  virtual int GetVersion() = 0;
-  virtual ~IhkPackFile() = 0;
+  virtual int32 GetVersion() const = 0;
+  virtual ~IhkPackFile() {};
 
-  ES_INLINE VirtualClasses GetClasses(const char *hkClassName) {
-    return GetClasses(
-        JenkinsHash(hkClassName, static_cast<int>(strlen(hkClassName))));
+  VirtualClassesRef GetClasses(es::string_view hkClassName) {
+    return GetClasses(JenkinsHash(hkClassName));
   }
-  ES_INLINE hkRootLevelContainer *GetRootLevelContainer() {
+
+  VirtualClassesRef GetClasses(JenHash hash);
+
+  hkRootLevelContainer *GetRootLevelContainer() {
     return dynamic_cast<hkRootLevelContainer *>(
         GetClasses(hkRootLevelContainer::HASH)[0]);
   }
-  VirtualClasses GetClasses(JenHash hash);
+
   const IhkVirtualClass *GetClass(const void *ptr);
 
-  ES_FORCEINLINE static IhkPackFile *Create(const wchar_t *fileName,
-                                            bool suppressErrors = false) {
-    return _Create(fileName, suppressErrors);
-  }
-  ES_FORCEINLINE static IhkPackFile *Create(const char *fileName,
-                                            bool suppressErrors = false) {
-    return _Create(fileName, suppressErrors);
-  }
+  static IhkPackFile *Create(const std::string &fileName,
+                             bool suppressErrors = false);
+  static IhkPackFile *Create(es::string_view fileName,
+                             bool suppressErrors = false);
 
-  ES_FORCEINLINE int ExportXML(const wchar_t *fileName,
-                               hkXMLToolsets toolsetVersion) {
+  int ExportXML(const wchar_t *fileName, hkXMLToolsets toolsetVersion) {
     return _ExportXML(fileName, toolsetVersion);
   }
-  ES_FORCEINLINE int ExportXML(const char *fileName,
-                               hkXMLToolsets toolsetVersion) {
+  int ExportXML(const char *fileName, hkXMLToolsets toolsetVersion) {
     return _ExportXML(fileName, toolsetVersion);
   }
 

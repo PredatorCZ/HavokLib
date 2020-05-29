@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2019 Lukas Cone
+    Copyright(C) 2016-2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -54,22 +54,22 @@ struct TransformMask {
     splineW
   };
 
-  uchar quantizationTypes;
-  esFlags<uchar, FlagOffset> positionTypes;
-  uchar rotationTypes;
-  esFlags<uchar, FlagOffset> scaleTypes;
+  uint8 quantizationTypes;
+  esFlags<uint8, FlagOffset> positionTypes;
+  uint8 rotationTypes;
+  esFlags<uint8, FlagOffset> scaleTypes;
 
-  ES_INLINE QuantizationType GetPosQuantizationType() const {
+  QuantizationType GetPosQuantizationType() const {
     return static_cast<QuantizationType>(quantizationTypes & 3);
   }
-  ES_INLINE QuantizationType GetRotQuantizationType() {
+  QuantizationType GetRotQuantizationType() const {
     return static_cast<QuantizationType>(((quantizationTypes >> 2) & 0xf) + 2);
   }
-  ES_INLINE QuantizationType GetScaleQuantizationType() {
+  QuantizationType GetScaleQuantizationType() const {
     return static_cast<QuantizationType>((quantizationTypes >> 6) & 3);
   }
 
-  ES_INLINE SplineTrackType GetSubTrackType(TransformType type) {
+  SplineTrackType GetSubTrackType(TransformType type) const {
     switch (type) {
     case ttPosX:
       return positionTypes[staticX]
@@ -118,20 +118,20 @@ template <class C> struct SplineStaticTrack : ISplineTrack<C> {
 };
 
 struct SplineDynamicTrackVector : ISplineTrack<Vector> {
-  typedef std::vector<uchar, std::allocator_hybrid<uchar>> knots_type;
+  typedef std::vector<uint8, es::allocator_hybrid<uint8>> knots_type;
   std::vector<float> tracks[3];
   knots_type knots;
-  uchar degree;
+  uint8 degree;
 
   Vector GetValue(float localFrame);
   bool IsStatic() { return !knots.size(); }
 };
 
 struct SplineDynamicTrackQuat : ISplineTrack<Vector4A16> {
-  typedef std::vector<uchar, std::allocator_hybrid<uchar>> knots_type;
+  typedef std::vector<uint8, es::allocator_hybrid<uint8>> knots_type;
   std::vector<Vector4A16> track;
   knots_type knots;
-  uchar degree;
+  uint8 degree;
 
   Vector4A16 GetValue(float localFrame);
   bool IsStatic() { return false; }
@@ -145,7 +145,7 @@ struct TransformTrack {
 };
 
 struct TransformSplineBlock {
-  typedef std::vector<TransformMask, std::allocator_hybrid<TransformMask>>
+  typedef std::vector<TransformMask, es::allocator_hybrid<TransformMask>>
       masks_type;
 
 private:
@@ -153,65 +153,19 @@ private:
   std::vector<TransformTrack> tracks;
 
 public:
-  void Assign(char *buffer, int numTracks, int numFloatTractks);
-  bool IsTrackStatic(int trackID, hkaAnimation::TrackType type) const;
-  void GetTrack(int trackID, float localFrame, hkaAnimation::TrackType type,
-                Vector4A16 &out) const;
-  void GetTransform(int trackID, float localFrame, hkQTransform &out) const;
+  void Assign(char *buffer, size_t numTracks, size_t numFloatTractks);
+  void GetValue(size_t trackID, float time, hkQTransform &out) const;
 };
 
 struct hkaSplineDecompressor {
   std::vector<TransformSplineBlock> blocks;
   // TODO floats
   void Assign(hkaSplineCompressedAnimationInternalInterface *input);
-  bool IsTrackStatic(int trackID, hkaAnimation::TrackType type) const;
 };
 
-ES_INLINE bool
-TransformSplineBlock::IsTrackStatic(int trackID,
-                                    hkaAnimation::TrackType type) const {
-  switch (type) {
-  case hkaAnimation::Rotation:
-    return tracks[trackID].rotation->IsStatic();
-  case hkaAnimation::Position:
-    return tracks[trackID].pos->IsStatic();
-  case hkaAnimation::Scale:
-    return tracks[trackID].scale->IsStatic();
-  }
-
-  return true;
-}
-
-ES_INLINE bool
-hkaSplineDecompressor::IsTrackStatic(int trackID,
-                                     hkaAnimation::TrackType type) const {
-  for (auto &b : blocks) {
-    if (!b.IsTrackStatic(trackID, type))
-      return false;
-  }
-
-  return true;
-}
-
-ES_INLINE void TransformSplineBlock::GetTrack(int trackID, float localFrame,
-                                              hkaAnimation::TrackType type,
-                                              Vector4A16 &out) const {
-  switch (type) {
-  case hkaAnimation::Rotation:
-    out = tracks[trackID].rotation->GetValue(localFrame);
-    break;
-  case hkaAnimation::Position:
-    out = tracks[trackID].pos->GetValue(localFrame);
-    break;
-  case hkaAnimation::Scale:
-    out = tracks[trackID].scale->GetValue(localFrame);
-    break;
-  }
-}
-
-ES_INLINE void TransformSplineBlock::GetTransform(int trackID, float localFrame,
-                                                  hkQTransform &out) const {
-  out.rotation = tracks[trackID].rotation->GetValue(localFrame);
-  out.position = tracks[trackID].pos->GetValue(localFrame);
-  out.scale = tracks[trackID].scale->GetValue(localFrame);
+inline void TransformSplineBlock::GetValue(size_t trackID, float time,
+                                           hkQTransform &out) const {
+  out.rotation = tracks[trackID].rotation->GetValue(time);
+  out.translation = tracks[trackID].pos->GetValue(time);
+  out.scale = tracks[trackID].scale->GetValue(time);
 }

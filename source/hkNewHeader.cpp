@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2019 Lukas Cone
+    Copyright(C) 2016-2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -24,13 +24,13 @@
 struct _chunkCC {
   chunkCC c;
   _chunkCC() = default;
-  _chunkCC(_chunkCC input, char item, int index) : c(input.c) {
+  _chunkCC(_chunkCC input, char item, uint32 index) : c(input.c) {
     c.fourCC[index] = item;
   }
 };
 
-constexpr uint _ToFourCC(const char *input, const _chunkCC chnk = {},
-                         const int index = 2) {
+constexpr uint32 _ToFourCC(const char *input, const _chunkCC chnk = {},
+                           uint32 index = 2) {
   return index > 5 ? chnk.c.hash
                    : _ToFourCC(input, _chunkCC(chnk, input[index], index - 2),
                                index + 1);
@@ -52,99 +52,67 @@ int chDATARead(BinReader *rd, hkChunk *holder, hkxNewHeader *root) {
   if (!holder || !root)
     return 1;
 
-  const int dataSize = holder->Size();
-  root->dataBuffer = static_cast<char *>(malloc(dataSize));
-  rd->ReadBuffer(root->dataBuffer, dataSize);
+  const uint32 dataSize = holder->Size();
+  rd->ReadContainer(root->dataBuffer, dataSize);
+
+  return 0;
+}
+
+int ReadTypeNames(BinReader *rd, hkChunk *holder, hkxNewHeader *root,
+                  std::string &outBuffer, _clVec &outVec) {
+  if (!holder || !root)
+    return 1;
+
+  const uint32 bufferSize = holder->Size();
+  rd->ReadContainer(outBuffer, bufferSize);
+  char *buffer = &outBuffer[0];
+  es::string_view lastName = buffer;
+
+  for (uint32 t = 0; t < bufferSize; t++) {
+    if (!buffer[t]) {
+      outVec.push_back(lastName);
+      lastName = buffer + t + 1;
+
+      if (lastName.empty()) {
+        break;
+      }
+    }
+  }
 
   return 0;
 }
 
 int chTSTRRead(BinReader *rd, hkChunk *holder, hkxNewHeader *root) {
-  if (!holder || !root)
-    return 1;
-
-  const int bufferSize = holder->Size();
-  char *&buffer = root->classNamesBuffer;
-  buffer = static_cast<char *>(malloc(bufferSize));
-  rd->ReadBuffer(buffer, bufferSize);
-
-  int numStrings = 0;
-
-  for (int t = 0; t < bufferSize; t++)
-    if (!buffer[t])
-      numStrings++;
-
-  _clVec &vec = root->classNames;
-  vec.reserve(++numStrings);
-
-  char *lastPtr = buffer;
-
-  for (int t = 0; t < bufferSize; t++) {
-    if (t && !buffer[t - 1] && !buffer[t])
-      break;
-
-    if (!buffer[t]) {
-      vec.push_back(lastPtr);
-      lastPtr = buffer + t + 1;
-    }
-  }
-
-  return 0;
+  return ReadTypeNames(rd, holder, root, root->classNamesBuffer,
+                       root->classNames);
 }
 
 int chFSTRRead(BinReader *rd, hkChunk *holder, hkxNewHeader *root) {
-  if (!holder || !root)
-    return 1;
-
-  const int bufferSize = holder->Size();
-  char *&buffer = root->memberNamesBuffer;
-  buffer = static_cast<char *>(malloc(bufferSize));
-  rd->ReadBuffer(buffer, bufferSize);
-
-  int numStrings = 0;
-
-  for (int t = 0; t < bufferSize; t++)
-    if (!buffer[t])
-      numStrings++;
-
-  _clVec &vec = root->memberNames;
-  vec.reserve(++numStrings);
-
-  char *lastPtr = buffer;
-
-  for (int t = 0; t < bufferSize; t++) {
-    if (t && !buffer[t - 1] && !buffer[t])
-      break;
-
-    if (!buffer[t]) {
-      vec.push_back(lastPtr);
-      lastPtr = buffer + t + 1;
-    }
-  }
-
-  return 0;
+  return ReadTypeNames(rd, holder, root, root->memberNamesBuffer,
+                       root->memberNames);
 }
 
-ES_INLINE int ReadCompressedInt(BinReader *rd) {
-  uchar tempChar;
-  int resultInt = 0;
+int32 ReadCompressedInt(BinReader *rd) {
+  uint8 firstInt;
+  int32 resultInt = 0;
 
-  rd->Read(tempChar);
+  rd->Read(firstInt);
 
-  const bool flag1 = (tempChar & 0x80) == 0x80;
-  const bool flag2 = (tempChar & 0xC0) == 0xC0;
-  const bool flag3 = (tempChar & 0xE0) == 0xE0;
+  const bool flag1 = (firstInt & 0x80) == 0x80;
+  const bool flag2 = (firstInt & 0xC0) == 0xC0;
+  const bool flag3 = (firstInt & 0xE0) == 0xE0;
 
   if (flag3) {
     rd->Read(resultInt);
-    resultInt |= (tempChar & 0xf) << 4;
+    resultInt |= (firstInt & 0xf) << 4;
   } else if (flag2) {
     printerror("[Havok] Unhandled int compression : 0xC0!")
   } else if (flag1) {
-    rd->Read(resultInt, 1);
-    resultInt |= (static_cast<int>(tempChar) & 0xf) << 8;
+    uint8 secondInt;
+    rd->Read(secondInt);
+    resultInt = secondInt | ((static_cast<int32>(firstInt) & 0xf) << 8);
   } else
-    resultInt = tempChar;
+    resultInt = firstInt;
 
   return resultInt;
 }
@@ -154,20 +122,20 @@ int chTNAMRead(BinReader *rd, hkChunk *holder, hkxNewHeader *root) {
     return 1;
 
   const size_t savepos = rd->Tell();
-  const int numClasses = ReadCompressedInt(rd) - 1;
+  const uint32 numClasses = ReadCompressedInt(rd) - 1;
 
   root->weldedClassNames.resize(numClasses);
 
   for (auto &c : root->weldedClassNames) {
-    const int classNameIndex = ReadCompressedInt(rd);
+    const uint32 classNameIndex = ReadCompressedInt(rd);
     c.className = root->classNames[classNameIndex];
 
-    uchar numTemplateArgs;
+    uint8 numTemplateArgs;
     rd->Read(numTemplateArgs);
     c.templateArguments.resize(numTemplateArgs);
 
     for (auto &t : c.templateArguments) {
-      int argNameIndex = ReadCompressedInt(rd);
+      uint32 argNameIndex = ReadCompressedInt(rd);
       t.argName = root->classNames[argNameIndex];
 
       argNameIndex = ReadCompressedInt(rd);
@@ -175,8 +143,8 @@ int chTNAMRead(BinReader *rd, hkChunk *holder, hkxNewHeader *root) {
     }
   }
 
-  const int diff =
-      static_cast<int>(holder->Size()) - static_cast<int>(rd->Tell() - savepos);
+  const int32 diff = static_cast<int32>(holder->Size()) -
+                     static_cast<int32>(rd->Tell() - savepos);
 
   if (diff < 0) {
     printwarning("[Havok] TNAM chunk read too much data, possible incorrect "
@@ -196,17 +164,17 @@ int chITEMRead(BinReader *rd, hkChunk *holder, hkxNewHeader *root) {
   if (!holder || !root)
     return 1;
 
-  const int numFixups = holder->Size() / sizeof(classEntryFixup);
+  const uint32 numFixups = holder->Size() / sizeof(classEntryFixup);
 
   rd->ReadContainer(root->classEntries, numFixups);
 
   return 0;
 }
 
-ES_INLINE std::string _hkGenerateClassnameNew(hkxNewHeader *hdr,
-                                              const std::string &className) {
+std::string _hkGenerateClassnameNew(hkxNewHeader *hdr,
+                                    const std::string &className) {
   return className + "_t<" + className + hdr->contentsVersionStripped + "_t<" +
-         "hkPointerX64" + ">>";
+         "esPointerX64" + ">>";
 }
 
 int chPTCHRead(BinReader *rd, hkChunk *holder, hkxNewHeader *root) {
@@ -221,35 +189,37 @@ int chPTCHRead(BinReader *rd, hkChunk *holder, hkxNewHeader *root) {
   const size_t endPos = rd->Tell() + holder->Size();
 
   while (rd->Tell() < endPos) {
-    int classNameIndex;
+    uint32 classNameIndex;
     rd->Read(classNameIndex);
 
-    const char *toclassname =
+    es::string_view toclassname =
         root->weldedClassNames[classNameIndex - 1].className;
 
-    bool isHKArray = !strcmp(toclassname, "hkArray");
-    bool isHKRelArray = !strcmp(toclassname, "hkRelArray");
+    bool isHKArray = toclassname == "hkArray";
+    bool isHKRelArray = toclassname == "hkRelArray";
 
-    int numPointers;
+    uint32 numPointers;
     rd->Read(numPointers);
 
-    for (int t = 0; t < numPointers; t++) {
-      int cPointer;
+    for (uint32 t = 0; t < numPointers; t++) {
+      uint32 cPointer;
       rd->Read(cPointer);
 
       if (isHKRelArray) {
-        uint *retarget = reinterpret_cast<uint *>(root->dataBuffer + cPointer);
+        uint32 *retarget =
+            reinterpret_cast<uint32 *>(&root->dataBuffer[0] + cPointer);
         const classEntryFixup &xfix = root->classEntries[*retarget];
 
-        ushort *relRetarget = reinterpret_cast<ushort *>(retarget);
+        uint16 *relRetarget = reinterpret_cast<uint16 *>(retarget);
         *relRetarget = xfix.tag.hash - cPointer;
         *(relRetarget + 1) = xfix.count;
       } else {
         uint64 *retarget =
-            reinterpret_cast<uint64 *>(root->dataBuffer + cPointer);
+            reinterpret_cast<uint64 *>(&root->dataBuffer[0] + cPointer);
         const classEntryFixup &xfix = root->classEntries[*retarget];
 
-        *retarget = reinterpret_cast<uint64>(xfix.tag.hash + root->dataBuffer);
+        *retarget =
+            reinterpret_cast<uint64>(xfix.tag.hash + root->dataBuffer.data());
 
         if (isHKArray)
           *(retarget + 1) = xfix.count;
@@ -258,26 +228,25 @@ int chPTCHRead(BinReader *rd, hkChunk *holder, hkxNewHeader *root) {
   }
 
   for (auto &f : root->classEntries) {
-    const int clsID = f.Size() - 1;
+    const uint32 clsID = f.Size() - 1;
 
     if (clsID < 0)
       continue;
 
-    const char *clName = root->weldedClassNames[clsID].className;
+    es::string_view clName = root->weldedClassNames[clsID].className;
     std::string compiledClassname = _hkGenerateClassnameNew(root, clName);
-    const JenHash _chash = JenkinsHash(
-        compiledClassname.c_str(), static_cast<int>(compiledClassname.size()));
+    const JenHash _chash = JenkinsHash(compiledClassname.c_str());
 
     hkVirtualClass *cls = IhkPackFile::ConstructClass(_chash);
 
     if (cls) {
-      cls->SetDataPointer(root->dataBuffer + f.tag.hash);
-      cls->namePtr = clName;
-      cls->superHash = JenkinsHash(clName, static_cast<int>(strlen(clName)));
+      cls->SetDataPointer(&root->dataBuffer[0] + f.tag.hash);
+      cls->name = clName;
+      cls->superHash = JenkinsHash(clName);
       // cls->masterBuffer = root->dataBuffer;
       cls->header = root;
 
-      root->virtualClasses.push_back(cls);
+      root->virtualClasses.emplace_back(cls);
       cls->Process();
     }
   }
@@ -305,7 +274,7 @@ int ReadBlankChunkNoSkip(BinReader *, hkChunk *, hkxNewHeader *) { return 0; }
 #define chunkRegisterBlankNoskip(value)                                        \
   {_ToFourCC(#value), ReadBlankChunkNoSkip},
 
-static const std::map<const uint,
+static const std::map<const uint32,
                       int (*)(BinReader *, hkChunk *, hkxNewHeader *)>
     hkChunkRegistry = {
         StaticFor(chunkRegister, chSDKVRead, chDATARead, chTSTRRead, chFSTRRead,
@@ -321,7 +290,7 @@ int hkChunk::Read(BinReader *rd, hkxNewHeader *root) {
   Reorder();
 
   if (!hkChunkRegistry.count(tag.hash)) {
-    printwarning("[Havok] Unhandled tag chunk: ",
+    printwarning("[Havok] Unhandled tag chunk: "
                  << tag.fourCC[0] << tag.fourCC[1] << tag.fourCC[2]
                  << tag.fourCC[3]);
     rd->Skip(Size());
@@ -329,16 +298,18 @@ int hkChunk::Read(BinReader *rd, hkxNewHeader *root) {
   }
 
   if (hkChunkRegistry.at(tag.hash)(rd, this, root)) {
-    printerror("[Havok] Error reading chunk: ",
-               << tag.fourCC[0] << tag.fourCC[1] << tag.fourCC[2]
-               << tag.fourCC[3]);
+    printerror("[Havok] Error reading chunk: " << tag.fourCC[0] << tag.fourCC[1]
+                                               << tag.fourCC[2]
+                                               << tag.fourCC[3]);
     return 1;
   }
 
   return 0;
 }
 
-int hkxNewHeader::GetVersion() { return atoi(contentsVersionStripped); }
+int32 hkxNewHeader::GetVersion() const {
+  return atoi(contentsVersionStripped);
+}
 
 int hkxNewHeader::Load(BinReader *rd) {
   rd->Read(static_cast<hkChunk &>(*this));
@@ -349,7 +320,7 @@ int hkxNewHeader::Load(BinReader *rd) {
     return 1;
   }
 
-  const int fileSize = Size();
+  const uint32 fileSize = Size();
 
   while (rd->Tell() < fileSize) {
     hkChunk curChunk;
@@ -359,18 +330,6 @@ int hkxNewHeader::Load(BinReader *rd) {
   }
 
   return 0;
-}
-
-hkxNewHeader::~hkxNewHeader() {
-  if (dataBuffer)
-    free(dataBuffer);
-  if (classNamesBuffer)
-    free(classNamesBuffer);
-  if (memberNamesBuffer)
-    free(memberNamesBuffer);
-
-  for (auto &v : virtualClasses)
-    delete v;
 }
 
 void hkxNewHeader::DumpClassNames(std::ostream &str) {

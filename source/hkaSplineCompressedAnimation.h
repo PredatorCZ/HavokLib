@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2019 Lukas Cone
+    Copyright(C) 2016-2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -22,24 +22,31 @@
 template <class C>
 struct hkaSplineCompressedAnimation_t
     : hkaSplineCompressedAnimationInternalInterface,
-      hkaSkeletalAnimation_t<typename C::parentClass> {
+      hkaSkeletalAnimation_t<typename C::parentClass,
+                             hkaAnimationInternalInterface> {
   typedef C value_type;
-  typedef hkaSkeletalAnimation_t<typename C::parentClass> parent;
+  typedef hkaSkeletalAnimation_t<typename C::parentClass,
+                                 hkaAnimationInternalInterface>
+      parent;
   hkClassConstructor(hkaSplineCompressedAnimation_t);
   void SwapEndian() {
-    hkaSkeletalAnimation_t<typename C::parentClass>::SwapEndian();
+    parent::SwapEndian();
     static_cast<value_type *>(this->Data)->SwapEndian();
   }
-  void Process() { decomp.Assign(this); }
+  void Process() {
+    decomp.Assign(this);
+    this->frameRate =
+        static_cast<uint32>(this->GetNumFrames() / this->Duration());
+  }
   hkaSplineDecompressor decomp;
 
-  int GetNumFrames() const {
+  uint32 GetNumFrames() const {
     return static_cast<value_type *>(this->Data)->GetNumFrames();
   }
-  int GetNumBlocks() const {
+  uint32 GetNumBlocks() const {
     return static_cast<value_type *>(this->Data)->GetNumBlocks();
   }
-  int GetMaxFramesPerBlock() const {
+  uint32 GetMaxFramesPerBlock() const {
     return static_cast<value_type *>(this->Data)->GetMaxFramesPerBlock();
   }
   float GetBlockDuration() const {
@@ -54,57 +61,26 @@ struct hkaSplineCompressedAnimation_t
   char *GetData() const {
     return static_cast<value_type *>(this->Data)->GetData();
   }
-  hkRealArray<uint> GetBlockOffsets() const {
+  hkRealArray<uint32> GetBlockOffsets() const {
     return static_cast<value_type *>(this->Data)->GetBlockOffsets();
   }
-  hkRealArray<uint> GetFloatBlockOffsets() const {
-    return static_cast<value_type *>(this->Data)
-        ->GetFloatBlockOffsets();
+  hkRealArray<uint32> GetFloatBlockOffsets() const {
+    return static_cast<value_type *>(this->Data)->GetFloatBlockOffsets();
   }
-  hkRealArray<uint> GetTransformOffsets() const {
-    return static_cast<value_type *>(this->Data)
-        ->GetTransformOffsets();
+  hkRealArray<uint32> GetTransformOffsets() const {
+    return static_cast<value_type *>(this->Data)->GetTransformOffsets();
   }
-  hkRealArray<uint> GetFloatOffsets() const {
+  hkRealArray<uint32> GetFloatOffsets() const {
     return static_cast<value_type *>(this->Data)->GetFloatOffsets();
   }
-  bool IsDecoderSupported() const { return true; }
-  ES_INLINE int GetLocalValues(int frame, float delta,
-                               float &localFrame) const {
-    int blockID = frame / (GetMaxFramesPerBlock() - 1);
 
-    if (blockID >= GetNumBlocks())
-      blockID = GetNumBlocks() - 1;
-    else if (blockID < 0)
-      blockID = 0;
+  void GetValue(uni::RTSValue &output, float time,
+                size_t trackID) const override {
+    size_t blockID = static_cast<size_t>(time * GetBlockInverseDuration());
+    float localTime = time - (static_cast<float>(blockID) * GetBlockDuration());
 
-    localFrame =
-        static_cast<float>(frame - (blockID * (GetMaxFramesPerBlock() - 1)));
-    localFrame = (delta + localFrame) * GetFrameDuration();
-    localFrame =
-        localFrame * GetBlockInverseDuration() * (GetMaxFramesPerBlock() - 1);
-
-    return blockID;
+    decomp.blocks[blockID].GetValue(trackID, localTime, output);
   }
-
-  void GetTrack(int trackID, int frame, float delta, TrackType type,
-                Vector4A16 &out) const {
-    float localFrame;
-    int blockID = GetLocalValues(frame, delta, localFrame);
-
-    decomp.blocks[blockID].GetTrack(trackID, localFrame, type, out);
-  }
-  void GetTransform(int trackID, int frame, float delta,
-                    hkQTransform &out) const {
-    float localFrame;
-    int blockID = GetLocalValues(frame, delta, localFrame);
-
-    decomp.blocks[blockID].GetTransform(trackID, localFrame, out);
-  }
-  bool IsTrackStatic(int trackID, TrackType type) const {
-    return decomp.IsTrackStatic(trackID, type);
-  }
-  int GetNumInternalFrames() const { return GetNumFrames(); }
 };
 
 template <class C>
@@ -113,33 +89,23 @@ using hkaSplineSkeletalAnimation_t = hkaSplineCompressedAnimation_t<C>;
 template <template <class C> class _ipointer,
           template <template <class C> class __ipointer> class _parent>
 struct hkaSplineCompressedSkeletalAnimation_t_shared : _parent<_ipointer> {
-  ES_FORCEINLINE int GetNumFrames() const { return this->numFrames; }
-  ES_FORCEINLINE int GetNumBlocks() const { return this->numBlocks; }
-  ES_FORCEINLINE int GetMaxFramesPerBlock() const {
-    return this->maxFramesPerBlock;
-  }
-  ES_FORCEINLINE float GetBlockDuration() const { return this->blockDuration; }
-  ES_FORCEINLINE float GetBlockInverseDuration() const {
-    return this->blockInverseDuration;
-  }
-  ES_FORCEINLINE float GetFrameDuration() const { return this->frameDuration; }
-  ES_FORCEINLINE char *GetData() {
-    return this->data;
-  }
-  ES_FORCEINLINE hkRealArray<uint> GetBlockOffsets() const {
+  uint32 GetNumFrames() const { return this->numFrames; }
+  uint32 GetNumBlocks() const { return this->numBlocks; }
+  uint32 GetMaxFramesPerBlock() const { return this->maxFramesPerBlock; }
+  float GetBlockDuration() const { return this->blockDuration; }
+  float GetBlockInverseDuration() const { return this->blockInverseDuration; }
+  float GetFrameDuration() const { return this->frameDuration; }
+  char *GetData() { return this->data; }
+  hkRealArray<uint32> GetBlockOffsets() const {
     return {this->blockOffsets, this->blockOffsets.count};
   }
-  ES_FORCEINLINE hkRealArray<uint>
-  GetFloatBlockOffsets() const {
-    return {this->floatBlockOffsets,
-            this->floatBlockOffsets.count};
+  hkRealArray<uint32> GetFloatBlockOffsets() const {
+    return {this->floatBlockOffsets, this->floatBlockOffsets.count};
   }
-  ES_FORCEINLINE hkRealArray<uint>
-  GetTransformOffsets() const {
-    return {this->transformOffsets,
-            this->transformOffsets.count};
+  hkRealArray<uint32> GetTransformOffsets() const {
+    return {this->transformOffsets, this->transformOffsets.count};
   }
-  ES_FORCEINLINE hkRealArray<uint> GetFloatOffsets() const {
+  hkRealArray<uint32> GetFloatOffsets() const {
     return {this->floatOffsets, this->floatOffsets.count};
   }
 
@@ -157,16 +123,16 @@ struct hkaSplineCompressedSkeletalAnimation_t_shared : _parent<_ipointer> {
     FByteswapper(this->transformOffsets.count);
     FByteswapper(this->floatOffsets.count);
 
-    for (int i = 0; i < this->blockOffsets.count; i++)
+    for (uint32 i = 0; i < this->blockOffsets.count; i++)
       FByteswapper(this->blockOffsets[i]);
 
-    for (int i = 0; i < this->floatBlockOffsets.count; i++)
+    for (uint32 i = 0; i < this->floatBlockOffsets.count; i++)
       FByteswapper(this->floatBlockOffsets[i]);
 
-    for (int i = 0; i < this->transformOffsets.count; i++)
+    for (uint32 i = 0; i < this->transformOffsets.count; i++)
       FByteswapper(this->transformOffsets[i]);
 
-    for (int i = 0; i < this->floatOffsets.count; i++)
+    for (uint32 i = 0; i < this->floatOffsets.count; i++)
       FByteswapper(this->floatOffsets[i]);
   }
 };
@@ -175,17 +141,17 @@ template <template <class C> class _ipointer,
           template <template <class C> class __ipointer> class _parent>
 struct hkaSplineCompressedAnimation550_tt : _parent<_ipointer> {
   typedef _parent<_ipointer> parentClass;
-  int numFrames;
-  int numBlocks;
-  int maxFramesPerBlock;
-  int maskAndQuantizationSize;
+  uint32 numFrames;
+  uint32 numBlocks;
+  uint32 maxFramesPerBlock;
+  uint32 maskAndQuantizationSize;
   float blockDuration;
   float blockInverseDuration;
   float frameDuration;
-  hkArray<uint, _ipointer> blockOffsets, floatBlockOffsets, transformOffsets,
+  hkArray<uint32, _ipointer> blockOffsets, floatBlockOffsets, transformOffsets,
       floatOffsets;
   hkArray<char, _ipointer> data;
-  int endian;
+  uint32 endian;
 };
 
 template <template <class C> class _ipointer>

@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2019 Lukas Cone
+    Copyright(C) 2016-2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
 */
 
 #pragma once
+#include "datas/pointer.hpp"
 
 #ifndef _MSC_VER
 #define MSC_RP_PACK(packingVal) pack()
@@ -54,77 +55,12 @@ template <template <class C> class _ipointer> struct hkReferenceObject_rp {
 };
 #pragma pack()
 
-template <class C> union hkPointerX64 {
-  typedef C value_type;
-
-private:
-  C *pointer;
-  uint64 bound;
-
-public:
-  operator C *() { return pointer; }
-  C &operator*() { return *pointer; }
-  C *operator->() { return pointer; }
-
-  operator const C *() const { return pointer; }
-  const C &operator*() const { return *pointer; }
-  const C *operator->() const { return pointer; }
-};
-
-template <class C> struct _hkPointerX86 {
-  typedef C value_type;
-
-private:
-  uint varPtr;
-
-public:
-  operator C *() {
-    return reinterpret_cast<C *>(reinterpret_cast<char *>(&varPtr) + varPtr);
-  }
-
-  C &operator*() { return *static_cast<C *>(*this); }
-  C *operator->() { return *this; }
-
-  operator const C *() const {
-    return reinterpret_cast<const C *>(reinterpret_cast<const char *>(&varPtr) +
-                                       varPtr);
-  }
-  const C &operator*() const { return *static_cast<C *>(*this); }
-  const C *operator->() const { return *this; }
-};
-
-template <class C> union _hkPointer {
-  typedef C value_type;
-
-private:
-  C *pointer;
-
-public:
-  operator C *() { return pointer; }
-  C &operator*() { return *pointer; }
-  C *operator->() { return pointer; }
-
-  operator const C *() const { return pointer; }
-  const C &operator*() const { return *pointer; }
-  const C *operator->() const { return pointer; }
-};
-
-template <class C, bool x64> struct ___hkPointerX86 {
-  typedef _hkPointerX86<C> value_type;
-};
-template <class C> struct ___hkPointerX86<C, false> {
-  typedef _hkPointer<C> value_type;
-};
-
-template <class C>
-using hkPointerX86 = typename ___hkPointerX86<C, ES_X64>::value_type;
-
 template <class C, template <class _C> class _ipointer> struct hkArray {
   typedef C value_type;
 
   _ipointer<C> data;
-  int count;
-  int capacityAndFlags;
+  uint32 count;
+  uint32 capacityAndFlags;
 
   operator C *() { return data; }
   operator const C *() const { return data; }
@@ -137,18 +73,16 @@ using is_hkArray =
 
 #define enablehkArrayArg(_value, arg)                                          \
   template <class SC = decltype(parent_class::_value)>                         \
-  typename std::enable_if<is_hkArray<_ipointer, SC>::value, arg>::type         \
-      ES_FORCEINLINE
+  typename std::enable_if<is_hkArray<_ipointer, SC>::value, arg>::type
 
 #define enablePtrPairArg(_value, arg)                                          \
   template <class SC = decltype(parent_class::_value)>                         \
-  typename std::enable_if<!is_hkArray<_ipointer, SC>::value, arg>::type        \
-      ES_FORCEINLINE
+  typename std::enable_if<!is_hkArray<_ipointer, SC>::value, arg>::type
 
-#define enablehkArray(_value) enablehkArrayArg(_value, const int)
-#define enablePtrPair(_value) enablePtrPairArg(_value, const int)
-#define enablehkArrayRef(_value) enablehkArrayArg(_value, int &)
-#define enablePtrPairRef(_value) enablePtrPairArg(_value, int &)
+#define enablehkArray(_value) enablehkArrayArg(_value, uint32)
+#define enablePtrPair(_value) enablePtrPairArg(_value, uint32)
+#define enablehkArrayRef(_value) enablehkArrayArg(_value, uint32 &)
+#define enablePtrPairRef(_value) enablePtrPairArg(_value, uint32 &)
 
 template <class C, template <class _C> class _ipointer> struct hkVariant {
   _ipointer<C> object;

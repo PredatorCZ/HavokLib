@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2019 Lukas Cone
+    Copyright(C) 2016-2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -25,8 +25,8 @@ struct hkRootLevelContainer_t : hkRootLevelContainerInternalInterface {
   hkClassConstructor(hkRootLevelContainer_t<C>);
 
   void SwapEndian() override { Data->SwapEndian(); }
-  const int GetNumVariants() const override { return Data->GetNumVariants(); }
-  const hkNamedVariant GetVariant(int id) const override {
+  size_t Size() const override { return Data->GetNumVariants(); }
+  const hkNamedVariant At(size_t id) const override {
     return Data->GetVariant(header, id);
   }
 };
@@ -35,8 +35,10 @@ template <template <class C> class _ipointer> struct hkNamedVariant_t {
   _ipointer<char> name;
   _ipointer<char> classname;
   hkVariant<char, _ipointer> variant;
-  ES_FORCEINLINE const hkNamedVariant GetVariant(IhkPackFile *header) const {
-    return hkNamedVariant{name, classname, header->GetClass(variant.object)};
+  const hkNamedVariant GetVariant(IhkPackFile *header) const {
+    return {static_cast<const char *>(name),
+            static_cast<const char *>(classname),
+            header->GetClass(variant.object)};
   }
 };
 
@@ -44,8 +46,9 @@ template <template <class C> class _ipointer> struct hkNamedVariant2_t {
   _ipointer<char> name;
   _ipointer<char> classname;
   _ipointer<char> variant;
-  ES_FORCEINLINE const hkNamedVariant GetVariant(IhkPackFile *header) const {
-    return hkNamedVariant{name, classname, header->GetClass(variant)};
+  const hkNamedVariant GetVariant(IhkPackFile *header) const {
+    return {static_cast<const char *>(name),
+            static_cast<const char *>(classname), header->GetClass(variant)};
   }
 };
 
@@ -60,18 +63,17 @@ struct hkRootLevelContainer_t_shared : _parent<_ipointer> {
   enablePtrPairRef(variants) GetNumVariants() { return this->numVariants; }
   enablehkArrayRef(variants) GetNumVariants() { return this->variants.count; }
 
-  ES_FORCEINLINE const hkNamedVariant GetVariant(IhkPackFile *header,
-                                                 int id) const {
+  const hkNamedVariant GetVariant(IhkPackFile *header, size_t id) const {
     return parent_class::variants[id].GetVariant(header);
   }
 
-  ES_FORCEINLINE void SwapEndian() { FByteswapper(GetNumVariants()); }
+  void SwapEndian() { FByteswapper(GetNumVariants()); }
 };
 
 template <template <class C> class _ipointer>
 struct hkRootLevelContainer660_t_sharedData {
   _ipointer<hkNamedVariant_t<_ipointer>> variants;
-  int numVariants;
+  uint32 numVariants;
 };
 
 template <template <class C> class _ipointer>

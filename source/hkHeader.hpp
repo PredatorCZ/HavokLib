@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2019 Lukas Cone
+    Copyright(C) 2016-2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -16,6 +16,8 @@
 */
 
 #pragma once
+#include "datas/endian.hpp"
+
 #include "hkInternalInterfaces.h"
 
 #define hkMagic1 0x57e0e057
@@ -71,19 +73,27 @@ struct hkxHeaderlayout {
       emptyBaseClassOptimization;
 };
 
-struct hkxSectionHeader {
+struct hkxSectionHeaderData {
+  char sectionTag[20];
+  uint32 absoluteDataStart, localFixupsOffset, globalFixupsOffset,
+      virtualFixupsOffset, exportsOffset, importsOffset, bufferSize;
+
+  void SwapEndian();
+};
+
+struct hkxSectionHeader : hkxSectionHeaderData {
 
   struct hkxLocalFixup {
-    int pointer, destination;
-    ES_FORCEINLINE void SwapEndian() {
+    int32 pointer, destination;
+    void SwapEndian() {
       FByteswapper(pointer);
       FByteswapper(destination);
     }
   };
 
   struct hkxGlobalFixup {
-    int pointer, sectionid, destination;
-    ES_FORCEINLINE void SwapEndian() {
+    int32 pointer, sectionid, destination;
+    void SwapEndian() {
       FByteswapper(pointer);
       FByteswapper(destination);
       FByteswapper(sectionid);
@@ -91,22 +101,16 @@ struct hkxSectionHeader {
   };
 
   struct hkxVirtualFixup {
-    int dataoffset, sectionid, classnameoffset;
-    ES_FORCEINLINE void SwapEndian() {
+    int32 dataoffset, sectionid, classnameoffset;
+    void SwapEndian() {
       FByteswapper(dataoffset);
       FByteswapper(sectionid);
       FByteswapper(classnameoffset);
     }
   };
 
-  char sectionTag[20];
-  int absoluteDataStart, localFixupsOffset, globalFixupsOffset,
-      virtualFixupsOffset, exportsOffset, importsOffset, bufferSize;
-  static const int PODSize;
-
-  int sectionID;
-  int sectionBufferSize;
-  char *sectionBuffer;
+  uint32 sectionID;
+  std::string buffer;
   std::vector<hkxLocalFixup> localFixups;
   std::vector<hkxGlobalFixup> globalFixups;
   std::vector<hkxVirtualFixup> virtualFixups;
@@ -116,32 +120,29 @@ struct hkxSectionHeader {
   int LoadBuffer(BinReader *rd);
   int LinkBuffer();
   int LinkBuffer86();
+};
 
-  ~hkxSectionHeader();
+struct hkxHeaderData {
+  uint32 magic1, magic2, userTag, Version;
+  hkxHeaderlayout layout;
+  uint32 numSections, contentsSectionIndex, contentsSectionOffset,
+      contentsClassNameSectionIndex, contentsClassNameSectionOffset;
+  char contentsVersion[16];
+  uint32 flags;
+  int16 maxpredicate, predicateArraySizePlusPadding;
+
   void SwapEndian();
 };
 
-struct hkxHeader : IhkPackFile {
-  int magic1, magic2, userTag, Version;
-  hkxHeaderlayout layout;
-  int numSections, contentsSectionIndex, contentsSectionOffset,
-      contentsClassNameSectionIndex, contentsClassNameSectionOffset;
-  char contentsVersion[16];
-  int flags;
-  short maxpredicate, predicateArraySizePlusPadding;
-
+struct hkxHeader : hkxHeaderData, IhkPackFile {
   char contentsVersionStripped[5];
 
   std::vector<hkxSectionHeader> sections;
 
   int Load(BinReader &rd);
-  ES_FORCEINLINE hkxSectionHeader *GetDataSection() {
-    return &sections[contentsSectionIndex];
-  }
-  ES_FORCEINLINE VirtualClasses &GetAllClasses() {
+  hkxSectionHeader *GetDataSection() { return &sections[contentsSectionIndex]; }
+  VirtualClasses &GetAllClasses() override {
     return GetDataSection()->virtualClasses;
   }
-  int GetVersion();
-  void SwapEndian();
-  ~hkxHeader() {}
+  int32 GetVersion() const override;
 };

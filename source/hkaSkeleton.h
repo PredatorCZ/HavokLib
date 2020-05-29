@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2019 Lukas Cone
+    Copyright(C) 2016-2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -24,65 +24,67 @@ template <class C> struct hkaSkeleton_t : hkaSkeletonInternalInterface {
   C *Data;
   hkClassConstructor(hkaSkeleton_t<C>);
 
-  const int GetNumBones() const { return Data->GetNumBones(); }
-  const char *GetBoneName(int id) const { return Data->GetBoneName(id); }
-  const hkQTransform *GetBoneTM(int id) const {
+  size_t GetNumBones() const override { return Data->GetNumBones(); }
+  es::string_view GetBoneName(size_t id) const override {
+    return Data->GetBoneName(id);
+  }
+  const hkQTransform *GetBoneTM(size_t id) const override {
     if (id < Data->GetNumTransforms())
       return Data->GetBoneTM(id);
 
     return nullptr;
   }
-  const short GetBoneParentID(int id) const {
+  int16 GetBoneParentID(size_t id) const override {
     if (id < Data->GetNumParentIndices())
       return Data->GetBoneParentID(id);
 
     return -1;
   }
-
-  const char *GetSkeletonName() const { return Data->GetSkeletonName(); };
-  const int GetNumFloatSlots() const { return Data->GetNumFloatSlots(); };
-  const char *GetFloatSlot(int id) const { return Data->GetFloatSlot(id); };
-
-  const int GetNumLocalFrames() const { return Data->GetNumLocalFrames(); };
-  const hkLocalFrameOnBone GetLocalFrame(int id) const {
+  es::string_view Name() const override { return Data->GetSkeletonName(); };
+  size_t GetNumFloatSlots() const override { return Data->GetNumFloatSlots(); };
+  es::string_view GetFloatSlot(size_t id) const override {
+    return Data->GetFloatSlot(id);
+  };
+  size_t GetNumLocalFrames() const override {
+    return Data->GetNumLocalFrames();
+  };
+  hkLocalFrameOnBone GetLocalFrame(size_t id) const override {
     return Data->GetLocalFrame(id);
   };
-
-  const int GetNumPartitions() const { return Data->GetNumPartitions(); };
-  const hkaPartition GetPartition(int id) const {
+  size_t GetNumPartitions() const { return Data->GetNumPartitions(); };
+  hkaPartition GetPartition(size_t id) const override {
     return Data->GetPartition(id);
   };
-  const int GetNumReferenceFloats() const {
+  size_t GetNumReferenceFloats() const override {
     return Data->GetNumReferenceFloats();
   };
-  const float GetReferenceFloat(int id) const {
+  float GetReferenceFloat(size_t id) const override {
     return Data->GetReferenceFloat(id);
   }
 
-  void SwapEndian() { Data->SwapEndian(); }
+  void SwapEndian() override { Data->SwapEndian(); }
 };
 
 template <template <class C> class _ipointer> struct hkLocalFrameOnBone_t {
   _ipointer<hkLocalFrame> localFrame;
-  int boneIndex;
+  int32 boneIndex;
 };
 
 template <template <class C> class _ipointer> struct hkLocalFrameOnBone2_t {
   _ipointer<hkLocalFrame> localFrame;
-  short boneIndex;
+  int16 boneIndex;
 };
 
 template <template <class C> class _ipointer> struct hkaBone_t {
   _ipointer<char> name;
-  int lockTranslation;
+  int32 lockTranslation;
 };
 
 template <template <class C> class _ipointer> struct hkaPartition_t {
   _ipointer<char> Name;
-  short startBoneIndex, numBones;
+  int16 startBoneIndex;
+  uint16 numBones;
 };
-
-static int _dummy;
 
 template <template <class C> class _ipointer,
           template <template <class C> class __ipointer> class _parent>
@@ -114,20 +116,18 @@ struct hkaSkeleton_t_shared : _parent<_ipointer> {
   enablePtrPairRef(bones) GetNumTransforms() { return this->numTransforms; }
   enablehkArrayRef(bones) GetNumTransforms() { return this->transforms.count; }
 
-  disabledFunction(noLocalFrames, const int) ES_FORCEINLINE
-      GetNumLocalFrames() const {
+  disabledFunction(noLocalFrames, size_t) GetNumLocalFrames() const {
     return 0;
   };
-  enabledFunction(noLocalFrames, const int) ES_FORCEINLINE
-      GetNumLocalFrames() const {
+  enabledFunction(noLocalFrames, size_t) GetNumLocalFrames() const {
     return _GetNumLocalFrames();
   };
 
-  disabledFunction(noLocalFrames, int &) ES_FORCEINLINE GetNumLocalFrames() {
-    _dummy = 0;
-    return _dummy;
+  disabledFunction(noLocalFrames, uint32 &) GetNumLocalFrames() {
+    static uint32 _dummy;
+    return _dummy = 0;
   };
-  enabledFunction(noLocalFrames, int &) ES_FORCEINLINE GetNumLocalFrames() {
+  enabledFunction(noLocalFrames, uint32 &) GetNumLocalFrames() {
     return _GetNumLocalFrames();
   };
 
@@ -157,117 +157,99 @@ struct hkaSkeleton_t_shared : _parent<_ipointer> {
     return this->localFrames.count;
   }
 
-  enablePtrPairArg(bones, const char *) GetBoneName(int id) const {
+  enablePtrPairArg(bones, const char *) GetBoneName(size_t id) const {
     return this->bones[id]->name;
   }
-  enablehkArrayArg(bones, const char *) GetBoneName(int id) const {
+  enablehkArrayArg(bones, const char *) GetBoneName(size_t id) const {
     return this->bones[id].name;
   }
 
-  ES_FORCEINLINE const hkQTransform *GetBoneTM(int id) const {
+  const hkQTransform *GetBoneTM(size_t id) const {
     return &this->transforms[id];
   }
-  ES_FORCEINLINE const short GetBoneParentID(int id) const {
-    return this->parentIndicies[id];
-  }
-  ES_FORCEINLINE const char *GetSkeletonName() const {
-    return this->Name;
-  };
-  ES_FORCEINLINE const char *GetFloatSlot(int id) const {
-    return this->floatSlots[id];
-  };
+  int16 GetBoneParentID(size_t id) const { return this->parentIndicies[id]; }
+  const char *GetSkeletonName() const { return this->Name; };
+  const char *GetFloatSlot(size_t id) const { return this->floatSlots[id]; };
 
-  enabledFunction(noLocalFrames, const hkLocalFrameOnBone) ES_FORCEINLINE
-      GetLocalFrame(int id) const {
+  enabledFunction(noLocalFrames, const hkLocalFrameOnBone)
+      GetLocalFrame(size_t id) const {
     return hkLocalFrameOnBone{this->localFrames[id].localFrame,
                               this->localFrames[id].boneIndex};
   };
 
-  disabledFunction(noLocalFrames, const hkLocalFrameOnBone) ES_FORCEINLINE
-      GetLocalFrame(int id) const {
+  disabledFunction(noLocalFrames, const hkLocalFrameOnBone)
+      GetLocalFrame(size_t id) const {
     return hkLocalFrameOnBone{};
   };
 
-  disabledFunction(noPartitions, const int) ES_FORCEINLINE
-      GetNumPartitions() const {
-    return 0;
-  }
-  enabledFunction(noPartitions, const int) ES_FORCEINLINE
-      GetNumPartitions() const {
+  disabledFunction(noPartitions, size_t) GetNumPartitions() const { return 0; }
+  enabledFunction(noPartitions, size_t) GetNumPartitions() const {
     return GetNumPartitions();
   }
-  enabledFunction(noPartitions, int &) ES_FORCEINLINE GetNumPartitions() {
+  enabledFunction(noPartitions, uint32 &) GetNumPartitions() {
     return this->partitions.count;
   }
 
-  disabledFunction(noReferenceFloats, const int) ES_FORCEINLINE
-      GetNumReferenceFloats() const {
+  disabledFunction(noReferenceFloats, size_t) GetNumReferenceFloats() const {
     return 0;
   }
-  enabledFunction(noReferenceFloats, const int) ES_FORCEINLINE
-      GetNumReferenceFloats() const {
+  enabledFunction(noReferenceFloats, size_t) GetNumReferenceFloats() const {
     return this->referenceFloats.count;
   }
 
-  disabledFunction(noPartitions, const hkaPartition) ES_FORCEINLINE
-      GetPartition(int id) const {
+  disabledFunction(noPartitions, const hkaPartition)
+      GetPartition(size_t id) const {
     return hkaPartition{};
   }
-  enabledFunction(noPartitions, const hkaPartition) ES_FORCEINLINE
-      GetPartition(int id) const {
+  enabledFunction(noPartitions, const hkaPartition)
+      GetPartition(size_t id) const {
     return hkaPartition{static_cast<const char *>(this->partitions[id].Name),
                         this->partitions[id].startBoneIndex,
                         this->partitions[id].numBones};
   }
 
-  disabledFunction(noReferenceFloats, const float) ES_FORCEINLINE
-      GetReferenceFloat(int id) const {
+  disabledFunction(noReferenceFloats, const float)
+      GetReferenceFloat(size_t id) const {
     return 0.0f;
   }
-  enabledFunction(noReferenceFloats, const float) ES_FORCEINLINE
-      GetReferenceFloat(int id) const {
+  enabledFunction(noReferenceFloats, const float)
+      GetReferenceFloat(size_t id) const {
     return this->referenceFloats[id];
   }
 
-  disabledFunction(noLocalFrames, void) ES_FORCEINLINE
-      SwapLocalFrames() {}
-  enabledFunction(noLocalFrames, void) ES_FORCEINLINE
-      SwapLocalFrames() {
+  disabledFunction(noLocalFrames, void) SwapLocalFrames() {}
+  enabledFunction(noLocalFrames, void) SwapLocalFrames() {
     FByteswapper(GetNumLocalFrames());
-    const int numLocalFrames = GetNumLocalFrames();
+    const size_t numLocalFrames = GetNumLocalFrames();
 
-    for (int i = 0; i < numLocalFrames; i++)
+    for (size_t i = 0; i < numLocalFrames; i++)
       FByteswapper(this->localFrames[i].boneIndex);
   }
-  disabledFunction(noReferenceFloats, void) ES_FORCEINLINE
-      SwapRefFloats() {}
-  enabledFunction(noReferenceFloats, void) ES_FORCEINLINE
-      SwapRefFloats() {
+  disabledFunction(noReferenceFloats, void) SwapRefFloats() {}
+  enabledFunction(noReferenceFloats, void) SwapRefFloats() {
     FByteswapper(GetNumFloatSlots());
-    const int numRefFloats = GetNumFloatSlots();
+    const size_t numRefFloats = GetNumFloatSlots();
 
-    for (int i = 0; i < numRefFloats; i++)
+    for (size_t i = 0; i < numRefFloats; i++)
       FByteswapper(this->referenceFloats[i]);
   }
-  disabledFunction(noPartitions, void) ES_FORCEINLINE
-      SwapPartitions() {}
-  enabledFunction(noPartitions, void) ES_FORCEINLINE
-      SwapPartitions() {
+  disabledFunction(noPartitions, void) SwapPartitions() {}
+  enabledFunction(noPartitions, void) SwapPartitions() {
     FByteswapper(GetNumPartitions());
-    const int numPartitions = GetNumPartitions();
+    const size_t numPartitions = GetNumPartitions();
 
-    for (int i = 0; i < numPartitions; i++) {
+    for (size_t i = 0; i < numPartitions; i++) {
       FByteswapper(this->partitions[i].startBoneIndex);
       FByteswapper(this->partitions[i].numBones);
     }
   }
 
-  ES_FORCEINLINE void SwapEndian() {
+  void SwapEndian() {
     FByteswapper(GetNumBones());
     FByteswapper(GetNumParentIndices());
     FByteswapper(GetNumTransforms());
 
-    const int numBones = GetNumBones();
+    const size_t numBones = GetNumBones();
 
     short *pData = this->parentIndicies;
     short *pDataEnd = pData + numBones;
@@ -292,15 +274,15 @@ template <template <class C> class _ipointer>
 struct hkaSkeleton550_t_sharedData {
   _ipointer<char> Name;
   _ipointer<short> parentIndicies;
-  int numParentIndicies;
+  uint32 numParentIndicies;
   _ipointer<_ipointer<hkaBone_t<_ipointer>>> bones;
-  int numBones;
+  uint32 numBones;
   _ipointer<hkQTransform> transforms;
-  int numTransforms;
+  uint32 numTransforms;
   _ipointer<_ipointer<char>> floatSlots;
-  int numFloatSlots;
+  uint32 numFloatSlots;
 
-  // int numLocalFrames;
+  // uint32 numLocalFrames;
   static _ipointer<hkLocalFrameOnBone_t<_ipointer>> localFrames;
 
   void noPartitions();
@@ -312,15 +294,15 @@ template <template <class C> class _ipointer>
 struct hkaSkeleton660_t_sharedData {
   _ipointer<char> Name;
   _ipointer<short> parentIndicies;
-  int numParentIndicies;
+  uint32 numParentIndicies;
   _ipointer<_ipointer<hkaBone_t<_ipointer>>> bones;
-  int numBones;
+  uint32 numBones;
   _ipointer<hkQTransform> transforms;
-  int numTransforms;
+  uint32 numTransforms;
   _ipointer<_ipointer<char>> floatSlots;
-  int numFloatSlots;
+  uint32 numFloatSlots;
   _ipointer<hkLocalFrameOnBone_t<_ipointer>> localFrames;
-  int numLocalFrames;
+  uint32 numLocalFrames;
 
   void noPartitions();
   void noReferenceFloats();
@@ -341,7 +323,7 @@ struct hkaSkeleton660_rp_t : hkaSkeleton660_t<_ipointer> {};
 template <template <class C> class _ipointer>
 struct hkaSkeleton710_t_sharedData : hkReferenceObject<_ipointer> {
   _ipointer<char> Name;
-  hkArray<short, _ipointer> parentIndicies;
+  hkArray<int16, _ipointer> parentIndicies;
   hkArray<hkaBone_t<_ipointer>, _ipointer> bones;
   hkArray<hkQTransform, _ipointer> transforms;
   hkArray<_ipointer<char>, _ipointer> floatSlots;
@@ -360,7 +342,7 @@ struct hkaSkeleton710_rp_t : hkaSkeleton710_t<_ipointer> {};
 template <template <class C> class _ipointer>
 struct hkaSkeleton2010_t_sharedData : hkReferenceObject<_ipointer> {
   _ipointer<char> Name;
-  hkArray<short, _ipointer> parentIndicies;
+  hkArray<int16, _ipointer> parentIndicies;
   hkArray<hkaBone_t<_ipointer>, _ipointer> bones;
   hkArray<hkQTransform, _ipointer> transforms;
   hkArray<float, _ipointer> referenceFloats;
@@ -379,7 +361,7 @@ struct hkaSkeleton2010_rp_t : hkaSkeleton2010_t<_ipointer> {};
 template <template <class C> class _ipointer>
 struct hkaSkeleton2011_t_sharedData : hkReferenceObject<_ipointer> {
   _ipointer<char> Name;
-  hkArray<short, _ipointer> parentIndicies;
+  hkArray<int16, _ipointer> parentIndicies;
   hkArray<hkaBone_t<_ipointer>, _ipointer> bones;
   hkArray<hkQTransform, _ipointer> transforms;
   hkArray<float, _ipointer> referenceFloats;
@@ -398,7 +380,7 @@ struct hkaSkeleton2011_rp_t : hkaSkeleton2011_t<_ipointer> {};
 template <template <class C> class _ipointer>
 struct hkaSkeleton2012_t_sharedData : hkReferenceObject<_ipointer> {
   _ipointer<char> Name;
-  hkArray<short, _ipointer> parentIndicies;
+  hkArray<int16, _ipointer> parentIndicies;
   hkArray<hkaBone_t<_ipointer>, _ipointer> bones;
   hkArray<hkQTransform, _ipointer> transforms;
   hkArray<float, _ipointer> referenceFloats;
@@ -428,7 +410,7 @@ struct hkaSkeleton2015_rp_t : hkaSkeleton2012_t<_ipointer> {};
 template <template <class C> class _ipointer>
 struct hkaSkeleton2016_t_sharedData : hkReferenceObject2016<_ipointer> {
   _ipointer<char> Name;
-  hkArray<short, _ipointer> parentIndicies;
+  hkArray<int16, _ipointer> parentIndicies;
   hkArray<hkaBone_t<_ipointer>, _ipointer> bones;
   hkArray<hkQTransform, _ipointer> transforms;
   hkArray<float, _ipointer> referenceFloats;

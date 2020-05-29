@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2019 Lukas Cone
+    Copyright(C) 2016-2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -22,19 +22,26 @@
 #include "hkHeader.hpp"
 #include "hkNewHeader.h"
 #include "pugixml.hpp"
-#include <map>
+#include <unordered_map>
 
 #include "hkXML.h"
 
 REFLECTOR_CREATE(hkaPartition, 1, VARNAMES, name, startBoneIndex, numBones);
+REGISTER_ENUMS(BlendHint, hkaAnimationType)
 
-template <class _Ty>
-IhkPackFile *IhkPackFile::_Create(const _Ty *fileName, bool suppressErrors) {
+IhkPackFile::IhkPackFile()
+{
+  RegisterLocalEnums();
+  REGISTER_CLASSES(hkaPartition);
+}
+
+IhkPackFile *IhkPackFile::Create(const std::string &fileName,
+                                 bool suppressErrors) {
   BinReader rd(fileName);
 
   if (!rd.IsValid()) {
     if (!suppressErrors) {
-      printerror("[Havok] Cannot open file. ", << fileName);
+      printerror("[Havok] Cannot open file. " << fileName);
     }
 
     return nullptr;
@@ -70,41 +77,41 @@ IhkPackFile *IhkPackFile::_Create(const _Ty *fileName, bool suppressErrors) {
   return nullptr;
 }
 
-template IhkPackFile *IhkPackFile::_Create(const wchar_t *fileName,
-                                           bool suppressErrors);
-template IhkPackFile *IhkPackFile::_Create(const char *fileName,
-                                           bool suppressErrors);
-
-IhkPackFile::~IhkPackFile() {}
+IhkPackFile *IhkPackFile::Create(es::string_view fileName,
+                                 bool suppressErrors) {
+  std::string fleName = fileName.to_string();
+  return Create(fleName);
+}
 
 struct xmlToolsetProp {
   enum xmlToolsetPropFlags { TopLevelObject, MaxPredicate };
-  EnumFlags<uchar, xmlToolsetPropFlags> flags;
+  esFlags<uint8, xmlToolsetPropFlags> flags;
   char version[3];
   const char name[16];
 };
 
-static const std::map<hkXMLToolsets, xmlToolsetProp> xmlToolsetProps = {
-    {HK550, xmlToolsetProp{{}, "5", "Havok-5.5.0-r1"}},
-    {HK660,
-     xmlToolsetProp{xmlToolsetProp::TopLevelObject, "7", "Havok-6.6.0-r1"}},
-    {HK710,
-     xmlToolsetProp{xmlToolsetProp::TopLevelObject, "7", "Havok-7.1.0-r1"}},
-    {HK2010_2,
-     xmlToolsetProp{xmlToolsetProp::TopLevelObject, "8", "hk_2010.2.0-r1"}},
-    {HK2011,
-     xmlToolsetProp{xmlToolsetProp::TopLevelObject, "9", "hk_2011.1.0-r1"}},
-    {HK2011_2,
-     xmlToolsetProp{xmlToolsetProp::TopLevelObject, "9", "hk_2011.2.0-r1"}},
-    {HK2012_2,
-     xmlToolsetProp{xmlToolsetProp::TopLevelObject, "9", "hk_2012.2.0-r1"}},
-    {HK2013,
-     xmlToolsetProp{xmlToolsetProp::TopLevelObject, "9", "hk_2013.1.0-r1"}},
-    {HK2014,
-     xmlToolsetProp{
-         EnumFlags<uchar, xmlToolsetProp::xmlToolsetPropFlags>(
-             xmlToolsetProp::TopLevelObject, xmlToolsetProp::MaxPredicate),
-         "11", "hk_2014.1.0-r1"}},
+static const std::unordered_map<hkXMLToolsets, xmlToolsetProp> xmlToolsetProps =
+    {
+        {HK550, xmlToolsetProp{{}, "5", "Havok-5.5.0-r1"}},
+        {HK660,
+         xmlToolsetProp{xmlToolsetProp::TopLevelObject, "7", "Havok-6.6.0-r1"}},
+        {HK710,
+         xmlToolsetProp{xmlToolsetProp::TopLevelObject, "7", "Havok-7.1.0-r1"}},
+        {HK2010_2,
+         xmlToolsetProp{xmlToolsetProp::TopLevelObject, "8", "hk_2010.2.0-r1"}},
+        {HK2011,
+         xmlToolsetProp{xmlToolsetProp::TopLevelObject, "9", "hk_2011.1.0-r1"}},
+        {HK2011_2,
+         xmlToolsetProp{xmlToolsetProp::TopLevelObject, "9", "hk_2011.2.0-r1"}},
+        {HK2012_2,
+         xmlToolsetProp{xmlToolsetProp::TopLevelObject, "9", "hk_2012.2.0-r1"}},
+        {HK2013,
+         xmlToolsetProp{xmlToolsetProp::TopLevelObject, "9", "hk_2013.1.0-r1"}},
+        {HK2014,
+         xmlToolsetProp{
+             esFlags<uint8, xmlToolsetProp::xmlToolsetPropFlags>(
+                 xmlToolsetProp::TopLevelObject, xmlToolsetProp::MaxPredicate),
+             "11", "hk_2014.1.0-r1"}},
 };
 
 void IhkPackFile::_GenerateXML(pugi::xml_document &doc,
@@ -124,10 +131,10 @@ void IhkPackFile::_GenerateXML(pugi::xml_document &doc,
   pugi::xml_node dataSection = master.append_child("hksection");
   dataSection.append_attribute(_hkName).set_value("__data__");
 
-  VirtualClasses allClasses = GetAllClasses();
+  const VirtualClasses &allClasses = GetAllClasses();
 
   for (auto &c : allClasses) {
-    hkVirtualClass *cls = dynamic_cast<hkVirtualClass *>(c);
+    hkVirtualClass *cls = dynamic_cast<hkVirtualClass *>(c.get());
     pugi::xml_node classNode = dataSection.append_child(_hkObject);
     pugi::xml_attribute addrAttr = classNode.append_attribute(_hkName);
 
@@ -136,7 +143,7 @@ void IhkPackFile::_GenerateXML(pugi::xml_document &doc,
 
     addrAttr.set_value(_buffer.c_str());
     classNode.append_attribute(_hkClass).set_value(
-        cls->GetClassName(toolsetVersion));
+        cls->GetClassName(toolsetVersion).c_str());
 
     if (cls->superHash == hkRootLevelContainer::HASH &&
         propRef.flags[xmlToolsetProp::TopLevelObject])
@@ -163,30 +170,109 @@ const IhkVirtualClass *IhkPackFile::GetClass(const void *ptr) {
   VirtualClasses &classes = GetAllClasses();
 
   for (auto &c : classes) {
-    hkVirtualClass *cls = static_cast<hkVirtualClass *>(c);
+    hkVirtualClass *cls = dynamic_cast<hkVirtualClass *>(c.get());
 
     if (cls->GetPointer() == ptr)
-      return c;
+      return c.get();
   }
 
   return nullptr;
 }
 
-IhkPackFile::VirtualClasses IhkPackFile::GetClasses(JenHash hash) {
+IhkPackFile::VirtualClassesRef IhkPackFile::GetClasses(JenHash hash) {
   VirtualClasses &classes = GetAllClasses();
-  VirtualClasses buffa;
+  VirtualClassesRef buffa;
 
   for (auto &c : classes) {
-    hkVirtualClass *cls = static_cast<hkVirtualClass *>(c);
+    hkVirtualClass *cls = dynamic_cast<hkVirtualClass *>(c.get());
 
     if (cls->superHash == hash)
-      buffa.push_back(c);
+      buffa.push_back(c.get());
   }
 
   return buffa;
 }
 
-xmlHavokFile::~xmlHavokFile() {
-  for (auto &c : classes)
-    delete c;
+void hkaSkeletonInternalInterface::Process() {
+  storage.resize(GetNumBones());
+  size_t curId = 0;
+
+  for (auto &b : storage) {
+    b.id = curId;
+    b.name = GetBoneName(curId);
+    int16 prentID = GetBoneParentID(curId);
+    b.parent = prentID < 0 ? nullptr : &storage[prentID];
+    b.tm = GetBoneTM(curId);
+
+    curId++;
+  }
 }
+
+void hkaAniTrackHandle::GetValue(uni::RTSValue &output, float time) const {
+  hdl->GetValue(output, time, index);
+}
+
+static Vector4A16 Lerp(const Vector4A16 &v1, const Vector4A16 &v2,
+                         float delta) {
+    return v1 + (v2 - v1) * delta;
+  }
+
+void hkaAnimationLerpSampler::GetValue(uni::RTSValue &output, float time,
+                                       size_t trackID) const {
+  const float frameFull = time * frameRate;
+  int32 frame = static_cast<int32>(frameFull);
+  float delta = frameFull - frame;
+
+  if (frame >= numFrames) {
+    frame = static_cast<int32>(numFrames - 1);
+    delta = 0.f;
+  }
+
+  if (!delta) {
+    GetFrame(trackID, frame, output);
+  } else {
+    hkQTransform start;
+    GetFrame(trackID, frame++, start);
+    hkQTransform end;
+    GetFrame(trackID, frame, end);
+
+    output.translation = ::Lerp(start.translation, end.translation, delta);
+    output.rotation = ::Lerp(start.rotation, end.rotation, delta);
+    output.scale = ::Lerp(start.scale, end.scale, delta);
+  }
+}
+
+static uni::RTSValue ConvertRefFrame(const Vector4 &input) {
+  uni::RTSValue retVal;
+  retVal.translation = Vector4A16(input, 1.f);
+  retVal.rotation = Vector4A16(0, 0, 0, input.W);
+  retVal.rotation.QComputeElement<2>();
+  return retVal;
+}
+
+void hkaAnimatedReferenceFrameInternalInterface::GetValue(uni::RTSValue &output, float time) const {
+  const float frameFull = time * frameRate;
+  int32 frame = static_cast<int32>(frameFull);
+  float delta = frameFull - frame;
+  const auto numFrames = GetNumFrames();
+
+  if (frame >= numFrames) {
+    frame = static_cast<int32>(numFrames - 1);
+    delta = 0.f;
+  }
+
+  if (!delta) {
+    auto cFrame = GetRefFrame(frame);
+    output = ConvertRefFrame(*cFrame);
+  } else {
+    auto frame0 = GetRefFrame(frame++);
+    auto frame1 = GetRefFrame(frame);
+
+    hkQTransform start = ConvertRefFrame(*frame0);
+    hkQTransform end = ConvertRefFrame(*frame1);
+
+    output.translation = ::Lerp(start.translation, end.translation, delta);
+    output.rotation = ::Lerp(start.rotation, end.rotation, delta);
+  }
+}
+

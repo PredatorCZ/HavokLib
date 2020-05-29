@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2019 Lukas Cone
+    Copyright(C) 2016-2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -29,19 +29,20 @@ template <class C> struct hkxEnvironment_t : hkxEnvironmentInternalInterface {
   hkClassConstructor(hkxEnvironment_t);
 
   void SwapEndian() { Data->SwapEndian(); }
-  const int GetNumVars() const { return Data->GetNumVars(); }
-  hkxEnvironmentVariable GetVar(int id) const { return Data->GetVar(id); }
+  size_t Size() const { return Data->GetNumVars(); }
+  const hkxEnvironmentVariable At(size_t id) const { return Data->GetVar(id); }
 };
 
 template <template <class C> class _ipointer,
           template <template <class C> class __ipointer> class _parent>
 struct hkxEnvironment_t_shared : _parent<_ipointer> {
-  ES_FORCEINLINE const int GetNumVars() const { return this->variables.count; }
-  ES_FORCEINLINE hkxEnvironmentVariable GetVar(int id) const {
+  size_t GetNumVars() const { return this->variables.count; }
+  hkxEnvironmentVariable GetVar(size_t id) const {
     const hkxEnvironmentVariable_t<_ipointer> &tmpVal = this->variables[id];
-    return {tmpVal.name, tmpVal.value};
+    return {static_cast<const char *>(tmpVal.name),
+            static_cast<const char *>(tmpVal.value)};
   }
-  ES_FORCEINLINE void SwapEndian() { FByteswapper(this->variables.count); }
+  void SwapEndian() { FByteswapper(this->variables.count); }
 };
 
 template <template <class C> class _ipointer>

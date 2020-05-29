@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2019 Lukas Cone
+    Copyright(C) 2016-2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -27,23 +27,22 @@
                                                                                \
 public:                                                                        \
   classname() {                                                                \
-    hash = classname::HASH;                                                    \
-    superHash = parent::HASH;                                                  \
-    namePtr = #parent;                                                         \
+    this->hash = classname::HASH;                                              \
+    this->superHash = parent::HASH;                                            \
+    this->name = #parent;                                                      \
   }
 
 class xmlHavokFile : public IhkPackFile {
   VirtualClasses classes;
-  int GetVersion() { return -1; }
+  int32 GetVersion() const override { return -1; }
 
 public:
   VirtualClasses &GetAllClasses() { return classes; }
   template <class C> C *NewClass() {
     C *cls = new C();
-    classes.push_back(dynamic_cast<hkVirtualClass *>(cls));
+    classes.emplace_back(dynamic_cast<hkVirtualClass *>(cls));
     return cls;
   }
-  ~xmlHavokFile();
 };
 
 class xmlRootLevelContainer : public hkRootLevelContainerInternalInterface {
@@ -52,7 +51,7 @@ class xmlRootLevelContainer : public hkRootLevelContainerInternalInterface {
   const int GetNumVariants() const { return static_cast<int>(variants.size()); }
   const hkNamedVariant GetVariant(int id) const { return variants.at(id); }
   void AddVariant(hkVirtualClass *input) {
-    variants.push_back({input->namePtr, input->namePtr, input});
+    variants.push_back({input->name, input->name, input});
   }
 
 private:
@@ -62,26 +61,24 @@ private:
 class xmlAnimationContainer : public hkaAnimationContainerInternalInterface {
   DECLARE_XMLCLASS(xmlAnimationContainer, hkaAnimationContainer)
 
-  const int GetNumSkeletons() const {
-    return static_cast<int>(skeletons.size());
+  size_t GetNumSkeletons() const override { return skeletons.size(); }
+  const hkaSkeleton *GetSkeleton(size_t id) const override {
+    return skeletons.at(id);
   }
-  const hkaSkeleton *GetSkeleton(int id) const { return skeletons.at(id); }
-  const int GetNumAnimations() const {
-    return static_cast<int>(animations.size());
+  size_t GetNumAnimations() const override { return animations.size(); }
+  const hkaAnimation *GetAnimation(size_t id) const override {
+    return animations.at(id);
   }
-  const hkaAnimation *GetAnimation(int id) const { return animations.at(id); }
-  const int GetNumBindings() const { return static_cast<int>(bindings.size()); }
-  const hkaAnimationBinding *GetBinding(int id) const {
+  size_t GetNumBindings() const override { return bindings.size(); }
+  const hkaAnimationBinding *GetBinding(size_t id) const override {
     return bindings.at(id);
   }
-  const int GetNumAttachments() const {
-    return static_cast<int>(attachments.size());
-  }
-  const hkaBoneAttachment *GetAttachment(int id) const {
+  size_t GetNumAttachments() const override { return attachments.size(); }
+  const hkaBoneAttachment *GetAttachment(size_t id) const override {
     return attachments.at(id);
   }
-  const int GetNumSkins() const { return static_cast<int>(skins.size()); }
-  const hkaMeshBinding *GetSkin(int id) const { return skins.at(id); }
+  size_t GetNumSkins() const override { return skins.size(); }
+  const hkaMeshBinding *GetSkin(size_t id) const { return skins.at(id); }
 
   // private:
   std::vector<hkaSkeleton *> skeletons;
@@ -92,7 +89,7 @@ class xmlAnimationContainer : public hkaAnimationContainerInternalInterface {
 };
 
 struct xmlBone {
-  short ID;
+  int16 ID;
   std::string name;
   xmlBone *parent;
   hkQTransform transform;
@@ -106,74 +103,63 @@ struct xmlRefFloat {
 class xmlSkeleton : public hkaSkeletonInternalInterface {
   DECLARE_XMLCLASS(xmlSkeleton, hkaSkeleton)
 
-  const char *GetSkeletonName() const { return name.c_str(); }
-  const int GetNumLocalFrames() const {
-    return static_cast<int>(localFrames.size());
-  }
-  const hkLocalFrameOnBone GetLocalFrame(int id) const {
+  es::string_view Name() const override { return name; }
+  size_t GetNumLocalFrames() const override { return localFrames.size(); }
+  hkLocalFrameOnBone GetLocalFrame(size_t id) const override {
     return localFrames.at(id);
   }
-  const int GetNumPartitions() const {
-    return static_cast<int>(partitions.size());
+  size_t GetNumPartitions() const override { return partitions.size(); }
+  hkaPartition GetPartition(size_t id) const override {
+    return partitions.at(id);
   }
-  const hkaPartition GetPartition(int id) const { return partitions.at(id); }
-  const int GetNumBones() const { return static_cast<int>(bones.size()); }
-  const char *GetBoneName(int id) const { return bones.at(id)->name.c_str(); }
-  const hkQTransform *GetBoneTM(int id) const {
+  size_t GetNumBones() const override { return bones.size(); }
+  es::string_view GetBoneName(size_t id) const override {
+    return bones.at(id)->name;
+  }
+  const hkQTransform *GetBoneTM(size_t id) const override {
     return &bones.at(id)->transform;
   }
-  const short GetBoneParentID(int id) const {
+  int16 GetBoneParentID(size_t id) const override {
     xmlBone *parent = bones.at(id)->parent;
     return parent ? parent->ID : -1;
   }
 
-  const int GetNumReferenceFloats() const {
-    return static_cast<int>(floats.size());
-  };
-  const float GetReferenceFloat(int id) const { return floats.at(id).value; }
-  const int GetNumFloatSlots() const { return GetNumReferenceFloats(); }
-  const char *GetFloatSlot(int id) const { return floats.at(id).name.c_str(); }
+  size_t GetNumReferenceFloats() const override { return floats.size(); };
+  float GetReferenceFloat(size_t id) const override {
+    return floats.at(id).value;
+  }
+  size_t GetNumFloatSlots() const override { return GetNumReferenceFloats(); }
+  es::string_view GetFloatSlot(size_t id) const override {
+    return floats.at(id).name;
+  }
 
   std::string name;
-  std::vector<xmlBone *> bones;
+  std::vector<std::unique_ptr<xmlBone>> bones;
   std::vector<xmlRefFloat> floats;
   std::vector<hkLocalFrameOnBone> localFrames;
   std::vector<hkaPartition> partitions;
-
-  ~xmlSkeleton() {
-    for (auto &b : bones)
-      delete b;
-  }
 };
 
 class xmlAnnotationTrack : public hkaAnnotationTrackInternalInterface {
   DECLARE_XMLCLASS(xmlAnnotationTrack, hkaAnnotationTrack);
 
-  const char *GetName() const { return name.c_str(); }
-  const int GetNumAnnotations() const {
-    return static_cast<int>(annotations.size());
-  }
-  Annotation GetAnnotation(int id) const { return annotations[id]; }
-
+  es::string_view GetName() const { return name; }
   std::string name;
-  std::vector<hkaAnnotationTrack::Annotation> annotations;
 };
 
-class xmlAnimation : public virtual hkaAnimationInternalInterface {
+template <class _parent> class xmlAnimation : public virtual _parent {
   DECLARE_XMLCLASS(xmlAnimation, hkaAnimation);
 
-  const char *GetAnimationTypeName() const {
-    return _EnumWrap<hkaAnimationType>{}._reflected[animType];
+  es::string_view GetAnimationTypeName() const override {
+    return GetReflectedEnum<hkaAnimationType>()[animType];
   }
-  const hkaAnimationType GetAnimationType() const { return animType; }
-  const float GetDuration() const { return duration; }
-  const hkaAnimatedReferenceFrame *GetExtractedMotion() const {
+  hkaAnimationType GetAnimationType() const override { return animType; }
+  float Duration() const override { return duration; }
+  const hkaAnimatedReferenceFrame *GetExtractedMotion() const override {
     return nullptr;
   } // TODO
-  const int GetNumAnnotations() const {
-    return static_cast<int>(annotations.size());
-  }
-  hkaAnnotationTrackPtr GetAnnotation(int id) const {
+  size_t GetNumAnnotations() const override { return annotations.size(); }
+  hkaAnnotationTrackPtr GetAnnotation(size_t id) const override {
     return hkaAnnotationTrackPtr(&annotations[id], false);
   }
 
@@ -183,7 +169,7 @@ class xmlAnimation : public virtual hkaAnimationInternalInterface {
 };
 
 class xmlInterleavedAnimation
-    : public xmlAnimation,
+    : public xmlAnimation<hkaAnimationLerpSampler>,
       public hkaInterleavedAnimationInternalInterface {
   DECLARE_HKCLASS(xmlInterleavedAnimation)
   void SwapEndian() {}
@@ -199,63 +185,40 @@ public:
   std::vector<Transform_Container *> transforms;
   std::vector<Float_Container *> floats;
 
-  const int GetNumOfTransformTracks() const {
-    return static_cast<int>(transforms.size());
-  }
-  const int GetNumOfFloatTracks() const {
-    return static_cast<int>(floats.size());
-  }
+  size_t GetNumOfTransformTracks() const override { return transforms.size(); }
+  size_t GetNumOfFloatTracks() const override { return floats.size(); }
 
-  const char *GetClassName(hkXMLToolsets toolset) const {
+  es::string_view GetClassName(hkXMLToolsets toolset) const override {
     if (toolset == HK550)
       return "hkaInterleavedSkeletalAnimation";
     else
       return "hkaInterleavedUncompressedAnimation";
   }
 
-  void GetTrack(int trackID, int frame, float, TrackType type,
-                Vector4A16 &out) const {
-    switch (type) {
-    case hkaAnimation::Rotation:
-      out = transforms[trackID]->at(frame).rotation;
-      break;
-    case hkaAnimation::Position:
-      out = reinterpret_cast<const Vector4A16 &>(
-          transforms[trackID]->at(frame).position);
-      out.W = 1.0f;
-      break;
-    case hkaAnimation::Scale:
-      out = reinterpret_cast<const Vector4A16 &>(
-          transforms[trackID]->at(frame).scale);
-      out.W = 0.0f;
-      break;
-    }
-  }
-
-  void GetTransform(int trackID, int frame, float, hkQTransform &out) const {
+  void GetFrame(size_t trackID, int32 frame, hkQTransform &out) const override {
     out = transforms[trackID]->at(frame);
   }
 
-  int GetNumTransforms() const {
+  size_t GetNumTransforms() const override {
     if (transforms.size())
-      return static_cast<int>(transforms[0]->size() * transforms.size());
+      return transforms[0]->size() * transforms.size();
 
     return 0;
   }
 
-  int GetNumFloats() const {
+  size_t GetNumFloats() const override {
     if (floats.size())
-      return static_cast<int>(floats[0]->size() * floats.size());
+      return floats[0]->size() * floats.size();
 
     return 0;
   }
 
-  const hkQTransform *GetTransform(int id) const {
-    const int numTracks = static_cast<int>(transforms.size());
+  const hkQTransform *GetTransform(size_t id) const override {
+    const size_t numTracks = transforms.size();
     return &transforms[id % numTracks]->at(id / numTracks);
   }
 
-  float GetFloat(int id) const {
+  float GetFloat(size_t id) const override {
     const int numTracks = static_cast<int>(floats.size());
     return floats[id % numTracks]->at(id / numTracks);
   }
@@ -273,42 +236,47 @@ class xmlAnimationBinding : public hkaAnimationBindingInternalInterface {
   DECLARE_XMLCLASS(xmlAnimationBinding, hkaAnimationBinding);
   hkaAnimation *animation = nullptr;
   std::string skeletonName;
-  std::vector<short> transformTrackToBoneIndices;
-  std::vector<short> floatTrackToFloatSlotIndices;
-  std::vector<short> partitionIndices;
+  std::vector<int16> transformTrackToBoneIndices;
+  std::vector<int16> floatTrackToFloatSlotIndices;
+  std::vector<int16> partitionIndices;
   BlendHint blendHint = NORMAL;
 
-  const char *GetSkeletonName() const { return skeletonName.c_str(); }
-  const hkaAnimation *GetAnimation() const { return animation; }
-  BlendHint GetBlendHint() const { return blendHint; }
-  const int GetNumTransformTrackToBoneIndices() const {
-    return static_cast<int>(transformTrackToBoneIndices.size());
+  es::string_view GetSkeletonName() const override { return skeletonName; }
+  const hkaAnimation *GetAnimation() const override { return animation; }
+  BlendHint GetBlendHint() const override { return blendHint; }
+  size_t GetNumTransformTrackToBoneIndices() const override {
+    return transformTrackToBoneIndices.size();
   }
-  const short GetTransformTrackToBoneIndex(int id) const {
+  int16 GetTransformTrackToBoneIndex(size_t id) const override {
     return transformTrackToBoneIndices[id];
   }
-  const int GetNumFloatTrackToFloatSlotIndices() const {
-    return static_cast<int>(floatTrackToFloatSlotIndices.size());
+  size_t GetNumFloatTrackToFloatSlotIndices() const override {
+    return floatTrackToFloatSlotIndices.size();
   }
-  const short GetFloatTrackToFloatSlotIndex(int id) const {
+  int16 GetFloatTrackToFloatSlotIndex(size_t id) const override {
     return floatTrackToFloatSlotIndices[id];
   }
-  const int GetNumPartitionIndices() const {
-    return static_cast<int>(partitionIndices.size());
+  size_t GetNumPartitionIndices() const override {
+    return partitionIndices.size();
   }
-  const short GetPartitionIndex(int id) const { return partitionIndices[id]; }
+  int16 GetPartitionIndex(size_t id) const override {
+    return partitionIndices[id];
+  }
 };
 
 struct xmlEnvironmentVariable {
   std::string name, value;
+
+  xmlEnvironmentVariable() = default;
+  xmlEnvironmentVariable(const std::string &iname, const std::string &ivalue)
+      : name(iname), value(ivalue) {}
+
+  operator hkxEnvironmentVariable() const { return {name, value}; }
 };
 
-class xmlEnvironment : public hkxEnvironmentInternalInterface {
+class xmlEnvironment
+    : public hkxEnvironmentInternalInterface,
+      public uni::VectorList<hkxEnvironmentVariable, xmlEnvironmentVariable,
+                             uni::Vector> {
   DECLARE_XMLCLASS(xmlEnvironment, hkxEnvironment);
-  std::vector<xmlEnvironmentVariable> variables;
-
-  const int GetNumVars() const { return static_cast<int>(variables.size()); }
-  hkxEnvironmentVariable GetVar(int id) const {
-    return {variables[id].name.c_str(), variables[id].value.c_str()};
-  }
 };

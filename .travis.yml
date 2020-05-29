@@ -1,5 +1,5 @@
 ﻿language: cpp
-dist: trusty
+dist: xenial
 
 matrix:
   fast_finish: true
@@ -12,7 +12,7 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-6
-            - cmake
+            - zstd
       env:
          - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
     - os: linux
@@ -23,7 +23,7 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-7
-            - cmake
+            - zstd
       env:
          - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
     - os: linux
@@ -34,7 +34,7 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-8
-            - cmake
+            - zstd
       env:
          - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
     - os: linux
@@ -45,16 +45,19 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-9
-            - cmake
+            - zstd
       env:
          - MATRIX_EVAL="CC=gcc-9 && CXX=g++-9"
+
+    - os: windows
+      name: "Compiler MSVC"
          
 before_install:
     - eval "${MATRIX_EVAL}"
 
 script:
-  - cd _samples
   - mkdir build
   - cd build
   - cmake ..
-  - make
+  - cmake --build . -j 6
+  - ctest -C Debug --verbose

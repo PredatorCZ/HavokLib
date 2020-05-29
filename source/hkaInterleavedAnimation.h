@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2019 Lukas Cone
+    Copyright(C) 2016-2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -21,49 +21,38 @@
 template <class C>
 struct hkaInterleavedUncompressedAnimation_t
     : hkaInterleavedAnimationInternalInterface,
-      hkaSkeletalAnimation_t<typename C::parentClass> {
+      hkaSkeletalAnimation_t<typename C::parentClass, hkaAnimationLerpSampler> {
   typedef C value_type;
-  typedef hkaSkeletalAnimation_t<typename C::parentClass> parent;
+  typedef hkaSkeletalAnimation_t<typename C::parentClass,
+                                 hkaAnimationLerpSampler>
+      parent;
   hkClassConstructor(hkaInterleavedUncompressedAnimation_t);
-  void SwapEndian() {
-    hkaSkeletalAnimation_t<typename C::parentClass>::SwapEndian();
+  void SwapEndian() override {
+    parent::SwapEndian();
     static_cast<value_type *>(this->Data)->SwapEndian();
   }
 
-  void GetTrack(int trackID, int frame, float delta, TrackType type,
-                Vector4A16 &out) const {
-    const hkQTransform *ctr =
-        GetTransform(frame * GetNumOfTransformTracks() + trackID);
-
-    switch (type) {
-    case hkaAnimation::Rotation:
-      out = ctr->rotation;
-      break;
-    case hkaAnimation::Position:
-      out = ctr->position;
-      break;
-    case hkaAnimation::Scale:
-      out = ctr->scale;
-      break;
-    }
+  void Process() override {
+    this->numFrames = static_cast<uint32>(this->GetNumTransforms() /
+                                          this->GetNumOfTransformTracks());
+    this->frameRate = static_cast<uint32>(this->numFrames / this->Duration());
   }
 
-  void GetTransform(int trackID, int frame, float delta,
-                    hkQTransform &out) const {
+  void GetFrame(size_t trackID, int32 frame, hkQTransform &out) const override {
     out = *GetTransform(frame * GetNumOfTransformTracks() + trackID);
   }
 
-  int GetNumTransforms() const {
+  size_t GetNumTransforms() const override {
     return static_cast<value_type *>(this->Data)->NumTransforms();
   }
-  int GetNumFloats() const {
+  size_t GetNumFloats() const override {
     return static_cast<value_type *>(this->Data)->NumFloats();
   }
 
-  const hkQTransform *GetTransform(int id) const {
+  const hkQTransform *GetTransform(size_t id) const override {
     return static_cast<value_type *>(this->Data)->GetTransform(id);
   }
-  float GetFloat(int id) const {
+  float GetFloat(size_t id) const override {
     return static_cast<value_type *>(this->Data)->GetFloat(id);
   }
 };
@@ -93,16 +82,16 @@ struct hkaInterleavedAnimation_t_shared : _parent<_ipointer> {
   enablePtrPairRef(floats) NumFloats() { return this->numFloats; }
   enablehkArrayRef(floats) NumFloats() { return this->floats.count; }
 
-  ES_FORCEINLINE const hkQTransform *GetTransform(int id) const {
+  const hkQTransform *GetTransform(size_t id) const {
     return &this->transforms[id];
   }
-  ES_FORCEINLINE float GetFloat(int id) const { return this->floats[id]; }
+  float GetFloat(size_t id) const { return this->floats[id]; }
 
-  ES_FORCEINLINE void SwapEndian() {
+  void SwapEndian() {
     FByteswapper(NumTransforms());
     FByteswapper(NumFloats());
-    const int numTransforms = NumTransforms() * 12;
-    const int numFloats = NumFloats();
+    const size_t numTransforms = NumTransforms() * 12;
+    const size_t numFloats = NumFloats();
 
     float *data = reinterpret_cast<float *>(
         static_cast<hkQTransform *>(this->transforms));
@@ -111,7 +100,7 @@ struct hkaInterleavedAnimation_t_shared : _parent<_ipointer> {
     for (; data != dataEnd; data++)
       FByteswapper(*data);
 
-    for (int i = 0; i < numFloats; i++)
+    for (size_t i = 0; i < numFloats; i++)
       FByteswapper(this->floats[i]);
   }
 };
@@ -121,9 +110,9 @@ template <template <class C> class _ipointer,
 struct hkaInterleavedAnimation550_tt : _parent<_ipointer> {
   typedef _parent<_ipointer> parentClass;
   _ipointer<hkQTransform> transforms;
-  int numTransforms;
+  uint32 numTransforms;
   _ipointer<float> floats;
-  int numFloats;
+  uint32 numFloats;
 };
 
 template <template <class C> class _ipointer>

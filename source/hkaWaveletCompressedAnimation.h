@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2019 Lukas Cone
+    Copyright(C) 2016-2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -24,54 +24,55 @@
 template <class C>
 struct hkaWaveletCompressedAnimation_t
     : hkaWaveletCompressedAnimationInternalInterface,
-      hkaSkeletalAnimation_t<typename C::parentClass> {
+      hkaSkeletalAnimation_t<typename C::parentClass, hkaAnimationLerpSampler> {
   typedef C value_type;
-  hkClassConstructor(hkaWaveletCompressedAnimation_t<C>);
-  void SwapEndian() {
-    hkaSkeletalAnimation_t<typename C::parentClass>::SwapEndian();
+  typedef hkaSkeletalAnimation_t<typename C::parentClass,
+                                 hkaAnimationLerpSampler>
+      parent;
+  hkClassConstructor(hkaWaveletCompressedAnimation_t);
+  void SwapEndian() override {
+    parent::SwapEndian();
     static_cast<value_type *>(this->Data)->SwapEndian();
   }
-  void Process() {} //{ decomp.Assign(this); }
+  void Process() override {} //{ decomp.Assign(this); }
   // hkaWaveletDecompressor decomp;
-  const int GetNumOfPoses() const {
+  size_t GetNumOfPoses() const {
     return static_cast<value_type *>(this->Data)->GetNumOfPoses();
   }
-  const int GetBlockSize() const {
+  size_t GetBlockSize() const {
     return static_cast<value_type *>(this->Data)->GetBlockSize();
   }
-  const int GetQuantizedDataOffset() const {
+  size_t GetQuantizedDataOffset() const {
     return static_cast<value_type *>(this->Data)->GetQuantizedDataOffset();
   }
-  const int GetStaticMaskOffset() const {
+  size_t GetStaticMaskOffset() const {
     return static_cast<value_type *>(this->Data)->GetStaticMaskOffset();
   }
-  const int GetStaticDataOffset() const {
+  size_t GetStaticDataOffset() const {
     return static_cast<value_type *>(this->Data)->GetStaticDataOffset();
   }
   const char *GetData() const {
     return static_cast<value_type *>(this->Data)->GetData();
   }
-  const int GetNumDynamicTracks() const {
+  size_t GetNumDynamicTracks() const {
     return static_cast<value_type *>(this->Data)->GetNumDynamicTracks();
   }
-  const int GetOffsetsOffset() const {
+  size_t GetOffsetsOffset() const {
     return static_cast<value_type *>(this->Data)->GetOffsetsOffset();
   }
-  const int GetBitWidthOffset() const {
+  size_t GetBitWidthOffset() const {
     return static_cast<value_type *>(this->Data)->GetBitWidthOffset();
   }
-  const int GetScalesOffset() const {
+  size_t GetScalesOffset() const {
     return static_cast<value_type *>(this->Data)->GetScalesOffset();
   }
-  const int GetNumPreserved() const {
+  size_t GetNumPreserved() const {
     return static_cast<value_type *>(this->Data)->GetNumPreserved();
   }
-  bool IsTrackStatic(int trackID, TrackType type) const { return false; }
-  void GetTrack(int trackID, int frame, float delta, TrackType type,
-                Vector4A16 &out) const {}
-  void GetTransform(int trackID, int frame, float delta,
-                    hkQTransform &out) const {}
-  int GetNumInternalFrames() const { return 0; }
+
+  void GetFrame(size_t trackID, int32 frame, hkQTransform &out) const override {
+    //decomp.GetFrame(trackID, frame, out);
+  };
 };
 
 template <class C>
@@ -81,34 +82,34 @@ using hkaWaveletCompressedSkeletalAnimation_t =
 template <template <class C> class _ipointer,
           template <template <class C> class __ipointer> class _parent>
 struct hkaWaveletCompressedSkeletalAnimation_t_shared : _parent<_ipointer> {
-  ES_FORCEINLINE const int GetNumOfPoses() const { return this->numberOfPoses; }
-  ES_FORCEINLINE const int GetBlockSize() const { return this->blockSize; }
-  ES_FORCEINLINE const int GetQuantizedDataOffset() const {
+   uint32 GetNumOfPoses() const { return this->numberOfPoses; }
+   uint32 GetBlockSize() const { return this->blockSize; }
+   uint32 GetQuantizedDataOffset() const {
     return this->quantizedDataIdx;
   }
-  ES_FORCEINLINE const int GetStaticMaskOffset() const {
+   uint32 GetStaticMaskOffset() const {
     return this->staticMaskIdx;
   }
-  ES_FORCEINLINE const int GetStaticDataOffset() const {
+   uint32 GetStaticDataOffset() const {
     return this->staticDOFsIdx;
   }
-  ES_FORCEINLINE const char *GetData() const {
-    return reinterpret_cast<const char *>(static_cast<const uchar*>(
+  const char *GetData() const {
+    return reinterpret_cast<const char *>(static_cast<const uint8*>(
         this->dataBuffer.GetData()));
   }
-  ES_FORCEINLINE const int GetNumDynamicTracks() const {
+   uint32 GetNumDynamicTracks() const {
     return this->qFormat.numD;
   }
-  ES_FORCEINLINE const int GetOffsetsOffset() const {
+   uint32 GetOffsetsOffset() const {
     return this->qFormat.offsetIdx;
   }
-  ES_FORCEINLINE const int GetBitWidthOffset() const {
+   uint32 GetBitWidthOffset() const {
     return this->qFormat.bitWidthIdx;
   }
-  ES_FORCEINLINE const int GetScalesOffset() const {
+   uint32 GetScalesOffset() const {
     return this->qFormat.scaleIdx;
   }
-  ES_FORCEINLINE const int GetNumPreserved() const {
+   uint32 GetNumPreserved() const {
     return this->qFormat.preserved;
   }
 
@@ -129,17 +130,17 @@ template <template <class C> class _ipointer,
           template <template <class C> class __ipointer> class _parent>
 struct hkaWaveletCompressedAnimation550_tt : _parent<_ipointer> {
   typedef _parent<_ipointer> parentClass;
-  int numberOfPoses;
-  int blockSize;
+  uint32 numberOfPoses;
+  uint32 blockSize;
   QuantizationFormat qFormat;
-  int staticMaskIdx;
-  int staticDOFsIdx;
-  int blockIndexIdx;
-  int blockIndexSize;
-  int quantizedDataIdx;
-  int quantizedDataSize;
-  _ipointer<unsigned char> dataBuffer;
-  int numDataBuffer;
+  uint32 staticMaskIdx;
+  uint32 staticDOFsIdx;
+  uint32 blockIndexIdx;
+  uint32 blockIndexSize;
+  uint32 quantizedDataIdx;
+  uint32 quantizedDataSize;
+  _ipointer<uint8> dataBuffer;
+  uint32 numDataBuffer;
 };
 
 template <template <class C> class _ipointer>
@@ -163,19 +164,19 @@ template <template <class C> class _ipointer,
           template <template <class C> class __ipointer> class _parent>
 struct hkaWaveletCompressedAnimation660_tt : _parent<_ipointer> {
   typedef _parent<_ipointer> parentClass;
-  int numberOfPoses;
-  int blockSize;
+  uint32 numberOfPoses;
+  uint32 blockSize;
   QuantizationFormat qFormat;
-  int staticMaskIdx;
-  int staticDOFsIdx;
-  int numStaticTransformDOFs;
-  int numDynamicTransformDOFs;
-  int blockIndexIdx;
-  int blockIndexSize;
-  int quantizedDataIdx;
-  int quantizedDataSize;
-  _ipointer<unsigned char> dataBuffer;
-  int numDataBuffer;
+  uint32 staticMaskIdx;
+  uint32 staticDOFsIdx;
+  uint32 numStaticTransformDOFs;
+  uint32 numDynamicTransformDOFs;
+  uint32 blockIndexIdx;
+  uint32 blockIndexSize;
+  uint32 quantizedDataIdx;
+  uint32 quantizedDataSize;
+  _ipointer<uint8> dataBuffer;
+  uint32 numDataBuffer;
 };
 
 template <template <class C> class _ipointer>
@@ -198,18 +199,18 @@ template <template <class C> class _ipointer,
           template <template <class C> class __ipointer> class _parent>
 struct hkaWaveletCompressedAnimation710_tt : _parent<_ipointer> {
   typedef _parent<_ipointer> parentClass;
-  int numberOfPoses;
-  int blockSize;
+  uint32 numberOfPoses;
+  uint32 blockSize;
   QuantizationFormat qFormat;
-  int staticMaskIdx;
-  int staticDOFsIdx;
-  int numStaticTransformDOFs;
-  int numDynamicTransformDOFs;
-  int blockIndexIdx;
-  int blockIndexSize;
-  int quantizedDataIdx;
-  int quantizedDataSize;
-  hkArray<unsigned char, _ipointer> dataBuffer;
+  uint32 staticMaskIdx;
+  uint32 staticDOFsIdx;
+  uint32 numStaticTransformDOFs;
+  uint32 numDynamicTransformDOFs;
+  uint32 blockIndexIdx;
+  uint32 blockIndexSize;
+  uint32 quantizedDataIdx;
+  uint32 quantizedDataSize;
+  hkArray<uint8, _ipointer> dataBuffer;
 };
 
 template <template <class C> class _ipointer>

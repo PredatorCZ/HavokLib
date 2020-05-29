@@ -2,44 +2,35 @@ cmake_minimum_required(VERSION 3.3)
 
 project(HavokLib)
 
-if (NOT DEFINED UNICODE)
-	set (UNICODE TRUE)
+if(NOT TARGETEX_LOCATION)
+	set(TARGETEX_LOCATION 3rd_party/PreCore/cmake)
+	include(${TARGETEX_LOCATION}/targetex.cmake)
+	include(${TARGETEX_LOCATION}/chartype.cmake)
 endif()
 
-if (NOT DEFINED RELEASEVER)
-	set(RELEASEVER FALSE)
-endif()
-
-if (RELEASEVER)
-	set(CMAKE_BUILD_TYPE Release)
-else()
-	set(CMAKE_BUILD_TYPE Debug)
-endif()
+add_subdirectory(3rd_party/PreCore)
 
 set(CMAKE_CXX_STANDARD 11)
+file(GLOB_RECURSE CORE_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp")
 
-add_library(HavokLib STATIC 
-3rd_party/PreCore/datas/MasterPrinter.cpp
-3rd_party/PreCore/datas/reflector.cpp
-3rd_party/PugiXml/src/pugixml.cpp
-source/hkaDeltaDecompressor.cpp
-source/hkaSplineDecompressor.cpp
-source/hkBin2XML.cpp
-source/hkCore.cpp
-source/hkHeader.cpp
-source/hkNewHeader.cpp
-source/hkRegistry.cpp
+build_target(
+	TYPE STATIC
+    SOURCES
+		${CORE_SOURCE_FILES}
+		3rd_party/PugiXml/src/pugixml.cpp
+    INCLUDES
+		src
+		include
+		3rd_party/PugiXml/src
+	NO_PROJECT_H
+	NO_VERINFO
 )
 
-include_directories(include/)
-include_directories(3rd_party/PreCore/)
-include_directories(3rd_party/PugiXml/src/)
+set_precore_sources(master_printer matrix44 reflector reflector_xml)
 
-if (WIN32 AND UNICODE)
-	message(STATUS "Compiling with wchar_t")
-	add_definitions(-D_UNICODE -DUNICODE)
-endif()
-
-if (CMAKE_COMPILER_IS_GNUCXX)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-invalid-offsetof")
+if (${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
+	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test)
+	enable_testing()
+	add_test(NAME HavokLibTesting COMMAND HavokLibTesting 
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test/resources)
 endif()

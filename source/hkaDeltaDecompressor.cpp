@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2019 Lukas Cone
+    Copyright(C) 2016-2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -16,22 +16,22 @@
 */
 
 #include "hkaDeltaDecompressor.h"
-#include "HavokApi.hpp"
+
+#include <algorithm>
 #include <climits>
 #include <cmath>
 
 void Decompress(float offset, float scale, char *buffer, char bitWidth,
-                int numItems, LineDynamicTrack *track) {
-  auto &container = track->items;
+                size_t numItems, std::vector<float> &container) {
   float refFrame = container.back();
-  int curItem = 0;
-  int currentBit = 0;
-  const int bitMask = (1 << bitWidth) - 1;
-  unsigned int *currentBuffer = reinterpret_cast<unsigned int *>(buffer);
+  size_t curItem = 0;
+  size_t currentBit = 0;
+  const uint32 bitMask = (1 << bitWidth) - 1;
+  uint32 *currentBuffer = reinterpret_cast<uint32 *>(buffer);
   const float fractal = 1.0f / bitMask;
 
   while (curItem < numItems) {
-    unsigned int curNumber = (*currentBuffer >> currentBit) & bitMask;
+    uint32 curNumber = (*currentBuffer >> currentBit) & bitMask;
     currentBit += bitWidth;
 
     if (currentBit > 31) {
@@ -39,9 +39,8 @@ void Decompress(float offset, float scale, char *buffer, char bitWidth,
       currentBuffer++;
 
       if (currentBit) {
-        const unsigned int subNumber =
-            (*currentBuffer & ((1 << currentBit) - 1))
-            << (bitWidth - currentBit);
+        const uint32 subNumber = (*currentBuffer & ((1 << currentBit) - 1))
+                                 << (bitWidth - currentBit);
         curNumber |= subNumber;
       }
     }
@@ -49,7 +48,7 @@ void Decompress(float offset, float scale, char *buffer, char bitWidth,
     float dequantized =
         refFrame + (offset + static_cast<float>(curNumber) * scale * fractal);
     refFrame = dequantized;
-    track->items.push_back(dequantized);
+    container.push_back(dequantized);
     curItem++;
   }
 }
@@ -58,13 +57,13 @@ void hkaDeltaDecompressor::Assign(
     hkaDeltaCompressedAnimationInternalInterface *input) {
   char *buffer = const_cast<char *>(input->GetData());
   hkaAnimation *anim = dynamic_cast<hkaAnimation *>(input);
-  const int numTracks = anim->GetNumOfTransformTracks();
-  const int numFloatTracks = anim->GetNumOfFloatTracks();
-  const int numDynTracks = input->GetNumDynamicTracks();
-  const int numFrames = input->GetNumOfPoses();
+  const size_t numTracks = anim->GetNumOfTransformTracks();
+  const size_t numFloatTracks = anim->GetNumOfFloatTracks();
+  const size_t numDynTracks = input->GetNumDynamicTracks();
+  const size_t numFrames = input->GetNumOfPoses();
 
-  uchar *bitWidthStart =
-      reinterpret_cast<uchar *>(buffer + input->GetBitWidthOffset());
+  uint8 *bitWidthStart =
+      reinterpret_cast<uint8 *>(buffer + input->GetBitWidthOffset());
   StaticMask *masksStart =
       reinterpret_cast<StaticMask *>(buffer + input->GetStaticMaskOffset());
   float *offsetsStart =
@@ -72,14 +71,12 @@ void hkaDeltaDecompressor::Assign(
   float *scalesStart =
       reinterpret_cast<float *>(buffer + input->GetScalesOffset());
 
-  bitWidths = bitWidths_type(bitWidthStart, bitWidthStart + numDynTracks,
-                             bitWidths_type::allocator_type(bitWidthStart));
-  masks = masks_type(masksStart, masksStart + (numTracks + numFloatTracks),
-                     masks_type::allocator_type(masksStart));
-  offsets = offsets_type(offsetsStart, offsetsStart + numDynTracks,
-                         offsets_type::allocator_type(offsetsStart));
-  scales = scales_type(scalesStart, scalesStart + numDynTracks,
-                       scales_type::allocator_type(scalesStart));
+  es::allocator_hybrid_base::LinkStorage(bitWidths, bitWidthStart,
+                                         numDynTracks);
+  es::allocator_hybrid_base::LinkStorage(masks, masksStart,
+                                         numTracks + numFloatTracks);
+  es::allocator_hybrid_base::LinkStorage(offsets, offsetsStart, numDynTracks);
+  es::allocator_hybrid_base::LinkStorage(scales, scalesStart, numDynTracks);
 
   tracks.reserve(numTracks);
   floats.reserve(numFloatTracks);
@@ -87,186 +84,245 @@ void hkaDeltaDecompressor::Assign(
   float *staticBuffer =
       reinterpret_cast<float *>(buffer + input->GetStaticDataOffset());
 
-  std::vector<LineDynamicTrack *> dtracks;
-  dtracks.reserve(numDynTracks);
-
-  for (int p = 0; p < numTracks; p++) {
-    StaticMask &m = masks[p];
-    MasterTrack *mtPtr = new MasterTrack(m);
-    MasterTrack &mt = *mtPtr;
-    tracks.push_back(mtPtr);
-
-    for (auto &t : mt.staticFloats) {
-      *t = *staticBuffer++;
-
-      if (fabs(*t) < FLT_EPSILON)
-        *t = 0;
-    }
-
-    for (auto &dt : mt.dynamicTracks)
-      dt->items.reserve(numFrames);
-
-    dtracks.insert(dtracks.end(), mt.dynamicTracks.begin(),
-                   mt.dynamicTracks.end());
-    mt.dynamicTracks.clear();
-    mt.staticFloats.clear();
-  }
-
-  for (int f = numTracks; f < numFloatTracks + numTracks; f++) {
-    StaticMask &m = masks[f];
-
-    switch (m.GetPosTrackType()) {
-    case TT_IDENTITY:
-      floats.push_back(new LineStaticTrack(0.0f));
-      break;
-    case TT_STATIC:
-      floats.push_back(new LineStaticTrack(*staticBuffer++));
-      break;
-    case TT_DYNAMIC: {
-      LineDynamicTrack *trck = new LineDynamicTrack();
-      floats.push_back(trck);
-      trck->items.reserve(numFrames);
-      dtracks.push_back(trck);
-      break;
-    }
-    }
-  }
-
   buffer += input->GetQuantizedDataOffset();
 
-  const int blockSize = input->GetBlockSize();
-  const int numBlocks =
-      static_cast<int>(ceilf(numFrames / static_cast<float>(blockSize)));
-  const int numPreserved = input->GetNumPreserved();
+  std::vector<DynamicTrack<float>> dynamicTracks;
+  dynamicTracks.resize(numDynTracks);
 
-  for (int b = 0; b < numBlocks; b++) {
-    int numItems = blockSize * (b + 1);
+  const size_t blockSize = input->GetBlockSize();
+  const size_t numBlocks =
+      static_cast<size_t>(ceilf(numFrames / static_cast<float>(blockSize)));
+  const size_t numPreserved = input->GetNumPreserved();
+
+  for (size_t b = 0; b < numBlocks; b++) {
+    size_t numItems = blockSize * (b + 1);
 
     if (numItems > numFrames)
       numItems = numFrames % blockSize;
     else
       numItems = blockSize;
 
-    for (int p = 0; p < numDynTracks; p++) {
-      LineDynamicTrack *t = dtracks[p];
+    for (size_t p = 0; p < numDynTracks; p++) {
+      auto &tck = dynamicTracks[p];
 
-      for (int pr = 0; pr < numPreserved; pr++) {
-        t->items.push_back(*reinterpret_cast<float *>(buffer));
+      for (size_t pr = 0; pr < numPreserved; pr++) {
+        tck.items.push_back(*reinterpret_cast<float *>(buffer));
         buffer += 4;
       }
 
-      const int deltaSize = (bitWidths[p] * (numItems - 1) + 7) >> 3;
+      const size_t deltaSize = (bitWidths[p] * (numItems - 1) + 7) >> 3;
 
-      Decompress(offsets[p], scales[p], buffer, bitWidths[p], numItems - 1, t);
+      Decompress(offsets[p], scales[p], buffer, bitWidths[p], numItems - 1,
+                 tck.items);
       buffer += deltaSize;
     }
   }
 
-  for (auto &t : tracks) {
-    IVectorTrack<Vector4> *rotTrack = t->rotation;
+  size_t curDynTrack = 0;
 
-    if (rotTrack->IsStatic()) {
-      VectorStaticTrack<Vector4> *trck =
-          static_cast<VectorStaticTrack<Vector4> *>(rotTrack);
-      Vector4 &vec = trck->item;
+  for (size_t p = 0; p < numTracks; p++) {
+    StaticMask &mask = masks[p];
+    MasterTrack *mtPtr = new MasterTrack(mask);
+    tracks.emplace_back(mtPtr);
 
-      if (vec.W == 2.0f || vec.W == -2.0f) {
-        vec.W = sqrtf(1 - (vec.X * vec.X) - (vec.Y * vec.Y) - (vec.Z * vec.Z)) *
-                (vec.W * 0.5f);
-      }
-    } else {
-      VectorDynamicTrack<Vector4> *trck =
-          static_cast<VectorDynamicTrack<Vector4> *>(rotTrack);
-      float Wframe = trck->tracks[3]->GetFrame(0);
-
-      if (Wframe == 2.0f || Wframe == -2.0f) {
-        delete trck->tracks[3];
-        LineDynamicTrack *dTrack = new LineDynamicTrack();
-        trck->tracks[3] = dTrack;
-        dTrack->items.resize(numFrames);
-
-        for (int t = 0; t < numFrames; t++) {
-          Vector4A16 iVec = trck->GetVector(t);
-          float &wItem = dTrack->items[t];
-          wItem = sqrtf(1 - (iVec.X * iVec.X) - (iVec.Y * iVec.Y) -
-                        (iVec.Z * iVec.Z)) *
-                  (Wframe * 0.5f);
+    auto CopyDynamic = [&](StaticMask::MaskType msk, size_t id,
+                           DynamicTrack<Vector4A16> *tck) {
+      if (mask.UseSubTrack(msk)) {
+        auto cTrack = dynamicTracks[curDynTrack++].items.begin();
+        for (auto &c : tck->items) {
+          c[id] = *cTrack++;
         }
+      }
+    };
+
+    switch (mask.GetPosTrackType()) {
+    case TT_STATIC: {
+      StaticTrack<Vector4A16> *tck =
+          static_cast<StaticTrack<Vector4A16> *>(mtPtr->pos.get());
+      tck->track = reinterpret_cast<Vector &>(*staticBuffer);
+      staticBuffer += 3;
+      break;
+    }
+    case TT_DYNAMIC: {
+      DynamicTrack<Vector4A16> *tck =
+          static_cast<DynamicTrack<Vector4A16> *>(mtPtr->pos.get());
+
+      Vector staticValues;
+
+      if (!mask.UseSubTrack(StaticMask::posX)) {
+        staticValues.X = *staticBuffer;
+        staticBuffer++;
+      }
+      if (!mask.UseSubTrack(StaticMask::posY)) {
+        staticValues.Y = *staticBuffer;
+        staticBuffer++;
+      }
+      if (!mask.UseSubTrack(StaticMask::posZ)) {
+        staticValues.Z = *staticBuffer;
+        staticBuffer++;
+      }
+
+      if (mask.UseSubTrack(StaticMask::posX) ||
+          mask.UseSubTrack(StaticMask::posY) ||
+          mask.UseSubTrack(StaticMask::posZ)) {
+        tck->items.insert(tck->items.begin(), numFrames, staticValues);
+      }
+
+      CopyDynamic(StaticMask::posX, 0, tck);
+      CopyDynamic(StaticMask::posY, 1, tck);
+      CopyDynamic(StaticMask::posZ, 2, tck);
+
+      break;
+    }
+    }
+
+    switch (mask.GetRotTrackType()) {
+    case TT_STATIC: {
+      StaticTrack<Vector4A16> *tck =
+          static_cast<StaticTrack<Vector4A16> *>(mtPtr->rot.get());
+      tck->track = reinterpret_cast<Vector4A16 &>(*staticBuffer);
+      staticBuffer += 4;
+      break;
+    }
+    case TT_DYNAMIC: {
+      DynamicTrack<Vector4A16> *tck =
+          static_cast<DynamicTrack<Vector4A16> *>(mtPtr->rot.get());
+
+      Vector4A16 staticValues;
+
+      if (!mask.UseSubTrack(StaticMask::rotX)) {
+        staticValues.X = *staticBuffer;
+        staticBuffer++;
+      }
+      if (!mask.UseSubTrack(StaticMask::rotY)) {
+        staticValues.Y = *staticBuffer;
+        staticBuffer++;
+      }
+      if (!mask.UseSubTrack(StaticMask::rotZ)) {
+        staticValues.Z = *staticBuffer;
+        staticBuffer++;
+      }
+      if (!mask.UseSubTrack(StaticMask::rotW)) {
+        staticValues.W = *staticBuffer;
+        staticBuffer++;
+      }
+
+      if (mask.UseSubTrack(StaticMask::rotX) ||
+          mask.UseSubTrack(StaticMask::rotY) ||
+          mask.UseSubTrack(StaticMask::rotZ) ||
+          mask.UseSubTrack(StaticMask::rotW)) {
+        tck->items.insert(tck->items.begin(), numFrames, staticValues);
+      }
+
+      CopyDynamic(StaticMask::rotX, 0, tck);
+      CopyDynamic(StaticMask::rotY, 1, tck);
+      CopyDynamic(StaticMask::rotZ, 2, tck);
+      CopyDynamic(StaticMask::rotW, 3, tck);
+
+      for (auto &t : tck->items) {
+        if (t.W == 2.0f || t.W == -2.0f) {
+          float basis = t.W * 0.5f;
+          t.QComputeElement() * basis;
+        }
+      }
+      break;
+    }
+    }
+
+    switch (mask.GetScaleTrackType()) {
+    case TT_STATIC: {
+      StaticTrack<Vector4A16> *tck =
+          static_cast<StaticTrack<Vector4A16> *>(mtPtr->scale.get());
+      tck->track = reinterpret_cast<Vector &>(*staticBuffer);
+      staticBuffer += 3;
+      break;
+    }
+    case TT_DYNAMIC: {
+      DynamicTrack<Vector4A16> *tck =
+          static_cast<DynamicTrack<Vector4A16> *>(mtPtr->scale.get());
+
+      Vector staticValues;
+
+      if (!mask.UseSubTrack(StaticMask::scaleX)) {
+        staticValues.X = *staticBuffer;
+        staticBuffer++;
+      }
+      if (!mask.UseSubTrack(StaticMask::scaleY)) {
+        staticValues.Y = *staticBuffer;
+        staticBuffer++;
+      }
+      if (!mask.UseSubTrack(StaticMask::scaleZ)) {
+        staticValues.Z = *staticBuffer;
+        staticBuffer++;
+      }
+
+      if (mask.UseSubTrack(StaticMask::scaleX) ||
+          mask.UseSubTrack(StaticMask::scaleY) ||
+          mask.UseSubTrack(StaticMask::scaleZ)) {
+        tck->items.insert(tck->items.begin(), numFrames, staticValues);
+      }
+
+      CopyDynamic(StaticMask::scaleX, 0, tck);
+      CopyDynamic(StaticMask::scaleY, 1, tck);
+      CopyDynamic(StaticMask::scaleZ, 2, tck);
+
+      break;
+    }
+    }
+
+    for (size_t f = numTracks; f < numFloatTracks + numTracks; f++) {
+      StaticMask &m = masks[f];
+
+      switch (m.GetPosTrackType()) {
+      case TT_IDENTITY:
+        floats.emplace_back(new StaticTrack<float>);
+        break;
+      case TT_STATIC:
+        floats.emplace_back(new StaticTrack<float>(*staticBuffer++));
+        break;
+      case TT_DYNAMIC: {
+        auto cFloatTrack = new DynamicTrack<float>;
+        floats.emplace_back(cFloatTrack);
+        cFloatTrack->items.swap(dynamicTracks[curDynTrack++].items);
+        break;
+      }
       }
     }
   }
 }
 
-hkaDeltaDecompressor::~hkaDeltaDecompressor() {
-  for (auto &f : floats)
-    delete f;
-  for (auto &t : tracks)
-    delete t;
-}
-
 MasterTrack::MasterTrack(StaticMask &mask) {
-  dynamicTracks.reserve(10);
-  staticFloats.reserve(10);
-
   switch (mask.GetPosTrackType()) {
   case TT_IDENTITY:
-    pos = new VectorStaticTrack<Vector>();
+  case TT_STATIC:
+    pos = VectorTrackPtr(new StaticTrack<Vector4A16>());
     break;
-  case TT_STATIC: {
-    auto _pos = new VectorStaticTrack<Vector>();
-    pos = _pos;
-    staticFloats.push_back(&_pos->item.X);
-    staticFloats.push_back(&_pos->item.Y);
-    staticFloats.push_back(&_pos->item.Z);
-    break;
-  }
   case TT_DYNAMIC:
-    pos = new VectorDynamicTrack<Vector>(mask, StaticMask::posX, *this);
+    pos = VectorTrackPtr(new DynamicTrack<Vector4A16>());
     break;
   }
 
   switch (mask.GetRotTrackType()) {
   case TT_IDENTITY:
-    rotation = new VectorStaticTrack<Vector4>();
-    static_cast<VectorStaticTrack<Vector4> *>(rotation)->item =
-        Vector4(0.0f, 0.0f, 0.0f, 1.0f);
+    rot = VectorTrackPtr(new StaticTrack<Vector4A16>({{}, 1.f}));
     break;
-  case TT_STATIC: {
-    auto _rot = new VectorStaticTrack<Vector4>();
-    rotation = _rot;
-    staticFloats.push_back(&_rot->item.X);
-    staticFloats.push_back(&_rot->item.Y);
-    staticFloats.push_back(&_rot->item.Z);
-    staticFloats.push_back(&_rot->item.W);
+  case TT_STATIC:
+    rot = VectorTrackPtr(new StaticTrack<Vector4A16>());
     break;
-  }
   case TT_DYNAMIC:
-    rotation =
-        new VectorDynamicTrack<Vector4>(mask, StaticMask::rotX, *this);
+    rot = VectorTrackPtr(new DynamicTrack<Vector4A16>());
     break;
   }
 
   switch (mask.GetScaleTrackType()) {
   case TT_IDENTITY:
-    scale = new VectorStaticTrack<Vector>();
-    static_cast<VectorStaticTrack<Vector> *>(scale)->item = {1.0f, 1.0f, 1.0f};
+    scale = VectorTrackPtr(new StaticTrack<Vector4A16>({1.f, 1.f, 1.f, 0.f}));
     break;
-  case TT_STATIC: {
-    auto _scale = new VectorStaticTrack<Vector>();
-    scale = _scale;
-    staticFloats.push_back(&_scale->item.X);
-    staticFloats.push_back(&_scale->item.Y);
-    staticFloats.push_back(&_scale->item.Z);
+  case TT_STATIC:
+    scale = VectorTrackPtr(new StaticTrack<Vector4A16>());
     break;
-  }
   case TT_DYNAMIC:
-    scale = new VectorDynamicTrack<Vector>(mask, StaticMask::scaleX, *this);
+    scale = VectorTrackPtr(new DynamicTrack<Vector4A16>());
     break;
   }
-}
-
-MasterTrack::~MasterTrack() {
-  delete pos;
-  delete rotation;
-  delete scale;
 }

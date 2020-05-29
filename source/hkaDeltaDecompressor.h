@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2019 Lukas Cone
+    Copyright(C) 2016-2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -24,78 +24,23 @@ struct hkaDeltaDecompressor {
   typedef hvector<StaticMask> masks_type;
   typedef hvector<float> offsets_type;
   typedef hvector<float> scales_type;
+  typedef ITrack<float> floats_track;
 
 private:
   hvector<unsigned char> bitWidths;
   hvector<StaticMask> masks;
   hvector<float> offsets;
   hvector<float> scales;
-  std::vector<MasterTrack *> tracks;
-  std::vector<ILineTrack *> floats;
+  std::vector<std::unique_ptr<MasterTrack>> tracks;
+  std::vector<std::unique_ptr<floats_track>> floats;
 
 public:
   void Assign(hkaDeltaCompressedAnimationInternalInterface *input);
-  bool IsTrackStatic(int trackID, hkaAnimation::TrackType type) const;
-  void GetTrack(int trackID, int frame, hkaAnimation::TrackType type,
-                Vector4A16 &out) const;
-  void GetTransform(int trackID, int frame, hkQTransform &out) const;
-  int GetNumInternalFrames() const;
-  ~hkaDeltaDecompressor();
+  void GetFrame(size_t trackID, int32 frame, hkQTransform &out) const;
 };
 
-ES_INLINE bool
-hkaDeltaDecompressor::IsTrackStatic(int trackID,
-                                    hkaAnimation::TrackType type) const {
-  switch (type) {
-  case hkaAnimation::Rotation:
-    return tracks[trackID]->rotation->IsStatic();
-  case hkaAnimation::Position:
-    return tracks[trackID]->pos->IsStatic();
-  case hkaAnimation::Scale:
-    return tracks[trackID]->scale->IsStatic();
-  }
-
-  return true;
-}
-
-ES_INLINE void hkaDeltaDecompressor::GetTrack(int trackID, int frame,
-                                              hkaAnimation::TrackType type,
-                                              Vector4A16 &out) const {
-  switch (type) {
-  case hkaAnimation::Rotation:
-    out = Vector4A16(tracks[trackID]->rotation->GetVector(frame));
-    break;
-  case hkaAnimation::Position:
-    out = tracks[trackID]->pos->GetVector(frame);
-    break;
-  case hkaAnimation::Scale:
-    out = tracks[trackID]->scale->GetVector(frame);
-    break;
-  }
-}
-
-ES_INLINE void hkaDeltaDecompressor::GetTransform(int trackID, int frame,
-                                                  hkQTransform &out) const {
-  out.rotation = Vector4A16(tracks[trackID]->rotation->GetVector(frame));
-  out.position = tracks[trackID]->pos->GetVector(frame);
-  out.scale = tracks[trackID]->scale->GetVector(frame);
-}
-
-ES_INLINE int hkaDeltaDecompressor::GetNumInternalFrames() const {
-  for (auto &t : tracks) {
-    int numPosFrames = t->pos->NumFrames();
-    int numRotFrames = t->rotation->NumFrames();
-    int numSclFrames = t->scale->NumFrames();
-
-    if (numPosFrames > 2)
-      return numPosFrames;
-
-    if (numRotFrames > 2)
-      return numRotFrames;
-
-    if (numSclFrames > 2)
-      return numSclFrames;
-  }
-
-  return 2;
+inline void hkaDeltaDecompressor::GetFrame(size_t trackID, int32 frame, hkQTransform &out) const {
+  out.rotation = tracks[trackID]->rot->GetFrame(frame);
+  out.translation = tracks[trackID]->pos->GetFrame(frame);
+  out.scale = tracks[trackID]->scale->GetFrame(frame);
 }

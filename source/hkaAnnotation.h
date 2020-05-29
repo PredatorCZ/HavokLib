@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2019 Lukas Cone
+    Copyright(C) 2016-2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -23,29 +23,29 @@ template <class C>
 struct hkaAnnotation_t : hkaAnnotationTrackInternalInterface {
   C *Data;
   hkClassConstructor_nohash(hkaAnnotation_t<C>);
-  void SwapEndian() { Data->SwapEndian(); }
-  virtual const char *GetName() const { return Data->name; };
-  virtual const int GetNumAnnotations() const {
-    return Data->GetNumAnnotations();
+  void SwapEndian() override { Data->SwapEndian(); }
+  es::string_view GetName() const override {
+    return static_cast<const char *>(Data->name);
   };
-  virtual Annotation GetAnnotation(int id) const {
+  size_t Size() const override { return Data->GetNumAnnotations(); };
+  const hkaAnnotationFrame At(size_t id) const override {
     return Data->GetAnnotation(id);
   }
 };
 
 template <template <class C> class _ipointer> struct hkaAnnotation {
   float time;
-  _ipointer<const char> text;
+  _ipointer<char> text;
 };
 
 template <template <class C> class _ipointer> struct hkaAnnotationTrack1 {
-  _ipointer<const char> name;
+  _ipointer<char> name;
   _ipointer<hkaAnnotation<_ipointer>> annotations;
-  int numAnnotations;
+  uint32 numAnnotations;
 };
 
 template <template <class C> class _ipointer> struct hkaAnnotationTrack2 {
-  _ipointer<const char> name;
+  _ipointer<char> name;
   hkArray<hkaAnnotation<_ipointer>, _ipointer> annotations;
 };
 
@@ -54,7 +54,7 @@ template <template <class C> class _ipointer,
 struct hkaAnnotation_t_shared : _parent<_ipointer> {
   typedef _parent<_ipointer> parent_class;
 
-  ES_FORCEINLINE const char *GetName() const { return this->name; }
+  const char *GetName() const { return this->name; }
 
   enablePtrPair(annotations) GetNumAnnotations() const {
     return this->numAnnotations;
@@ -70,15 +70,15 @@ struct hkaAnnotation_t_shared : _parent<_ipointer> {
     return this->annotations.count;
   }
 
-  hkaAnnotationTrack::Annotation GetAnnotation(int id) const {
+  hkaAnnotationFrame GetAnnotation(size_t id) const {
     const hkaAnnotation<_ipointer> &ano = this->annotations[id];
-    return hkaAnnotationTrack::Annotation{ano.time, ano.text};
+    return {ano.time, static_cast<const char*>(ano.text)};
   }
 
-  ES_FORCEINLINE void SwapEndian() {
+  void SwapEndian() {
     FByteswapper(GetNumAnnotations());
 
-    for (int a = 0; a < GetNumAnnotations(); a++) {
+    for (size_t a = 0; a < GetNumAnnotations(); a++) {
       FByteswapper(this->annotations[a].time);
     }
   }

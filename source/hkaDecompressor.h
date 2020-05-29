@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2019 Lukas Cone
+    Copyright(C) 2016-2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -17,18 +17,19 @@
 
 #pragma once
 #include "datas/allocator_hybrid.hpp"
+#include "datas/endian.hpp"
 #include "datas/flags.hpp"
 #include <vector>
 
-template <typename T> using hvector = std::vector<T, std::allocator_hybrid<T>>;
+template <typename T> using hvector = std::vector<T, es::allocator_hybrid<T>>;
 
 struct MasterTrack;
 
 struct QuantizationFormat {
-  unsigned char maxBitWidth, preserved;
-  int numD, offsetIdx, scaleIdx, bitWidthIdx;
+  uint8 maxBitWidth, preserved;
+  uint32 numD, offsetIdx, scaleIdx, bitWidthIdx;
 
-  ES_FORCEINLINE void SwapEndian() {
+  void SwapEndian() {
     FByteswapper(numD);
     FByteswapper(offsetIdx);
     FByteswapper(scaleIdx);
@@ -39,14 +40,8 @@ struct QuantizationFormat {
 enum TrackType { TT_DYNAMIC, TT_STATIC, TT_IDENTITY };
 
 class StaticMask {
-  esFlags<short> data;
-  ES_INLINE TrackType GetTrackType(int offset) {
-    return static_cast<TrackType>(static_cast<int>(data[offset]) |
-                                  static_cast<int>((data[offset + 1] << 1)));
-  }
-
 public:
-  enum FlagOffset {
+  enum MaskType {
     ttPos = 0,
     ttRot = 2,
     ttScale = 4,
@@ -61,113 +56,46 @@ public:
     scaleY,
     scaleX
   };
-  ES_INLINE TrackType GetPosTrackType() { return GetTrackType(ttPos); }
-  ES_INLINE TrackType GetRotTrackType() { return GetTrackType(ttRot); }
-  ES_INLINE TrackType GetScaleTrackType() { return GetTrackType(ttScale); }
-  ES_INLINE bool UseSubTrack(FlagOffset type) { return data[type]; }
+
+private:
+  union {
+    esFlags<uint8> data;
+    uint8 dataRaw;
+  };
+  TrackType GetTrackType(uint32 offset) {
+    return static_cast<TrackType>((dataRaw >> offset) & 3);
+  }
+
+public:
+  TrackType GetPosTrackType() { return GetTrackType(ttPos); }
+  TrackType GetRotTrackType() { return GetTrackType(ttRot); }
+  TrackType GetScaleTrackType() { return GetTrackType(ttScale); }
+  bool UseSubTrack(MaskType type) { return data[type]; }
 };
 
-struct ILineTrack {
-  virtual float &GetFrame(int frame) = 0;
-  virtual int NumFrames() const { return 2; }
-  virtual ~ILineTrack() {}
+template <class C> struct ITrack {
+  virtual C &GetFrame(int32 frame) = 0;
+  virtual size_t NumFrames() const { return 2; }
+  virtual ~ITrack() {}
 };
 
-struct LineDynamicTrack : ILineTrack {
-  std::vector<float> items;
-  float &GetFrame(int frame) { return items[frame]; }
-  int NumFrames() const { return static_cast<int>(items.size()); }
+template <class C> struct DynamicTrack : ITrack<C> {
+  std::vector<C> items;
+  C &GetFrame(int32 frame) { return items[frame]; }
+  size_t NumFrames() const { return items.size(); }
 };
 
-struct LineStaticTrack : ILineTrack {
-  float track;
-  float &GetFrame(int frame) { return track; }
-  LineStaticTrack(float input) : track(input) {}
-  LineStaticTrack() : track(0.0f) {}
-};
-
-template <class C> struct IVectorTrack {
-  virtual C GetVector(int frame) = 0;
-  virtual bool IsStatic() = 0;
-  virtual int NumFrames() const { return 2; }
-  virtual ~IVectorTrack() {}
-};
-
-template <class C> struct VectorDynamicTrack : IVectorTrack<C> {
-  static const int numComponents = sizeof(C) / 4;
-  ILineTrack *tracks[numComponents];
-
-  C GetVector(int frame);
-  int NumFrames() const;
-  VectorDynamicTrack(StaticMask &mask, StaticMask::FlagOffset offset,
-                     MasterTrack &master);
-  ~VectorDynamicTrack();
-  bool IsStatic() { return false; }
-};
-
-template <class C> struct VectorStaticTrack : IVectorTrack<C> {
-  C item;
-  C GetVector(int frame) { return item; }
-  bool IsStatic() { return true; }
+template <class C> struct StaticTrack : ITrack<C> {
+  C track;
+  C &GetFrame(int32 frame) { return track; }
+  StaticTrack(C input) : track(input) {}
+  StaticTrack() : track() {}
 };
 
 struct MasterTrack {
-  IVectorTrack<Vector> *pos;
-  IVectorTrack<Vector4> *rotation;
-  IVectorTrack<Vector> *scale;
-
-  std::vector<float *> staticFloats;
-  std::vector<LineDynamicTrack *> dynamicTracks;
+  typedef ITrack<Vector4A16> VectorTrack;
+  typedef std::unique_ptr<VectorTrack> VectorTrackPtr;
+  VectorTrackPtr pos, rot, scale;
 
   MasterTrack(StaticMask &mask);
-  ~MasterTrack();
 };
-
-template <class C> ES_INLINE C VectorDynamicTrack<C>::GetVector(int frame) {
-  C retval;
-
-  retval.X = tracks[0]->GetFrame(frame);
-  retval.Y = tracks[1]->GetFrame(frame);
-  retval.Z = tracks[2]->GetFrame(frame);
-
-  if (numComponents > 3) {
-    retval[3] = tracks[3]->GetFrame(frame);
-  }
-
-  return retval;
-}
-
-template <class C> ES_INLINE int VectorDynamicTrack<C>::NumFrames() const {
-  for (int t = 0; t < numComponents; t++)
-    if (tracks[t]->NumFrames() > 2)
-      return tracks[t]->NumFrames();
-
-  return 2;
-}
-
-template <class C>
-ES_INLINE VectorDynamicTrack<C>::VectorDynamicTrack(
-    StaticMask &mask, StaticMask::FlagOffset _offset, MasterTrack &master) {
-  int offset = _offset;
-
-  for (int t = 0; t < numComponents; t++) {
-    ILineTrack *ctr = nullptr;
-
-    if (!mask.UseSubTrack(static_cast<StaticMask::FlagOffset>(offset--))) {
-      auto _ctr = new LineStaticTrack();
-      ctr = _ctr;
-      master.staticFloats.push_back(&_ctr->track);
-    } else {
-      auto _ctr = new LineDynamicTrack();
-      ctr = _ctr;
-      master.dynamicTracks.push_back(_ctr);
-    }
-
-    tracks[t] = ctr;
-  }
-}
-
-template <class C> ES_INLINE VectorDynamicTrack<C>::~VectorDynamicTrack() {
-  for (int t = 0; t < numComponents; t++)
-    delete tracks[t];
-}

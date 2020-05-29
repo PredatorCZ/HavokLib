@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2019 Lukas Cone
+    Copyright(C) 2016-2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -25,28 +25,30 @@ template <class C>
 struct hkaAnimationBinding_t : hkaAnimationBindingInternalInterface {
   C *Data;
   hkClassConstructor(hkaAnimationBinding_t);
-  void SwapEndian() { Data->SwapEndian(); }
-  const char *GetSkeletonName() const { return Data->GetSkeletonName(); }
-  const hkaAnimation *GetAnimation() const {
+  void SwapEndian() override { Data->SwapEndian(); }
+  es::string_view GetSkeletonName() const override {
+    return Data->GetSkeletonName();
+  }
+  const hkaAnimation *GetAnimation() const override {
     return Data->GetAnimation(header);
   }
-  BlendHint GetBlendHint() const { return Data->GetBlendHint(); }
-  const int GetNumTransformTrackToBoneIndices() const {
+  BlendHint GetBlendHint() const override { return Data->GetBlendHint(); }
+  size_t GetNumTransformTrackToBoneIndices() const override {
     return Data->GetNumTransformTrackToBoneIndices();
   }
-  const short GetTransformTrackToBoneIndex(int id) const {
+  int16 GetTransformTrackToBoneIndex(size_t id) const override {
     return Data->GetTransformTrackToBoneIndex(id);
   }
-  const int GetNumFloatTrackToFloatSlotIndices() const {
+  size_t GetNumFloatTrackToFloatSlotIndices() const override {
     return Data->GetNumFloatTrackToFloatSlotIndices();
   }
-  const short GetFloatTrackToFloatSlotIndex(int id) const {
+  int16 GetFloatTrackToFloatSlotIndex(size_t id) const override {
     return Data->GetFloatTrackToFloatSlotIndex(id);
   }
-  const int GetNumPartitionIndices() const {
+  size_t GetNumPartitionIndices() const override {
     return Data->GetNumPartitionIndices();
   }
-  const short GetPartitionIndex(int id) const {
+  int16 GetPartitionIndex(size_t id) const override {
     return Data->GetPartitionIndex(id);
   }
 };
@@ -56,15 +58,15 @@ template <template <class C> class _ipointer,
 struct hkaAnimationBinding_t_shared : _parent<_ipointer> {
   typedef _parent<_ipointer> parent_class;
 
-  ES_FORCEINLINE const hkaAnimation *GetAnimation(IhkPackFile *header) const {
+  const hkaAnimation *GetAnimation(IhkPackFile *header) const {
     return dynamic_cast<const hkaAnimation *>(
         header->GetClass(this->animation));
   }
-  ES_FORCEINLINE BlendHint GetBlendHint() const { return this->blendHint; }
-  ES_FORCEINLINE const short GetTransformTrackToBoneIndex(int id) const {
+  BlendHint GetBlendHint() const { return this->blendHint; }
+  int16 GetTransformTrackToBoneIndex(size_t id) const {
     return this->transformTrackToBoneIndices[id];
   }
-  ES_FORCEINLINE const short GetFloatTrackToFloatSlotIndex(int id) const {
+  int16 GetFloatTrackToFloatSlotIndex(size_t id) const {
     return this->floatTrackToFloatSlotIndices[id];
   }
 
@@ -104,58 +106,52 @@ struct hkaAnimationBinding_t_shared : _parent<_ipointer> {
     return this->floatTrackToFloatSlotIndices.count;
   }
 
-  disabledFunction(noPartitions, const int) ES_FORCEINLINE
-      GetNumPartitionIndices() const {
+  disabledFunction(noPartitions, size_t) GetNumPartitionIndices() const {
     return 0;
   }
-  enabledFunction(noPartitions, const int) ES_FORCEINLINE
-      GetNumPartitionIndices() const {
+  enabledFunction(noPartitions, size_t) GetNumPartitionIndices() const {
     return GetNumPartitionIndices();
   }
-  enabledFunction(noPartitions, int &) ES_FORCEINLINE GetNumPartitionIndices() {
+  enabledFunction(noPartitions, uint32 &) GetNumPartitionIndices() {
     return this->partitionIndices.count;
   }
 
-  disabledFunction(noPartitions, const short) ES_FORCEINLINE
-      GetPartitionIndex(int) const {
+  disabledFunction(noPartitions, int16) GetPartitionIndex(size_t) const {
     return -1;
   }
-  enabledFunction(noPartitions, const short) ES_FORCEINLINE
-      GetPartitionIndex(int id) const {
+  enabledFunction(noPartitions, int16) GetPartitionIndex(size_t id) const {
     return this->partitionIndices[id];
   }
 
-  disabledFunction(noSkeletonName, const char *) ES_FORCEINLINE
-      GetSkeletonName() const {
+  disabledFunction(noSkeletonName, const char *) GetSkeletonName() const {
     return nullptr;
   }
-  enabledFunction(noSkeletonName, const char *) ES_FORCEINLINE
-      GetSkeletonName() const {
+  enabledFunction(noSkeletonName, const char *) GetSkeletonName() const {
     return this->skeletonName;
   }
 
-  disabledFunction(noPartitions, void) ES_FORCEINLINE SwapPartitionIndices() {}
-  enabledFunction(noPartitions, void) ES_FORCEINLINE SwapPartitionIndices() {
+  disabledFunction(noPartitions, void) SwapPartitionIndices() {}
+  enabledFunction(noPartitions, void) SwapPartitionIndices() {
     FByteswapper(GetNumPartitionIndices());
-    const int numPartitions = GetNumPartitionIndices();
+    const size_t numPartitions = GetNumPartitionIndices();
 
-    for (int i = 0; i < numPartitions; i++)
+    for (size_t i = 0; i < numPartitions; i++)
       FByteswapper(this->partitionIndices[i]);
   }
 
   void SwapEndian() {
     FByteswapper(GetNumTransformTrackToBoneIndices());
-    const int numTransformTrackToBoneIndices =
+    const size_t numTransformTrackToBoneIndices =
         GetNumTransformTrackToBoneIndices();
 
-    for (int i = 0; i < numTransformTrackToBoneIndices; i++)
+    for (size_t i = 0; i < numTransformTrackToBoneIndices; i++)
       FByteswapper(this->transformTrackToBoneIndices[i]);
 
     FByteswapper(GetNumFloatTrackToFloatSlotIndices());
-    const int numFloatTrackToFloatSlotIndices =
+    const size_t numFloatTrackToFloatSlotIndices =
         GetNumFloatTrackToFloatSlotIndices();
 
-    for (int i = 0; i < numFloatTrackToFloatSlotIndices; i++)
+    for (size_t i = 0; i < numFloatTrackToFloatSlotIndices; i++)
       FByteswapper(this->floatTrackToFloatSlotIndices[i]);
 
     SwapPartitionIndices();
@@ -165,10 +161,10 @@ struct hkaAnimationBinding_t_shared : _parent<_ipointer> {
 template <template <class C> class _ipointer>
 struct hkaAnimationBinding550_t_data {
   _ipointer<hkaAnimation> animation;
-  _ipointer<short> transformTrackToBoneIndices;
-  int numTransformTrackToBoneIndices;
-  _ipointer<short> floatTrackToFloatSlotIndices;
-  int numFloatTrackToFloatSlotIndices;
+  _ipointer<int16> transformTrackToBoneIndices;
+  uint32 numTransformTrackToBoneIndices;
+  _ipointer<int16> floatTrackToFloatSlotIndices;
+  uint32 numFloatTrackToFloatSlotIndices;
   BlendHint blendHint;
   void noPartitions();
   void noSkeletonName();
@@ -184,10 +180,10 @@ template <template <class C> class _ipointer>
 struct hkaAnimationBinding660_t_data {
   _ipointer<char> skeletonName;
   _ipointer<hkaAnimation> animation;
-  _ipointer<short> transformTrackToBoneIndices;
-  int numTransformTrackToBoneIndices;
-  _ipointer<short> floatTrackToFloatSlotIndices;
-  int numFloatTrackToFloatSlotIndices;
+  _ipointer<int16> transformTrackToBoneIndices;
+  uint32 numTransformTrackToBoneIndices;
+  _ipointer<int16> floatTrackToFloatSlotIndices;
+  uint32 numFloatTrackToFloatSlotIndices;
   BlendHint blendHint;
   void noPartitions();
 };
@@ -202,8 +198,8 @@ template <template <class C> class _ipointer>
 struct hkaAnimationBinding710_t_data : hkReferenceObject<_ipointer> {
   _ipointer<char> skeletonName;
   _ipointer<hkaAnimation> animation;
-  hkArray<short, _ipointer> transformTrackToBoneIndices;
-  hkArray<short, _ipointer> floatTrackToFloatSlotIndices;
+  hkArray<int16, _ipointer> transformTrackToBoneIndices;
+  hkArray<int16, _ipointer> floatTrackToFloatSlotIndices;
   BlendHint blendHint;
   void noPartitions();
 };
@@ -227,9 +223,9 @@ template <template <class C> class _ipointer>
 struct hkaAnimationBinding2012_t_data : hkReferenceObject<_ipointer> {
   _ipointer<char> skeletonName;
   _ipointer<hkaAnimation> animation;
-  hkArray<short, _ipointer> transformTrackToBoneIndices;
-  hkArray<short, _ipointer> floatTrackToFloatSlotIndices;
-  hkArray<short, _ipointer> partitionIndices;
+  hkArray<int16, _ipointer> transformTrackToBoneIndices;
+  hkArray<int16, _ipointer> floatTrackToFloatSlotIndices;
+  hkArray<int16, _ipointer> partitionIndices;
   BlendHint blendHint;
 };
 
@@ -259,9 +255,9 @@ template <template <class C> class _ipointer>
 struct hkaAnimationBinding2016_t_data : hkReferenceObject2016<_ipointer> {
   _ipointer<char> skeletonName;
   _ipointer<hkaAnimation> animation;
-  hkArray<short, _ipointer> transformTrackToBoneIndices;
-  hkArray<short, _ipointer> floatTrackToFloatSlotIndices;
-  hkArray<short, _ipointer> partitionIndices;
+  hkArray<int16, _ipointer> transformTrackToBoneIndices;
+  hkArray<int16, _ipointer> floatTrackToFloatSlotIndices;
+  hkArray<int16, _ipointer> partitionIndices;
   BlendHint blendHint;
 };
 

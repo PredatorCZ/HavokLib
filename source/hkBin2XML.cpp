@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2019 Lukas Cone
+    Copyright(C) 2016-2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -26,11 +26,11 @@ void hkNamedVariant::ToXML(XMLHandle hdl) const {
 
   pugi::xml_node nameNode = objectNode.append_child(_hkParam);
   nameNode.append_attribute(_hkName).set_value(_hkName);
-  nameNode.append_buffer(name, strlen(name) + 1);
+  nameNode.append_buffer(name.data(), name.size());
 
   pugi::xml_node classNameNode = objectNode.append_child(_hkParam);
   classNameNode.append_attribute(_hkName).set_value("className");
-  classNameNode.append_buffer(className, strlen(className) + 1);
+  classNameNode.append_buffer(className.data(), className.size());
 
   pugi::xml_node variantNode = objectNode.append_child(_hkParam);
   variantNode.append_attribute(_hkName).set_value("variant");
@@ -56,7 +56,7 @@ void hkRootLevelContainerInternalInterface::ToXML(XMLHandle hdl) const {
 
   for (auto &v : *this) {
     if (!v.pointer) {
-      printwarning("[Havok XML] Couldn't export variant: \"",
+      printwarning("[Havok XML] Couldn't export variant: \""
                    << v.name << "\" undefined class: " << v.className);
       continue;
     }
@@ -151,22 +151,23 @@ void hkaAnimationContainerInternalInterface::ToXML(XMLHandle hdl) const {
   }
 }
 
-std::string hkQTransform::ToString() const {
-  std::string buffer;
-  buffer += '(';
-  buffer += reinterpret_cast<const Vector &>(position).ToString() + ')';
-
-  buffer += '(';
-  buffer += rotation.ToString() + ')';
-
-  return buffer + '(' + reinterpret_cast<const Vector &>(scale).ToString() +
-         ')';
+std::string to_string(const hkQTransform &tm) {
+  std::string retVal;
+  retVal.push_back('(');
+  retVal.append(reinterpret_cast<const Vector &>(tm.translation).ToString())
+      .append(")(")
+      .append(tm.rotation.ToString())
+      .append(")(")
+      .append(reinterpret_cast<const Vector &>(tm.scale).ToString())
+      .push_back(')');
+  return retVal;
 }
 
 void hkaSkeletonInternalInterface::ToXML(XMLHandle hdl) const {
   pugi::xml_node nameNode = hdl.node->append_child(_hkParam);
   nameNode.append_attribute(_hkName).set_value(_hkName);
-  nameNode.append_buffer(GetSkeletonName(), strlen(GetSkeletonName()));
+  auto skName = Name();
+  nameNode.append_buffer(skName.data(), skName.size());
 
   pugi::xml_node parentNode = hdl.node->append_child(_hkParam);
   parentNode.append_attribute(_hkName).set_value("parentIndices");
@@ -177,7 +178,7 @@ void hkaSkeletonInternalInterface::ToXML(XMLHandle hdl) const {
   std::string buffer = ident;
   int cc = 0;
 
-  for (const short &s : BoneParentIDs()) {
+  for (const auto s : BoneParentIDs()) {
     buffer += std::to_string(s);
     cc++;
 
@@ -200,12 +201,12 @@ void hkaSkeletonInternalInterface::ToXML(XMLHandle hdl) const {
   bonesNode.append_attribute(_hkNumElements).set_value(GetNumBones());
 
   if (hdl.toolset > HK660) {
-    for (auto &b : BoneNames()) {
+    for (auto b : BoneNames()) {
       pugi::xml_node boneNode = bonesNode.append_child(_hkObject);
 
       pugi::xml_node boneNameNode = boneNode.append_child(_hkParam);
       boneNameNode.append_attribute(_hkName).set_value(_hkName);
-      boneNameNode.append_buffer(&b, strlen(&b));
+      boneNameNode.append_buffer(b.data(), b.size());
 
       pugi::xml_node boneLockTSNode = boneNode.append_child(_hkParam);
       boneLockTSNode.append_attribute(_hkName).set_value("lockTranslation");
@@ -216,9 +217,9 @@ void hkaSkeletonInternalInterface::ToXML(XMLHandle hdl) const {
     buffer = ident;
     cc = 0;
 
-    for (auto &b : BoneNames()) {
+    for (auto b : BoneNames()) {
       std::string _buffer;
-      PointerToString(&b, _buffer);
+      PointerToString(b.data(), _buffer);
 
       pugi::xml_node boneNode = datanode.append_child(_hkObject);
       boneNode.append_attribute(_hkName).set_value(_buffer.c_str());
@@ -226,7 +227,7 @@ void hkaSkeletonInternalInterface::ToXML(XMLHandle hdl) const {
 
       pugi::xml_node boneNameNode = boneNode.append_child(_hkParam);
       boneNameNode.append_attribute(_hkName).set_value(_hkName);
-      boneNameNode.append_buffer(&b, strlen(&b));
+      boneNameNode.append_buffer(b.data(), b.size());
 
       pugi::xml_node boneLockTSNode = boneNode.append_child(_hkParam);
       boneLockTSNode.append_attribute(_hkName).set_value("lockTranslation");
@@ -256,7 +257,7 @@ void hkaSkeletonInternalInterface::ToXML(XMLHandle hdl) const {
   buffer = ident;
 
   for (auto &s : BoneTransforms())
-    buffer += s.ToString() + ident;
+    buffer += ::to_string(s) + ident;
 
   if (buffer.size()) {
     buffer.pop_back();
@@ -269,7 +270,7 @@ void hkaSkeletonInternalInterface::ToXML(XMLHandle hdl) const {
     refsNode.append_attribute(_hkName).set_value("localFrames");
     refsNode.append_attribute(_hkNumElements).set_value(GetNumLocalFrames());
 
-    for (auto &s : LocalFrames()) {
+    for (auto s : LocalFrames()) {
       std::string _buffer;
       PointerToString(s.localFrame, _buffer);
 
@@ -318,8 +319,8 @@ void hkaSkeletonInternalInterface::ToXML(XMLHandle hdl) const {
   floatSlotsNode.append_attribute(_hkName).set_value("floatSlots");
   floatSlotsNode.append_attribute(_hkNumElements).set_value(GetNumFloatSlots());
 
-  for (auto &s : FloatSlots()) {
-    floatSlotsNode.append_child("hkcstring").append_buffer(&s, strlen(&s));
+  for (auto s : FloatSlots()) {
+    floatSlotsNode.append_child("hkcstring").append_buffer(s.data(), s.size());
   }
 
   if (hdl.toolset > HK2011_2) {
@@ -327,7 +328,7 @@ void hkaSkeletonInternalInterface::ToXML(XMLHandle hdl) const {
     partsNode.append_attribute(_hkName).set_value("partitions");
     partsNode.append_attribute(_hkNumElements).set_value(GetNumFloatSlots());
 
-    for (auto &s : Partitions()) {
+    for (auto s : Partitions()) {
       pugi::xml_node hkobj = partsNode.append_child(_hkObject);
       ExportReflectedClass(s, hkobj);
     }
@@ -340,11 +341,12 @@ void hkaAnnotationTrackInternalInterface::ToXML(XMLHandle hdl) const {
   pugi::xml_node tracksNode = hdl.node->append_child(_hkParam);
   tracksNode.append_attribute(_hkName).set_value(
       hdl.toolset == HK550 ? _hkName : "trackName");
-  tracksNode.append_buffer(GetName(), strlen(GetName()));
+  auto aName = this->GetName();
+  tracksNode.append_buffer(aName.data(), aName.size());
 
   pugi::xml_node annotsNode = hdl.node->append_child(_hkParam);
   annotsNode.append_attribute(_hkName).set_value("annotations");
-  annotsNode.append_attribute(_hkNumElements).set_value(GetNumAnnotations());
+  annotsNode.append_attribute(_hkNumElements).set_value(Size());
 
   for (auto a : *this) {
     pugi::xml_node cObjNode = annotsNode.append_child(_hkObject);
@@ -356,7 +358,7 @@ void hkaAnnotationTrackInternalInterface::ToXML(XMLHandle hdl) const {
 
     pugi::xml_node textNode = cObjNode.append_child(_hkParam);
     textNode.append_attribute("text");
-    textNode.append_buffer(a.text, strlen(a.text));
+    textNode.append_buffer(a.text.data(), a.text.size());
   }
 }
 
@@ -365,12 +367,12 @@ void hkaAnimationInternalInterface::ToXML(XMLHandle hdl) const {
 
   pugi::xml_node typeNode = hdl.node->append_child(_hkParam);
   typeNode.append_attribute(_hkName).set_value("type");
-  typeNode.append_buffer(GetAnimationTypeName(),
-                         strlen(GetAnimationTypeName()));
+  auto anType = GetAnimationTypeName();
+  typeNode.append_buffer(anType.data(), anType.size());
 
   pugi::xml_node durationNode = hdl.node->append_child(_hkParam);
   durationNode.append_attribute(_hkName).set_value("duration");
-  _buff = std::to_string(GetDuration());
+  _buff = std::to_string(Duration());
   durationNode.append_buffer(_buff.c_str(), _buff.size());
 
   pugi::xml_node numTransNode = hdl.node->append_child(_hkParam);
@@ -396,12 +398,12 @@ void hkaAnimationInternalInterface::ToXML(XMLHandle hdl) const {
   annotsNode.append_attribute(_hkNumElements).set_value(GetNumAnnotations());
 
   if (hdl.toolset > HK660) {
-    for (auto a : Annotations()) {
+    for (auto a : *this) {
       pugi::xml_node annotNode = annotsNode.append_child(_hkObject);
       XMLHandle annotHandle = hdl;
       annotHandle.node = &annotNode;
 
-      dynamic_cast<hkaAnnotationTrackInternalInterface *>(a.get())->ToXML(
+      dynamic_cast<const hkaAnnotationTrackInternalInterface *>(a.get())->ToXML(
           annotHandle);
     }
 
@@ -411,9 +413,9 @@ void hkaAnimationInternalInterface::ToXML(XMLHandle hdl) const {
     std::string buffer = ident;
     int cc = 0;
 
-    for (auto a : Annotations()) {
+    for (auto a : *this) {
       std::string _buffer;
-      PointerToString(a.get()->GetPointer(), _buffer);
+      PointerToString(a.get(), _buffer);
 
       buffer += _buffer;
       cc++;
@@ -430,7 +432,7 @@ void hkaAnimationInternalInterface::ToXML(XMLHandle hdl) const {
       XMLHandle annotHandle = hdl;
       annotHandle.node = &annotNode;
 
-      dynamic_cast<hkaAnnotationTrackInternalInterface *>(a.get())->ToXML(
+      dynamic_cast<const hkaAnnotationTrackInternalInterface *>(a.get())->ToXML(
           annotHandle);
     }
 
@@ -445,9 +447,9 @@ void hkaAnimationInternalInterface::ToXML(XMLHandle hdl) const {
 }
 
 void hkaInterleavedAnimationInternalInterface::ToXML(XMLHandle hdl) const {
-  hkaAnimationInternalInterface::ToXML(hdl);
+  dynamic_cast<const hkaAnimationInternalInterface*>(this)->ToXML(hdl);
 
-  const int numTransforms = GetNumTransforms();
+  const size_t numTransforms = GetNumTransforms();
   static const char *ident = "\n\t\t\t\t";
   std::string buffer = ident;
 
@@ -455,8 +457,8 @@ void hkaInterleavedAnimationInternalInterface::ToXML(XMLHandle hdl) const {
   transNode.append_attribute(_hkName).set_value("transforms");
   transNode.append_attribute(_hkNumElements).set_value(numTransforms);
 
-  for (int t = 0; t < numTransforms; t++) {
-    buffer += GetTransform(t)->ToString() + ident;
+  for (size_t t = 0; t < numTransforms; t++) {
+    buffer += ::to_string(*GetTransform(t)) + ident;
   }
 
   if (buffer.size()) {
@@ -465,15 +467,15 @@ void hkaInterleavedAnimationInternalInterface::ToXML(XMLHandle hdl) const {
     buffer.clear();
   }
 
-  const int numFloats = GetNumFloats();
+  const size_t numFloats = GetNumFloats();
   buffer = ident;
-  int cc = 0;
+  size_t cc = 0;
 
   pugi::xml_node floatsNode = hdl.node->append_child(_hkParam);
   floatsNode.append_attribute(_hkName).set_value("floats");
   floatsNode.append_attribute(_hkNumElements).set_value(numFloats);
 
-  for (int t = 0; t < numFloats; t++) {
+  for (size_t t = 0; t < numFloats; t++) {
     buffer += std::to_string(GetFloat(t));
     cc++;
 
@@ -499,10 +501,10 @@ void hkaAnimationBindingInternalInterface::ToXML(XMLHandle hdl) const {
     pugi::xml_node skelNode = hdl.node->append_child(_hkParam);
     skelNode.append_attribute(_hkName).set_value("originalSkeletonName");
 
-    const char *skelName = GetSkeletonName();
+    auto skelName = GetSkeletonName();
 
-    if (skelName)
-      skelNode.append_buffer(skelName, strlen(skelName));
+    if (!skelName.empty())
+      skelNode.append_buffer(skelName.data(), skelName.size());
   }
 
   pugi::xml_node aniNode = hdl.node->append_child(_hkParam);
@@ -598,26 +600,25 @@ void hkaAnimationBindingInternalInterface::ToXML(XMLHandle hdl) const {
   blendNode.append_attribute(_hkName).set_value("blendHint");
 
   BlendHint blendHint = GetBlendHint();
-  const char *blendName =
-      _EnumWrap<BlendHint>{}
-          ._reflected[blendHint + (!blendHint || hdl.toolset > HK710 ? 0 : 1)];
+  auto blendName = GetReflectedEnum<
+      BlendHint>()[blendHint + (!blendHint || hdl.toolset > HK710 ? 0 : 1)];
 
-  blendNode.append_buffer(blendName, strlen(blendName));
+  blendNode.append_buffer(blendName.data(), blendName.size());
 }
 
 void hkxEnvironmentInternalInterface::ToXML(XMLHandle hdl) const {
   pugi::xml_node varsNode = hdl.node->append_child(_hkParam);
   varsNode.append_attribute(_hkName).set_value("variables");
-  varsNode.append_attribute(_hkNumElements).set_value(GetNumVars());
+  varsNode.append_attribute(_hkNumElements).set_value(Size());
 
   for (auto v : *this) {
     pugi::xml_node varNode = varsNode.append_child(_hkObject);
     pugi::xml_node nameNode = varNode.append_child(_hkParam);
     nameNode.append_attribute(_hkName).set_value(_hkName);
-    nameNode.append_buffer(v.name, strlen(v.name));
+    nameNode.append_buffer(v.name.data(), v.name.size());
 
     pugi::xml_node valueNode = varNode.append_child(_hkParam);
     valueNode.append_attribute(_hkName).set_value("value");
-    valueNode.append_buffer(v.value, strlen(v.value));
+    valueNode.append_buffer(v.value.data(), v.value.size());
   }
 }

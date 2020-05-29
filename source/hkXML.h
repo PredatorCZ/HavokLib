@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2019 Lukas Cone
+    Copyright(C) 2016-2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ static const char *_hkName = "name", *_hkObject = "hkobject",
                   *_hkClass = "class", *_hkNumElements = "numelements",
                   *_hkParam = "hkparam";
 
-ES_INLINE void PointerToString(const void *ptr, std::string &str) {
+static inline void PointerToString(const void *ptr, std::string &str) {
   if (!ptr) {
     str.append("null");
     return;
@@ -30,19 +30,19 @@ ES_INLINE void PointerToString(const void *ptr, std::string &str) {
   str.append("0x");
 
   char buffer[20];
-  snprintf(buffer, 20, ES_X64 ? "%llX" : "%X",
+  snprintf(buffer, 20, ES_X64 ? "%lluX" : "%uX",
            reinterpret_cast<uintptr_t>(ptr));
   str.append(buffer);
 }
 
 template <class C>
-ES_INLINE void ExportReflectedClass(C &input, XMLnode &parent) {
+static void ExportReflectedClass(C &input, XMLnode &parent) {
   ReflectorWrapConst<C> refl(&input);
 
   for (int t = 0; t < refl.GetNumReflectedValues(); t++) {
     Reflector::KVPair pair = refl.GetReflectedPair(t);
     XMLnode nameNode = parent.append_child(_hkParam);
-    nameNode.append_attribute(_hkName).set_value(pair.name);
+    nameNode.append_attribute(_hkName).set_value(pair.name.c_str());
     nameNode.append_buffer(pair.value.c_str(), pair.value.size());
   }
 }

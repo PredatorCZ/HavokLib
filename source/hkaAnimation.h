@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2019 Lukas Cone
+    Copyright(C) 2016-2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 #include "hkObjectBase.h"
 #include "hkReflectorUtil.h"
 #include "hkaAnnotation.h"
-#include <map>
+#include <unordered_map>
 
 REFLECTOR_WOENUM_WREMAP(hkaAnimationType, HK_UNKNOWN_ANIMATION,
                         HK_INTERLEAVED_ANIMATION, HK_DELTA_COMPRESSED_ANIMATION,
@@ -60,31 +60,35 @@ struct AnimationType2 {
                       HK_REFERENCE_POSE_ANIMATION) // 2012, 2013, 2014
 };
 
-template <class C>
-struct hkaSkeletalAnimation_t : virtual hkaAnimationInternalInterface {
+template <class C, class parentClass>
+struct hkaSkeletalAnimation_t : virtual parentClass {
   C *Data;
-  hkClassConstructor_nohash(hkaSkeletalAnimation_t<C>);
-  void SwapEndian() { Data->SwapEndian(); }
-  const char *GetAnimationTypeName() const {
+  hkClassConstructor_nohash(hkaSkeletalAnimation_t);
+  void SwapEndian() override { Data->SwapEndian(); }
+  es::string_view GetAnimationTypeName() const override {
     return Data->GetAnimationTypeName();
   }
-  const hkaAnimationType GetAnimationType() const {
+  hkaAnimationType GetAnimationType() const override {
     return Data->GetAnimationType();
   }
-  const float GetDuration() const { return Data->GetDuration(); }
-  const int GetNumOfTransformTracks() const {
+  float Duration() const override { return Data->GetDuration(); }
+  size_t GetNumOfTransformTracks() const override {
     return Data->GetNumOfTransformTracks();
   }
-  const int GetNumOfFloatTracks() const { return Data->GetNumOfFloatTracks(); }
-  const hkaAnimatedReferenceFrame *GetExtractedMotion() const {
-    return Data->GetExtractedMotion(header);
+  size_t GetNumOfFloatTracks() const override {
+    return Data->GetNumOfFloatTracks();
   }
-  const int GetNumAnnotations() const { return Data->GetNumAnnotations(); }
-  hkaAnnotationTrackPtr GetAnnotation(int id) const {
+  const hkaAnimatedReferenceFrame *GetExtractedMotion() const override {
+    return Data->GetExtractedMotion(this->header);
+  }
+  size_t GetNumAnnotations() const override {
+    return Data->GetNumAnnotations();
+  }
+  hkaAnnotationTrackPtr GetAnnotation(size_t id) const override {
     return Data->GetAnnotation(id);
   }
 };
-template <class C> using hkaAnimation_t = hkaSkeletalAnimation_t<C>;
+template <class C, class parentClass> using hkaAnimation_t = hkaSkeletalAnimation_t<C, parentClass>;
 
 template <template <class C> class _ipointer, class AniType,
           template <template <class C> class __ipointer, class _AniType>
@@ -92,24 +96,24 @@ template <template <class C> class _ipointer, class AniType,
 struct hkaSkeletalAnimation_t_shared : _parent<_ipointer, AniType> {
   typedef _parent<_ipointer, AniType> parent_class;
 
-  ES_FORCEINLINE const char *GetAnimationTypeName() const {
+   const char *GetAnimationTypeName() const {
     return hkaAnimationType_reflected[GetAnimationType()];
   }
-  ES_FORCEINLINE const hkaAnimationType GetAnimationType() const {
+   hkaAnimationType GetAnimationType() const {
     const JenHash hsh =
         AnimationType1{}
             .AnimationType_hashed[static_cast<int>(this->animationType)];
     return hkaAnimationType_remap.at(hsh);
   }
 
-  ES_FORCEINLINE const float GetDuration() const { return this->duration; }
-  ES_FORCEINLINE const int GetNumOfTransformTracks() const {
+   float GetDuration() const { return this->duration; }
+   size_t GetNumOfTransformTracks() const {
     return this->numOfTransformTracks;
   }
-  ES_FORCEINLINE const int GetNumOfFloatTracks() const {
+   size_t GetNumOfFloatTracks() const {
     return this->numOfFloatTracks;
   }
-  ES_FORCEINLINE const hkaAnimatedReferenceFrame *
+   const hkaAnimatedReferenceFrame *
   GetExtractedMotion(IhkPackFile *header) const {
     return dynamic_cast<const hkaAnimatedReferenceFrame *>(
         header->GetClass(this->extractedMotion));
@@ -131,33 +135,33 @@ struct hkaSkeletalAnimation_t_shared : _parent<_ipointer, AniType> {
   typedef typename _parent<_ipointer, AniType>::annot_type annot_type;
 
   enablePtrPairArg(annotations, hkaAnnotationTrackPtr)
-      GetAnnotation(int id) const {
+      GetAnnotation(size_t id) const {
     hkaAnnotation_t<annot_type> *ano = new hkaAnnotation_t<annot_type>;
     ano->SetDataPointer(this->annotations[id]);
     return hkaAnnotationTrackPtr(ano);
   }
 
   enablehkArrayArg(annotations, hkaAnnotationTrackPtr)
-      GetAnnotation(int id) const {
+      GetAnnotation(size_t id) const {
     hkaAnnotation_t<annot_type> *ano = new hkaAnnotation_t<annot_type>;
     ano->SetDataPointer(&this->annotations[id]);
     return hkaAnnotationTrackPtr(ano);
   }
 
   enablePtrPairArg(annotations, void) SwapAnnotations() {
-    for (int a = 0; a < GetNumAnnotations(); a++) {
+    for (size_t a = 0; a < GetNumAnnotations(); a++) {
       this->annotations[a]->SwapEndian();
     }
   }
 
   enablehkArrayArg(annotations, void) SwapAnnotations() {
-    for (int a = 0; a < GetNumAnnotations(); a++) {
+    for (size_t a = 0; a < GetNumAnnotations(); a++) {
       this->annotations[a].SwapEndian();
     }
   }
 
-  ES_FORCEINLINE void SwapEndian() {
-    FByteswapper(reinterpret_cast<int &>(this->animationType));
+   void SwapEndian() {
+    FByteswapper(this->animationType);
     FByteswapper(this->duration);
     FByteswapper(this->numOfFloatTracks);
     FByteswapper(this->numOfTransformTracks);
@@ -170,12 +174,12 @@ template <template <class C> class _ipointer, class AniType>
 struct hkaSkeletalAnimation550_t_data : hkReferenceObject<_ipointer> {
   typename AniType::AnimationType animationType;
   float duration;
-  int numOfTransformTracks;
-  int numOfFloatTracks;
+  uint32 numOfTransformTracks;
+  uint32 numOfFloatTracks;
   _ipointer<hkaAnimatedReferenceFrame> extractedMotion;
   typedef hkaAnnotation_t_shared<_ipointer, hkaAnnotationTrack1> annot_type;
   mutable _ipointer<_ipointer<annot_type>> annotations;
-  int numAnnotations;
+  uint32 numAnnotations;
 
   GNU_PADDING(4);
 };
@@ -185,26 +189,26 @@ template <template <class C> class _ipointer, class AniType>
 struct hkaSkeletalAnimation550_rp_t_data : hkReferenceObject_rp<_ipointer> {
   typename AniType::AnimationType animationType;
   float duration;
-  int numOfTransformTracks;
-  int numOfFloatTracks;
+  uint32 numOfTransformTracks;
+  uint32 numOfFloatTracks;
   _ipointer<hkaAnimatedReferenceFrame> extractedMotion;
   typedef hkaAnnotation_t_shared<_ipointer, hkaAnnotationTrack1> annot_type;
   mutable _ipointer<_ipointer<annot_type>> annotations;
-  int numAnnotations;
+  uint32 numAnnotations;
 };
 #ifdef _MSC_VER
 template <class AniType>
-struct hkaSkeletalAnimation550_rp_t_data<hkPointerX64, AniType>
-    : hkReferenceObject_rp<hkPointerX64> {
+struct hkaSkeletalAnimation550_rp_t_data<esPointerX64, AniType>
+    : hkReferenceObject_rp<esPointerX64> {
   typename AniType::AnimationType animationType;
   float duration;
-  int numOfTransformTracks;
-  int numOfFloatTracks;
-  int _padding;
-  hkPointerX64<hkaAnimatedReferenceFrame> extractedMotion;
-  typedef hkaAnnotation_t_shared<hkPointerX64, hkaAnnotationTrack1> annot_type;
-  mutable hkPointerX64<hkPointerX64<annot_type>> annotations;
-  int numAnnotations;
+  uint32 numOfTransformTracks;
+  uint32 numOfFloatTracks;
+  uint32 _padding;
+  esPointerX64<hkaAnimatedReferenceFrame> extractedMotion;
+  typedef hkaAnnotation_t_shared<esPointerX64, hkaAnnotationTrack1> annot_type;
+  mutable esPointerX64<esPointerX64<annot_type>> annotations;
+  uint32 numAnnotations;
 };
 #endif
 #pragma pack()
@@ -214,8 +218,8 @@ template <template <class C> class _ipointer, class AniType,
 struct hkaAnimation2k_sharedData_t : _parent<_ipointer> {
   typename AniType::AnimationType animationType;
   float duration;
-  int numOfTransformTracks;
-  int numOfFloatTracks;
+  uint32 numOfTransformTracks;
+  uint32 numOfFloatTracks;
   _ipointer<hkaAnimatedReferenceFrame> extractedMotion;
   typedef hkaAnnotation_t_shared<_ipointer, hkaAnnotationTrack2> annot_type;
   mutable hkArray<annot_type, _ipointer> annotations;

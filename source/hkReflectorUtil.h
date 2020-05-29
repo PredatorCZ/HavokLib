@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2019 Lukas Cone
+    Copyright(C) 2016-2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -16,7 +16,8 @@
 */
 
 #pragma once
-#define _REFLECTOR_ADDN_HASH(value) JenkinsHash(#value, sizeof(#value) - 1),
+#define _REFLECTOR_ADDN_HASH(value) JenkinsHashC(#value),
+#define _REFLECTOR_ADDN_ENUMNAME(value) #value
 
 #define REFLECTOR_ENUM_HASH(classname, ...)                                    \
   static const int classname##_reflectedSize = VA_NARGS(__VA_ARGS__);          \
@@ -28,13 +29,13 @@
   {_REFLECTOR_ADDN_HASH(value) classname::value},
 
 #define REFLECTOR_ENUM_BUILD_REMAP(classname, ...)                             \
-  static const std::map<JenHash, classname> classname##_remap = {              \
+  static const std::unordered_map<JenHash, classname> classname##_remap = {              \
       StaticForArgID(_REFLECTOR_ADDN_REMAP, classname, __VA_ARGS__)};
 
 #define REFLECTOR_ENUM_WOENUM(classname, ...)                                  \
   static const int classname##_reflectedSize = VA_NARGS(__VA_ARGS__);          \
   static const char *classname##_reflected[classname##_reflectedSize] = {      \
-      StaticFor(_REFLECTOR_ADDN_ENUM, __VA_ARGS__)};
+      StaticFor(_REFLECTOR_ADDN_ENUMNAME, __VA_ARGS__)};
 
 #define REFLECTOR_WOENUM_WREMAP(classname, classHash, ...)                     \
   REFLECTOR_ENUM_WOENUM(classname, classHash, __VA_ARGS__)                     \

@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2019 Lukas Cone
+    Copyright(C) 2016-2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ Vector4 Read32Quat(char *&buffer) {
   constexpr float fPI4 = 0.5f * fPI2;
   constexpr float phiFrac = fPI2 / 511.f;
 
-  uint cVal = *reinterpret_cast<uint *>(buffer);
+  uint32 cVal = *reinterpret_cast<const uint32 *>(buffer);
 
   float R = static_cast<float>((cVal >> 18) & rMask) * rFrac;
   R = 1.0f - (R * R);
@@ -69,7 +69,7 @@ Vector4 Read40Quat(char *&buffer) {
   const uint64 mask = (1 << 12) - 1;
   const uint64 positiveMask = mask >> 1;
   const float fractal = 0.000345436f;
-  uint64 cVal = *reinterpret_cast<uint64 *>(buffer);
+  uint64 cVal = *reinterpret_cast<const uint64 *>(buffer);
 
   IVector tempVal;
   tempVal.X = cVal & mask;
@@ -109,7 +109,7 @@ Vector4 Read40Quat(char *&buffer) {
 Vector4 Read48Quat(char *&buffer) {
   const uint64 mask = (1 << 15) - 1;
   const float fractal = 0.000043161f;
-  SVector cVal = *reinterpret_cast<SVector *>(buffer);
+  SVector cVal = *reinterpret_cast<const SVector *>(buffer);
 
   char resultShift = ((cVal.Y >> 14) & 2) | ((cVal.X >> 15) & 1);
   bool rSign = (cVal.Z >> 15) != 0;
@@ -262,14 +262,13 @@ struct TrackBBOX {
   float min, max;
 };
 
-void TransformSplineBlock::Assign(char *buffer, int numTracks,
-                                  int numFloatTractks) {
-  TransformMask *trackStart = reinterpret_cast<TransformMask *>(buffer);
+void TransformSplineBlock::Assign(char *buffer, size_t numTracks,
+                                  size_t numFloatTractks) {
+  auto trackStart = reinterpret_cast<TransformMask *>(buffer);
   buffer += sizeof(TransformMask) * numTracks + numFloatTractks;
   ApplyPadding(buffer);
   int cTrack = 0;
-  masks = masks_type(trackStart, trackStart + numTracks,
-                     masks_type::allocator_type(trackStart));
+  es::allocator_hybrid_base::LinkStorage(masks, trackStart, numTracks);
   tracks.resize(numTracks);
 
   for (auto &m : masks) {
@@ -280,45 +279,43 @@ void TransformSplineBlock::Assign(char *buffer, int numTracks,
     if (usePosSpline) {
       SplineDynamicTrackVector *pTrack = new SplineDynamicTrackVector();
       tracks[cTrack].pos = pTrack;
-      short numItems = *reinterpret_cast<short *>(buffer++);
-      buffer++;
-      pTrack->degree = *reinterpret_cast<uchar *>(buffer++);
+      uint16 numItems = *reinterpret_cast<const uint16 *>(buffer);
+      buffer += 2;
+      pTrack->degree = *reinterpret_cast<const uint8 *>(buffer++);
       const int bufferSkip = numItems + pTrack->degree + 2;
-      pTrack->knots = SplineDynamicTrackVector::knots_type(
-          buffer, buffer + bufferSkip,
-          SplineDynamicTrackVector::knots_type::allocator_type(
-              reinterpret_cast<uchar *>(buffer)));
+      es::allocator_hybrid_base::LinkStorage(
+          pTrack->knots, reinterpret_cast<uint8 *>(buffer), bufferSkip);
       buffer += bufferSkip;
       ApplyPadding(buffer);
 
       TrackBBOX extremes[3] = {};
 
       if (m.GetSubTrackType(ttPosX) == STT_DYNAMIC) {
-        extremes[0] = *reinterpret_cast<TrackBBOX *>(buffer);
+        extremes[0] = *reinterpret_cast<const TrackBBOX *>(buffer);
         buffer += 8;
         pTrack->tracks[0].resize(numItems + 1);
       } else if (m.GetSubTrackType(ttPosX) == STT_STATIC) {
-        pTrack->tracks[0].push_back(*reinterpret_cast<float *>(buffer));
+        pTrack->tracks[0].push_back(*reinterpret_cast<const float *>(buffer));
         buffer += 4;
       } else
         pTrack->tracks[0].resize(1);
 
       if (m.GetSubTrackType(ttPosY) == STT_DYNAMIC) {
-        extremes[1] = *reinterpret_cast<TrackBBOX *>(buffer);
+        extremes[1] = *reinterpret_cast<const TrackBBOX *>(buffer);
         buffer += 8;
         pTrack->tracks[1].resize(numItems + 1);
       } else if (m.GetSubTrackType(ttPosY) == STT_STATIC) {
-        pTrack->tracks[1].push_back(*reinterpret_cast<float *>(buffer));
+        pTrack->tracks[1].push_back(*reinterpret_cast<const float *>(buffer));
         buffer += 4;
       } else
         pTrack->tracks[1].resize(1);
 
       if (m.GetSubTrackType(ttPosZ) == STT_DYNAMIC) {
-        extremes[2] = *reinterpret_cast<TrackBBOX *>(buffer);
+        extremes[2] = *reinterpret_cast<const TrackBBOX *>(buffer);
         buffer += 8;
         pTrack->tracks[2].resize(numItems + 1);
       } else if (m.GetSubTrackType(ttPosZ) == STT_STATIC) {
-        pTrack->tracks[2].push_back(*reinterpret_cast<float *>(buffer));
+        pTrack->tracks[2].push_back(*reinterpret_cast<const float *>(buffer));
         buffer += 4;
       } else
         pTrack->tracks[2].resize(1);
@@ -329,7 +326,7 @@ void TransformSplineBlock::Assign(char *buffer, int numTracks,
         for (int t = 0; t <= numItems; t++) {
           if (m.GetSubTrackType(ttPosX) == STT_DYNAMIC) {
             float dVar =
-                static_cast<float>(*reinterpret_cast<uchar *>(buffer++)) *
+                static_cast<float>(*reinterpret_cast<const uint8 *>(buffer++)) *
                 fractal;
             pTrack->tracks[0][t] =
                 extremes[0].min + (extremes[0].max - extremes[0].min) * dVar;
@@ -337,7 +334,7 @@ void TransformSplineBlock::Assign(char *buffer, int numTracks,
 
           if (m.GetSubTrackType(ttPosY) == STT_DYNAMIC) {
             float dVar =
-                static_cast<float>(*reinterpret_cast<uchar *>(buffer++)) *
+                static_cast<float>(*reinterpret_cast<const uint8 *>(buffer++)) *
                 fractal;
             pTrack->tracks[1][t] =
                 extremes[1].min + (extremes[1].max - extremes[1].min) * dVar;
@@ -345,7 +342,7 @@ void TransformSplineBlock::Assign(char *buffer, int numTracks,
 
           if (m.GetSubTrackType(ttPosZ) == STT_DYNAMIC) {
             float dVar =
-                static_cast<float>(*reinterpret_cast<uchar *>(buffer++)) *
+                static_cast<float>(*reinterpret_cast<const uint8 *>(buffer++)) *
                 fractal;
             pTrack->tracks[2][t] =
                 extremes[2].min + (extremes[2].max - extremes[2].min) * dVar;
@@ -356,27 +353,27 @@ void TransformSplineBlock::Assign(char *buffer, int numTracks,
 
         for (int t = 0; t <= numItems; t++) {
           if (m.GetSubTrackType(ttPosX) == STT_DYNAMIC) {
-            float dVar =
-                static_cast<float>(*reinterpret_cast<ushort *>(buffer++)) *
-                fractal;
+            float dVar = static_cast<float>(
+                             *reinterpret_cast<const uint16 *>(buffer++)) *
+                         fractal;
             pTrack->tracks[0][t] =
                 extremes[0].min + (extremes[0].max - extremes[0].min) * dVar;
             buffer++;
           }
 
           if (m.GetSubTrackType(ttPosY) == STT_DYNAMIC) {
-            float dVar =
-                static_cast<float>(*reinterpret_cast<ushort *>(buffer++)) *
-                fractal;
+            float dVar = static_cast<float>(
+                             *reinterpret_cast<const uint16 *>(buffer++)) *
+                         fractal;
             pTrack->tracks[1][t] =
                 extremes[1].min + (extremes[1].max - extremes[1].min) * dVar;
             buffer++;
           }
 
           if (m.GetSubTrackType(ttPosZ) == STT_DYNAMIC) {
-            float dVar =
-                static_cast<float>(*reinterpret_cast<ushort *>(buffer++)) *
-                fractal;
+            float dVar = static_cast<float>(
+                             *reinterpret_cast<const uint16 *>(buffer++)) *
+                         fractal;
             pTrack->tracks[2][t] =
                 extremes[2].min + (extremes[2].max - extremes[2].min) * dVar;
             buffer++;
@@ -390,17 +387,17 @@ void TransformSplineBlock::Assign(char *buffer, int numTracks,
       tracks[cTrack].pos = pTrack;
 
       if (m.GetSubTrackType(ttPosX) == STT_STATIC) {
-        pTrack->item.X = *reinterpret_cast<float *>(buffer);
+        pTrack->item.X = *reinterpret_cast<const float *>(buffer);
         buffer += 4;
       }
 
       if (m.GetSubTrackType(ttPosY) == STT_STATIC) {
-        pTrack->item.Y = *reinterpret_cast<float *>(buffer);
+        pTrack->item.Y = *reinterpret_cast<const float *>(buffer);
         buffer += 4;
       }
 
       if (m.GetSubTrackType(ttPosZ) == STT_STATIC) {
-        pTrack->item.Z = *reinterpret_cast<float *>(buffer);
+        pTrack->item.Z = *reinterpret_cast<const float *>(buffer);
         buffer += 4;
       }
     }
@@ -409,14 +406,11 @@ void TransformSplineBlock::Assign(char *buffer, int numTracks,
       SplineDynamicTrackQuat *rTrack = new SplineDynamicTrackQuat();
       tracks[cTrack].rotation = rTrack;
       esIntPtr savePtr = reinterpret_cast<esIntPtr>(buffer);
-      short numItems = *reinterpret_cast<short *>(buffer++);
+      uint16 numItems = *reinterpret_cast<const uint16 *>(buffer++);
       buffer++;
-      rTrack->degree = *reinterpret_cast<uchar *>(buffer++);
+      rTrack->degree = *reinterpret_cast<const uint8 *>(buffer++);
       const int bufferSkip = numItems + rTrack->degree + 2;
-      rTrack->knots = SplineDynamicTrackQuat::knots_type(
-          buffer, buffer + bufferSkip,
-          SplineDynamicTrackQuat::knots_type::allocator_type(
-              reinterpret_cast<uchar *>(buffer)));
+      es::allocator_hybrid_base::LinkStorage(rTrack->knots, reinterpret_cast<uint8 *>(buffer), bufferSkip);
       buffer += bufferSkip;
 
       if (m.GetRotQuantizationType() == QT_48bit)
@@ -448,45 +442,42 @@ void TransformSplineBlock::Assign(char *buffer, int numTracks,
     if (useScaleSpline) {
       SplineDynamicTrackVector *sTrack = new SplineDynamicTrackVector();
       tracks[cTrack].scale = sTrack;
-      short numItems = *reinterpret_cast<short *>(buffer++);
+      uint16 numItems = *reinterpret_cast<const uint16 *>(buffer++);
       buffer++;
-      sTrack->degree = *reinterpret_cast<uchar *>(buffer++);
+      sTrack->degree = *reinterpret_cast<const uint8 *>(buffer++);
       const int bufferSkip = numItems + sTrack->degree + 2;
-      sTrack->knots = SplineDynamicTrackVector::knots_type(
-          buffer, buffer + bufferSkip,
-          SplineDynamicTrackVector::knots_type::allocator_type(
-              reinterpret_cast<uchar *>(buffer)));
+      es::allocator_hybrid_base::LinkStorage(sTrack->knots, reinterpret_cast<uint8 *>(buffer), bufferSkip);
       buffer += bufferSkip;
       ApplyPadding(buffer);
 
       TrackBBOX extremes[3] = {};
 
       if (m.GetSubTrackType(ttScaleX) == STT_DYNAMIC) {
-        extremes[0] = *reinterpret_cast<TrackBBOX *>(buffer);
+        extremes[0] = *reinterpret_cast<const TrackBBOX *>(buffer);
         buffer += 8;
         sTrack->tracks[0].resize(numItems + 1);
       } else if (m.GetSubTrackType(ttScaleX) == STT_STATIC) {
-        sTrack->tracks[0].push_back(*reinterpret_cast<float *>(buffer));
+        sTrack->tracks[0].push_back(*reinterpret_cast<const float *>(buffer));
         buffer += 4;
       } else
         sTrack->tracks[0].push_back(1.0f);
 
       if (m.GetSubTrackType(ttScaleY) == STT_DYNAMIC) {
-        extremes[1] = *reinterpret_cast<TrackBBOX *>(buffer);
+        extremes[1] = *reinterpret_cast<const TrackBBOX *>(buffer);
         buffer += 8;
         sTrack->tracks[1].resize(numItems + 1);
       } else if (m.GetSubTrackType(ttScaleY) == STT_STATIC) {
-        sTrack->tracks[1].push_back(*reinterpret_cast<float *>(buffer));
+        sTrack->tracks[1].push_back(*reinterpret_cast<const float *>(buffer));
         buffer += 4;
       } else
         sTrack->tracks[1].push_back(1.0f);
 
       if (m.GetSubTrackType(ttScaleZ) == STT_DYNAMIC) {
-        extremes[2] = *reinterpret_cast<TrackBBOX *>(buffer);
+        extremes[2] = *reinterpret_cast<const TrackBBOX *>(buffer);
         buffer += 8;
         sTrack->tracks[2].resize(numItems + 1);
       } else if (m.GetSubTrackType(ttScaleZ) == STT_STATIC) {
-        sTrack->tracks[2].push_back(*reinterpret_cast<float *>(buffer));
+        sTrack->tracks[2].push_back(*reinterpret_cast<const float *>(buffer));
         buffer += 4;
       } else
         sTrack->tracks[2].push_back(1.0f);
@@ -497,7 +488,7 @@ void TransformSplineBlock::Assign(char *buffer, int numTracks,
         for (int t = 0; t <= numItems; t++) {
           if (m.GetSubTrackType(ttScaleX) == STT_DYNAMIC) {
             float dVar =
-                static_cast<float>(*reinterpret_cast<uchar *>(buffer++)) *
+                static_cast<float>(*reinterpret_cast<const uint8 *>(buffer++)) *
                 fractal;
             sTrack->tracks[0][t] =
                 extremes[0].min + (extremes[0].max - extremes[0].min) * dVar;
@@ -505,7 +496,7 @@ void TransformSplineBlock::Assign(char *buffer, int numTracks,
 
           if (m.GetSubTrackType(ttScaleY) == STT_DYNAMIC) {
             float dVar =
-                static_cast<float>(*reinterpret_cast<uchar *>(buffer++)) *
+                static_cast<float>(*reinterpret_cast<const uint8 *>(buffer++)) *
                 fractal;
             sTrack->tracks[1][t] =
                 extremes[1].min + (extremes[1].max - extremes[1].min) * dVar;
@@ -513,7 +504,7 @@ void TransformSplineBlock::Assign(char *buffer, int numTracks,
 
           if (m.GetSubTrackType(ttScaleZ) == STT_DYNAMIC) {
             float dVar =
-                static_cast<float>(*reinterpret_cast<uchar *>(buffer++)) *
+                static_cast<float>(*reinterpret_cast<const uint8 *>(buffer++)) *
                 fractal;
             sTrack->tracks[2][t] =
                 extremes[2].min + (extremes[2].max - extremes[2].min) * dVar;
@@ -524,27 +515,27 @@ void TransformSplineBlock::Assign(char *buffer, int numTracks,
 
         for (int t = 0; t <= numItems; t++) {
           if (m.GetSubTrackType(ttScaleX) == STT_DYNAMIC) {
-            float dVar =
-                static_cast<float>(*reinterpret_cast<ushort *>(buffer++)) *
-                fractal;
+            float dVar = static_cast<float>(
+                             *reinterpret_cast<const uint16 *>(buffer++)) *
+                         fractal;
             sTrack->tracks[0][t] =
                 extremes[0].min + (extremes[0].max - extremes[0].min) * dVar;
             buffer++;
           }
 
           if (m.GetSubTrackType(ttScaleY) == STT_DYNAMIC) {
-            float dVar =
-                static_cast<float>(*reinterpret_cast<ushort *>(buffer++)) *
-                fractal;
+            float dVar = static_cast<float>(
+                             *reinterpret_cast<const uint16 *>(buffer++)) *
+                         fractal;
             sTrack->tracks[1][t] =
                 extremes[1].min + (extremes[1].max - extremes[1].min) * dVar;
             buffer++;
           }
 
           if (m.GetSubTrackType(ttScaleZ) == STT_DYNAMIC) {
-            float dVar =
-                static_cast<float>(*reinterpret_cast<ushort *>(buffer++)) *
-                fractal;
+            float dVar = static_cast<float>(
+                             *reinterpret_cast<const uint16 *>(buffer++)) *
+                         fractal;
             sTrack->tracks[2][t] =
                 extremes[2].min + (extremes[2].max - extremes[2].min) * dVar;
             buffer++;
@@ -558,19 +549,19 @@ void TransformSplineBlock::Assign(char *buffer, int numTracks,
       tracks[cTrack].scale = sTrack;
 
       if (m.GetSubTrackType(ttScaleX) == STT_STATIC) {
-        sTrack->item.X = *reinterpret_cast<float *>(buffer);
+        sTrack->item.X = *reinterpret_cast<const float *>(buffer);
         buffer += 4;
       } else
         sTrack->item.X = 1.0f;
 
       if (m.GetSubTrackType(ttScaleY) == STT_STATIC) {
-        sTrack->item.Y = *reinterpret_cast<float *>(buffer);
+        sTrack->item.Y = *reinterpret_cast<const float *>(buffer);
         buffer += 4;
       } else
         sTrack->item.Y = 1.0f;
 
       if (m.GetSubTrackType(ttScaleZ) == STT_STATIC) {
-        sTrack->item.Z = *reinterpret_cast<float *>(buffer);
+        sTrack->item.Z = *reinterpret_cast<const float *>(buffer);
         buffer += 4;
       } else
         sTrack->item.Z = 1.0f;
@@ -582,7 +573,7 @@ void TransformSplineBlock::Assign(char *buffer, int numTracks,
 
 void hkaSplineDecompressor::Assign(
     hkaSplineCompressedAnimationInternalInterface *input) {
-  hkRealArray<uint> blockOffsets = input->GetBlockOffsets();
+  hkRealArray<uint32> blockOffsets = input->GetBlockOffsets();
   char *data = input->GetData();
   blocks.resize(blockOffsets.count);
   int cBlock = 0;

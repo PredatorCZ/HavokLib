@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2019 Lukas Cone
+    Copyright(C) 2016-2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -16,6 +16,8 @@
 */
 
 #pragma once
+#include "datas/endian.hpp"
+
 #include "hkInternalInterfaces.h"
 
 #define hkHederTAG 0x30474154
@@ -25,49 +27,49 @@ struct hkxNewHeader;
 
 union chunkCC {
   char fourCC[4];
-  uint hash;
-  ES_FORCEINLINE bool operator==(uint input) { return input == hash; }
-  ES_FORCEINLINE bool operator!=(uint input) { return input != hash; }
+  uint32 hash;
+  bool operator==(uint32 input) { return input == hash; }
+  bool operator!=(uint32 input) { return input != hash; }
 };
 
 class hkChunk {
-  int sizeAndFlags;
+  uint32 sizeAndFlags;
 
 public:
   chunkCC tag;
-  ES_FORCEINLINE void Reorder() {
+  void Reorder() {
     FByteswapper(sizeAndFlags);
     sizeAndFlags = ((sizeAndFlags & 0xffffff) - 8) | sizeAndFlags & 0xff000000;
   }
-  ES_FORCEINLINE int Size() const { return sizeAndFlags & 0xffffff; }
-  ES_FORCEINLINE bool IsSubChunk() const {
+  uint32 Size() const { return sizeAndFlags & 0xffffff; }
+  bool IsSubChunk() const {
     return (sizeAndFlags & 0x40000000) != 0;
   }
   int Read(BinReader *rd, hkxNewHeader *root);
 };
 
-typedef std::vector<const char *> _clVec;
+typedef std::vector<es::string_view> _clVec;
 struct ClassName;
 
 struct ClassTemplateArgument {
-  const char *argName;
+  es::string_view argName;
   ClassName *argType;
 };
 
 struct ClassName {
-  const char *className;
+  es::string_view className;
   std::vector<ClassTemplateArgument> templateArguments;
 };
 
 struct classEntryFixup : hkChunk {
-  int count;
+  uint32 count;
 };
 
 struct hkxNewHeader : IhkPackFile, hkChunk {
   char contentsVersionStripped[5];
-  char *dataBuffer;
-  char *classNamesBuffer;
-  char *memberNamesBuffer;
+  std::string dataBuffer;
+  std::string classNamesBuffer;
+  std::string memberNamesBuffer;
 
   _clVec classNames;
   _clVec memberNames;
@@ -75,9 +77,8 @@ struct hkxNewHeader : IhkPackFile, hkChunk {
   std::vector<classEntryFixup> classEntries;
   VirtualClasses virtualClasses;
 
-  VirtualClasses &GetAllClasses() { return virtualClasses; }
-  int GetVersion();
+  VirtualClasses &GetAllClasses() override { return virtualClasses; }
+  int32 GetVersion() const override;
   int Load(BinReader *rd);
-  ~hkxNewHeader();
   void DumpClassNames(std::ostream &str);
 };
