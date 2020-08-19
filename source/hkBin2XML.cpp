@@ -15,7 +15,7 @@
     along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "datas/masterprinter.hpp"
+#include "datas/master_printer.hpp"
 #include "hkInternalInterfaces.h"
 #include "pugixml.hpp"
 
@@ -92,8 +92,8 @@ void hkaAnimationContainerInternalInterface::ToXML(XMLHandle hdl) const {
 
   std::string buffer;
 
-  for (auto &s : Skeletons()) {
-    PointerToString(s.GetPointer(), buffer);
+  for (auto s : Skeletons()) {
+    PointerToString(s->GetPointer(), buffer);
     buffer += ' ';
   }
 
@@ -103,8 +103,8 @@ void hkaAnimationContainerInternalInterface::ToXML(XMLHandle hdl) const {
     buffer.clear();
   }
 
-  for (auto &s : Animations()) {
-    PointerToString(s.GetPointer(), buffer);
+  for (auto s : Animations()) {
+    PointerToString(s->GetPointer(), buffer);
     buffer += ' ';
   }
 
@@ -114,11 +114,11 @@ void hkaAnimationContainerInternalInterface::ToXML(XMLHandle hdl) const {
     buffer.clear();
   }
 
-  for (auto &s : Bindings()) {
-    if (!&s)
+  for (auto s : Bindings()) {
+    if (!s)
       continue;
 
-    PointerToString(s.GetPointer(), buffer);
+    PointerToString(s->GetPointer(), buffer);
     buffer += ' ';
   }
 
@@ -128,8 +128,8 @@ void hkaAnimationContainerInternalInterface::ToXML(XMLHandle hdl) const {
     buffer.clear();
   }
 
-  for (auto &s : Attachments()) {
-    PointerToString(s.GetPointer(), buffer);
+  for (auto s : Attachments()) {
+    PointerToString(s->GetPointer(), buffer);
     buffer += ' ';
   }
 
@@ -139,8 +139,8 @@ void hkaAnimationContainerInternalInterface::ToXML(XMLHandle hdl) const {
     buffer.clear();
   }
 
-  for (auto &s : MeshBinds()) {
-    PointerToString(s.GetPointer(), buffer);
+  for (auto s : MeshBinds()) {
+    PointerToString(s->GetPointer(), buffer);
     buffer += ' ';
   }
 
@@ -256,8 +256,8 @@ void hkaSkeletonInternalInterface::ToXML(XMLHandle hdl) const {
   refsNode.append_attribute(_hkNumElements).set_value(GetNumBones());
   buffer = ident;
 
-  for (auto &s : BoneTransforms())
-    buffer += ::to_string(s) + ident;
+  for (auto s : BoneTransforms())
+    buffer += ::to_string(*s) + ident;
 
   if (buffer.size()) {
     buffer.pop_back();
@@ -568,7 +568,7 @@ void hkaAnimationBindingInternalInterface::ToXML(XMLHandle hdl) const {
     buffer.clear();
   }
 
-  if (hdl.toolset > HK2011) {
+  if (hdl.toolset > HK2011_3) {
     pugi::xml_node partNode = hdl.node->append_child(_hkParam);
     partNode.append_attribute(_hkName).set_value("partitionIndices");
     partNode.append_attribute(_hkNumElements)

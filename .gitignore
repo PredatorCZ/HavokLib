@@ -38,3 +38,4 @@
 .vscode/*
 build/*
 test/resources/*
+lib/*

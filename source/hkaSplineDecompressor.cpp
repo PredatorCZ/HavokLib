@@ -18,20 +18,20 @@
 #include "hkaSplineDecompressor.h"
 #include <cmath>
 
-Vector4 Read32Quat(char *&buffer) {
-  const uint64 rMask = (1 << 10) - 1;
-  const float rFrac = 1.0f / rMask;
+Vector4A16 Read32Quat(const char *&buffer) {
+  constexpr uint64 rMask = (1 << 10) - 1;
+  constexpr float rFrac = GetFraction(10);
   constexpr float fPI = 3.14159265f;
   constexpr float fPI2 = 0.5f * fPI;
   constexpr float fPI4 = 0.5f * fPI2;
   constexpr float phiFrac = fPI2 / 511.f;
 
-  uint32 cVal = *reinterpret_cast<const uint32 *>(buffer);
+  const uint32 cVal = *reinterpret_cast<const uint32 *>(buffer);
 
   float R = static_cast<float>((cVal >> 18) & rMask) * rFrac;
   R = 1.0f - (R * R);
 
-  float phiTheta = static_cast<float>((cVal & 0x3FFFF));
+  const float phiTheta = static_cast<float>((cVal & 0x3FFFF));
 
   float phi = floorf(sqrtf(phiTheta));
   float theta = 0;
@@ -41,109 +41,83 @@ Vector4 Read32Quat(char *&buffer) {
     phi = phiFrac * phi;
   }
 
-  float magnitude = sqrtf(1.0f - R * R);
+  const float magnitude = sqrtf(1.0f - R * R);
+  const float sPhi = sinf(phi);
+  const float cPhi = cosf(phi);
+  const float sTheta = sinf(theta);
+  const float cTheta = cosf(theta);
 
-  Vector4 retVal;
-  retVal.X = sinf(phi) * cosf(theta) * magnitude;
-  retVal.Y = sinf(phi) * sinf(theta) * magnitude;
-  retVal.Z = cosf(phi) * magnitude;
-  retVal.W = R;
+  const Vector4A16 retVal0 = Vector4A16(sPhi, sPhi, cPhi, R) *
+                             Vector4A16(cTheta, sTheta, 1.f, 1.f) *
+                             Vector4A16(magnitude, magnitude, magnitude, 1.f);
+  const IVector4A16 signMask(0x10000000, 0x20000000, 0x40000000, 0x80000000);
+  const auto blendMask =
+      _mm_cmpeq_epi32((IVector4A16(cVal) & signMask)._data, signMask._data);
 
-  if (cVal & 0x10000000)
-    retVal.X *= -1;
-
-  if (cVal & 0x20000000)
-    retVal.Y *= -1;
-
-  if (cVal & 0x40000000)
-    retVal.Z *= -1;
-
-  if (cVal & 0x80000000)
-    retVal.W *= -1;
+  const auto retVal =
+      _mm_blendv_ps(retVal0._data, (-retVal0)._data,
+                    reinterpret_cast<const __m128 &>(blendMask));
 
   buffer += 4;
   return retVal;
 }
 
-Vector4 Read40Quat(char *&buffer) {
-  const uint64 mask = (1 << 12) - 1;
-  const uint64 positiveMask = mask >> 1;
-  const float fractal = 0.000345436f;
-  uint64 cVal = *reinterpret_cast<const uint64 *>(buffer);
+Vector4A16 Read40Quat(const char *&buffer) {
+  constexpr float fractal = 0.000345436f;
+  const Vector4A16 fract(fractal, fractal, fractal, 0);
 
-  IVector tempVal;
-  tempVal.X = cVal & mask;
-  tempVal.Y = (cVal >> 12) & mask;
-  tempVal.Z = (cVal >> 24) & mask;
-
-  int resultShift = (cVal >> 36) & 3;
-
-  tempVal -= positiveMask;
-
-  Vector tempValF = tempVal.Convert<float>() * fractal;
-
-  Vector4 retval;
-
-  for (int i = 0; i < 4; i++) {
-    if (i < resultShift)
-      retval[i] = tempValF[i];
-    else if (i > resultShift)
-      retval[i] = tempValF[i - 1];
-  }
-
-  retval[resultShift] = 1.0f - tempValF.X * tempValF.X -
-                        tempValF.Y * tempValF.Y - tempValF.Z * tempValF.Z;
-
-  if (retval[resultShift] <= 0.0f)
-    retval[resultShift] = 0.0f;
-  else
-    retval[resultShift] = sqrtf(retval[resultShift]);
-
-  if ((cVal >> 38) & 1)
-    retval[resultShift] *= -1;
-
+  const uint64 cVal0 = *reinterpret_cast<const uint64 *>(buffer);
+  const uint32 cVal1 = cVal0 >> 24;
+  const auto tmpVal = (UIVector4A16(cVal0, cVal0, cVal1, 0) *
+                       UIVector4A16(1 << 20, 1 << 8, 1 << 20, 0)) >>
+                      20;
+  const auto tmpVal1 = IVector4A16(tmpVal) - (1 << 11) - 1;
+  const auto tmpVal2 = (Vector4A16(tmpVal1) * fract).QComputeElement();
+  const size_t resultShift = (cVal0 >> 36) & 3;
+  const Vector4A16 wmul(1.f, 1.f, 1.f, (cVal0 >> 38) & 1 ? -1.f : 1.f);
+  const auto retVal = (wmul * tmpVal2)._data;
   buffer += 5;
-  return retval;
-}
 
-Vector4 Read48Quat(char *&buffer) {
-  const uint64 mask = (1 << 15) - 1;
-  const float fractal = 0.000043161f;
-  SVector cVal = *reinterpret_cast<const SVector *>(buffer);
-
-  char resultShift = ((cVal.Y >> 14) & 2) | ((cVal.X >> 15) & 1);
-  bool rSign = (cVal.Z >> 15) != 0;
-
-  cVal &= mask;
-  cVal -= mask >> 1;
-
-  Vector tempValF = cVal.Convert<float>() * fractal;
-
-  Vector4 retval;
-
-  for (int i = 0; i < 4; i++) {
-    if (i < resultShift)
-      retval[i] = tempValF[i];
-    else if (i > resultShift)
-      retval[i] = tempValF[i - 1];
+  switch (resultShift) {
+  case 0:
+    return _mm_shuffle_ps(retVal, retVal, _MM_SHUFFLE(2, 1, 0, 3));
+  case 1:
+    return _mm_shuffle_ps(retVal, retVal, _MM_SHUFFLE(2, 1, 3, 0));
+  case 2:
+    return _mm_shuffle_ps(retVal, retVal, _MM_SHUFFLE(2, 3, 1, 0));
+  default:
+    return retVal;
   }
-
-  retval[resultShift] = 1.0f - tempValF.X * tempValF.X -
-                        tempValF.Y * tempValF.Y - tempValF.Z * tempValF.Z;
-
-  if (retval[resultShift] <= 0.0f)
-    retval[resultShift] = 0.0f;
-  else
-    retval[resultShift] = sqrtf(retval[resultShift]);
-
-  if (rSign)
-    retval[resultShift] *= -1;
-
-  buffer += 6;
-  return retval;
 }
 
-Vector4A16 ReadQuat(QuantizationType qType, char *&buffer) {
+Vector4A16 Read48Quat(const char *&buffer) {
+  constexpr uint64 mask = (1 << 15) - 1;
+  constexpr float fractal = 0.000043161f;
+  const Vector4A16 fract(fractal, fractal, fractal, 0);
+  const SVector cVal = *reinterpret_cast<const SVector *>(buffer);
+
+  const char resultShift = ((cVal.Y >> 14) & 2) | ((cVal.X >> 15) & 1);
+  const bool rSign = (cVal.Z >> 15) != 0;
+  const IVector4A16 retVal0(cVal.X, cVal.Y, cVal.Z, 0.f);
+  auto retVal1 = Vector4A16((retVal0 & mask) - (mask >> 1)) * fract;
+  retVal1.QComputeElement();
+  const Vector4A16 wmul(1.f, 1.f, 1.f, rSign ? -1.f : 1.f);
+  const auto retVal = (wmul * retVal1)._data;
+  buffer += 6;
+
+  switch (resultShift) {
+  case 0:
+    return _mm_shuffle_ps(retVal, retVal, _MM_SHUFFLE(2, 1, 0, 3));
+  case 1:
+    return _mm_shuffle_ps(retVal, retVal, _MM_SHUFFLE(2, 1, 3, 0));
+  case 2:
+    return _mm_shuffle_ps(retVal, retVal, _MM_SHUFFLE(2, 3, 1, 0));
+  default:
+    return retVal;
+  }
+}
+
+Vector4A16 ReadQuat(QuantizationType qType, const char *&buffer) {
   switch (qType) {
   case QT_32bit:
     return Read32Quat(buffer);
@@ -151,9 +125,9 @@ Vector4A16 ReadQuat(QuantizationType qType, char *&buffer) {
     return Read40Quat(buffer);
   case QT_48bit:
     return Read48Quat(buffer);
+  default:
+    return {0.0f, 0.0f, 0.0f, 1.0f};
   }
-
-  return {0.0f, 0.0f, 0.0f, 1.0f};
 }
 
 // Algorithm A2.1 The NURBS Book 2nd edition, page 68
@@ -277,8 +251,8 @@ void TransformSplineBlock::Assign(char *buffer, size_t numTracks,
                               m.GetSubTrackType(ttPosZ) == STT_DYNAMIC;
 
     if (usePosSpline) {
-      SplineDynamicTrackVector *pTrack = new SplineDynamicTrackVector();
-      tracks[cTrack].pos = pTrack;
+      auto pTrack = new SplineDynamicTrackVector();
+      tracks[cTrack].pos = std::move(TransformTrack::TrackType<Vector>(pTrack));
       uint16 numItems = *reinterpret_cast<const uint16 *>(buffer);
       buffer += 2;
       pTrack->degree = *reinterpret_cast<const uint8 *>(buffer++);
@@ -383,8 +357,8 @@ void TransformSplineBlock::Assign(char *buffer, size_t numTracks,
 
       ApplyPadding(buffer);
     } else {
-      SplineStaticTrack<Vector> *pTrack = new SplineStaticTrack<Vector>();
-      tracks[cTrack].pos = pTrack;
+      auto pTrack = new SplineStaticTrack<Vector>();
+      tracks[cTrack].pos = std::move(TransformTrack::TrackType<Vector>(pTrack));
 
       if (m.GetSubTrackType(ttPosX) == STT_STATIC) {
         pTrack->item.X = *reinterpret_cast<const float *>(buffer);
@@ -403,14 +377,16 @@ void TransformSplineBlock::Assign(char *buffer, size_t numTracks,
     }
 
     if (m.GetSubTrackType(ttRotation) == STT_DYNAMIC) {
-      SplineDynamicTrackQuat *rTrack = new SplineDynamicTrackQuat();
-      tracks[cTrack].rotation = rTrack;
+      auto rTrack = new SplineDynamicTrackQuat();
+      tracks[cTrack].rotation =
+          std::move(TransformTrack::TrackType<Vector4A16>(rTrack));
       esIntPtr savePtr = reinterpret_cast<esIntPtr>(buffer);
       uint16 numItems = *reinterpret_cast<const uint16 *>(buffer++);
       buffer++;
       rTrack->degree = *reinterpret_cast<const uint8 *>(buffer++);
       const int bufferSkip = numItems + rTrack->degree + 2;
-      es::allocator_hybrid_base::LinkStorage(rTrack->knots, reinterpret_cast<uint8 *>(buffer), bufferSkip);
+      es::allocator_hybrid_base::LinkStorage(
+          rTrack->knots, reinterpret_cast<uint8 *>(buffer), bufferSkip);
       buffer += bufferSkip;
 
       if (m.GetRotQuantizationType() == QT_48bit)
@@ -420,17 +396,21 @@ void TransformSplineBlock::Assign(char *buffer, size_t numTracks,
 
       rTrack->track.resize(numItems + 1);
 
-      for (int t = 0; t <= numItems; t++)
-        rTrack->track[t] = ReadQuat(m.GetRotQuantizationType(), buffer);
+      for (int t = 0; t <= numItems; t++) {
+        rTrack->track[t] =
+            ReadQuat(m.GetRotQuantizationType(), (const char *&)buffer);
+      }
     } else {
-      SplineStaticTrack<Vector4A16> *rTrack =
-          new SplineStaticTrack<Vector4A16>();
-      tracks[cTrack].rotation = rTrack;
+      auto rTrack = new SplineStaticTrack<Vector4A16>();
+      tracks[cTrack].rotation =
+          std::move(TransformTrack::TrackType<Vector4A16>(rTrack));
 
-      if (m.GetSubTrackType(ttRotation) == STT_STATIC)
-        rTrack->item = ReadQuat(m.GetRotQuantizationType(), buffer);
-      else
+      if (m.GetSubTrackType(ttRotation) == STT_STATIC) {
+        rTrack->item =
+            ReadQuat(m.GetRotQuantizationType(), (const char *&)buffer);
+      } else {
         rTrack->item.W = 1.0f;
+      }
     }
 
     ApplyPadding(buffer);
@@ -440,13 +420,15 @@ void TransformSplineBlock::Assign(char *buffer, size_t numTracks,
                                 m.GetSubTrackType(ttScaleZ) == STT_DYNAMIC;
 
     if (useScaleSpline) {
-      SplineDynamicTrackVector *sTrack = new SplineDynamicTrackVector();
-      tracks[cTrack].scale = sTrack;
+      auto sTrack = new SplineDynamicTrackVector();
+      tracks[cTrack].scale =
+          std::move(TransformTrack::TrackType<Vector>(sTrack));
       uint16 numItems = *reinterpret_cast<const uint16 *>(buffer++);
       buffer++;
       sTrack->degree = *reinterpret_cast<const uint8 *>(buffer++);
       const int bufferSkip = numItems + sTrack->degree + 2;
-      es::allocator_hybrid_base::LinkStorage(sTrack->knots, reinterpret_cast<uint8 *>(buffer), bufferSkip);
+      es::allocator_hybrid_base::LinkStorage(
+          sTrack->knots, reinterpret_cast<uint8 *>(buffer), bufferSkip);
       buffer += bufferSkip;
       ApplyPadding(buffer);
 
@@ -545,26 +527,30 @@ void TransformSplineBlock::Assign(char *buffer, size_t numTracks,
 
       ApplyPadding(buffer);
     } else {
-      SplineStaticTrack<Vector> *sTrack = new SplineStaticTrack<Vector>();
-      tracks[cTrack].scale = sTrack;
+      auto sTrack = new SplineStaticTrack<Vector>();
+      tracks[cTrack].scale =
+          std::move(TransformTrack::TrackType<Vector>(sTrack));
 
       if (m.GetSubTrackType(ttScaleX) == STT_STATIC) {
         sTrack->item.X = *reinterpret_cast<const float *>(buffer);
         buffer += 4;
-      } else
+      } else {
         sTrack->item.X = 1.0f;
+      }
 
       if (m.GetSubTrackType(ttScaleY) == STT_STATIC) {
         sTrack->item.Y = *reinterpret_cast<const float *>(buffer);
         buffer += 4;
-      } else
+      } else {
         sTrack->item.Y = 1.0f;
+      }
 
       if (m.GetSubTrackType(ttScaleZ) == STT_STATIC) {
         sTrack->item.Z = *reinterpret_cast<const float *>(buffer);
         buffer += 4;
-      } else
+      } else {
         sTrack->item.Z = 1.0f;
+      }
     }
 
     cTrack++;
@@ -583,15 +569,4 @@ void hkaSplineDecompressor::Assign(
              input->GetNumOfTransformTracks(), input->GetNumOfFloatTracks());
     cBlock++;
   }
-}
-
-TransformTrack::~TransformTrack() {
-  if (pos)
-    delete pos;
-
-  if (scale)
-    delete scale;
-
-  if (rotation)
-    delete rotation;
 }

@@ -137,11 +137,11 @@ struct SplineDynamicTrackQuat : ISplineTrack<Vector4A16> {
   bool IsStatic() { return false; }
 };
 struct TransformTrack {
-  ISplineTrack<Vector> *pos;
-  ISplineTrack<Vector4A16> *rotation;
-  ISplineTrack<Vector> *scale;
-
-  ~TransformTrack();
+  template<class C>
+  using TrackType = std::unique_ptr<ISplineTrack<C>>;
+  TrackType<Vector> pos;
+  TrackType<Vector4A16> rotation;
+  TrackType<Vector> scale;
 };
 
 struct TransformSplineBlock {

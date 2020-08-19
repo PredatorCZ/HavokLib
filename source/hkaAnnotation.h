@@ -16,20 +16,26 @@
 */
 
 #pragma once
-#include "HavokApi.hpp"
+#include "hkInternalInterfaces.h"
 #include "hkObjectBase.h"
 
 template <class C>
 struct hkaAnnotation_t : hkaAnnotationTrackInternalInterface {
-  C *Data;
-  hkClassConstructor_nohash(hkaAnnotation_t<C>);
-  void SwapEndian() override { Data->SwapEndian(); }
+  uni::Element<C> data;
+  // std::unique_ptr<hkxEnvironmentSaver> saver;
+
+  void SetDataPointer(void *ptr) override {
+    data = {static_cast<C *>(ptr), false};
+  }
+  const void *GetPointer() const override { return data.get(); }
+
+  void SwapEndian() override { data->SwapEndian(); }
   es::string_view GetName() const override {
-    return static_cast<const char *>(Data->name);
+    return static_cast<const char *>(data->name);
   };
-  size_t Size() const override { return Data->GetNumAnnotations(); };
+  size_t Size() const override { return data->GetNumAnnotations(); };
   const hkaAnnotationFrame At(size_t id) const override {
-    return Data->GetAnnotation(id);
+    return data->GetAnnotation(id);
   }
 };
 
@@ -40,13 +46,13 @@ template <template <class C> class _ipointer> struct hkaAnnotation {
 
 template <template <class C> class _ipointer> struct hkaAnnotationTrack1 {
   _ipointer<char> name;
-  _ipointer<hkaAnnotation<_ipointer>> annotations;
+  _ipointer<hkaAnnotation<_ipointer>> Annotations;
   uint32 numAnnotations;
 };
 
 template <template <class C> class _ipointer> struct hkaAnnotationTrack2 {
   _ipointer<char> name;
-  hkArray<hkaAnnotation<_ipointer>, _ipointer> annotations;
+  hkArray<hkaAnnotation<_ipointer>, _ipointer> Annotations;
 };
 
 template <template <class C> class _ipointer,
@@ -56,22 +62,10 @@ struct hkaAnnotation_t_shared : _parent<_ipointer> {
 
   const char *GetName() const { return this->name; }
 
-  enablePtrPair(annotations) GetNumAnnotations() const {
-    return this->numAnnotations;
-  }
-  enablehkArray(annotations) GetNumAnnotations() const {
-    return this->annotations.count;
-  }
-
-  enablePtrPairRef(annotations) GetNumAnnotations() {
-    return this->numAnnotations;
-  }
-  enablehkArrayRef(annotations) GetNumAnnotations() {
-    return this->annotations.count;
-  }
+  GetNum(Annotations);
 
   hkaAnnotationFrame GetAnnotation(size_t id) const {
-    const hkaAnnotation<_ipointer> &ano = this->annotations[id];
+    const hkaAnnotation<_ipointer> &ano = this->Annotations[id];
     return {ano.time, static_cast<const char*>(ano.text)};
   }
 
@@ -79,7 +73,7 @@ struct hkaAnnotation_t_shared : _parent<_ipointer> {
     FByteswapper(GetNumAnnotations());
 
     for (size_t a = 0; a < GetNumAnnotations(); a++) {
-      FByteswapper(this->annotations[a].time);
+      FByteswapper(this->Annotations[a].time);
     }
   }
 };

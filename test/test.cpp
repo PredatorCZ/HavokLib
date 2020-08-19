@@ -15,7 +15,7 @@
     along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "datas/masterprinter.hpp"
+#include "datas/master_printer.hpp"
 #include "datas/string_view.hpp"
 #include "hkInternalInterfaces.h"
 #include "pugixml.hpp"
@@ -26,13 +26,15 @@ static const es::string_view compiledFlags[] = {
 };
 
 static const es::string_view versions[] = {
-    "550/",    "660/",    "710/",    "2010_1/", "2011_1/",
+    "550/",    "660/",    "710/",    "2010_2/", "2011_1/",
     "2011_2/", "2012_2/", "2013_1/", "2014_1/",
 };
 
-
-
+#include "test_defaultmotion.inl"
+#include "test_delta.inl"
+#include "test_interleaved.inl"
 #include "test_skeleton.inl"
+#include "test_spline.inl"
 
 #ifdef _MSC_VER
 // Use Visual C++'s memory checking functionality
@@ -48,7 +50,9 @@ int main() {
 
   printer.AddPrinterFunction(UPrintf);
 
-  TEST_CASES(int resultVar, TEST_FUNC(test_skeleton));
+  TEST_CASES(int resultVar, TEST_FUNC(test_skeleton),
+             TEST_FUNC(test_defaultmotion), TEST_FUNC(test_spline),
+             TEST_FUNC(test_interleaved), TEST_FUNC(test_delta));
 
   return resultVar;
 }

@@ -39,7 +39,7 @@ public:
   chunkCC tag;
   void Reorder() {
     FByteswapper(sizeAndFlags);
-    sizeAndFlags = ((sizeAndFlags & 0xffffff) - 8) | sizeAndFlags & 0xff000000;
+    sizeAndFlags = ((sizeAndFlags & 0xffffff) - 8) | (sizeAndFlags & 0xff000000);
   }
   uint32 Size() const { return sizeAndFlags & 0xffffff; }
   bool IsSubChunk() const {
@@ -66,7 +66,7 @@ struct classEntryFixup : hkChunk {
 };
 
 struct hkxNewHeader : IhkPackFile, hkChunk {
-  char contentsVersionStripped[5];
+  hkToolset toolset;
   std::string dataBuffer;
   std::string classNamesBuffer;
   std::string memberNamesBuffer;
@@ -78,7 +78,7 @@ struct hkxNewHeader : IhkPackFile, hkChunk {
   VirtualClasses virtualClasses;
 
   VirtualClasses &GetAllClasses() override { return virtualClasses; }
-  int32 GetVersion() const override;
+  hkToolset GetToolset() const override { return toolset; }
   int Load(BinReader *rd);
   void DumpClassNames(std::ostream &str);
 };

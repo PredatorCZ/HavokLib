@@ -5,40 +5,22 @@ matrix:
   fast_finish: true
   include:
     - os: linux
-      name: "Compiler GCC 6"
+      name: "GCC 5 + GCOV"
       addons:
         apt:
-          sources:
-            - ubuntu-toolchain-r-test
           packages:
-            - g++-6
             - zstd
-      env:
-         - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
+      before_install:
+        - pip install --user cpp-coveralls
+      script:
+        - mkdir build && cd build && cmake .. -DUSE_GCOV=TRUE
+        - cmake --build . -j 6
+        - ctest -V
+      after_success:
+        - cd .. && coveralls -E ".*/HavokLib/build/.*.c((pp)|(c)|(xx))?$" -e test -e 3rd_party --gcov-options '\-lp' > /dev/null
+
     - os: linux
-      name: "Compiler GCC 7"
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-7
-            - zstd
-      env:
-         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
-    - os: linux
-      name: "Compiler GCC 8"
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-8
-            - zstd
-      env:
-         - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
-    - os: linux
-      name: "Compiler GCC 9"
+      name: "GCC 9"
       addons:
         apt:
           sources:
@@ -47,17 +29,37 @@ matrix:
             - g++-9
             - zstd
       env:
-         - MATRIX_EVAL="CC=gcc-9 && CXX=g++-9"
+        - MATRIX_EVAL="CC=gcc-9 && CXX=g++-9"
+
+    - os: linux
+      name: "Clang 3.5"
+      addons:
+        apt:
+          packages:
+            - clang-3.5
+            - zstd
+      env:
+        - MATRIX_EVAL="CC=clang-3.5 && CXX=clang++-3.5"
+
+    - os: linux
+      name: "Clang 8"
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-xenial-8
+          packages:
+            - clang-8
+            - zstd
+      env:
+        - MATRIX_EVAL="CC=clang-8 && CXX=clang++-8"
 
     - os: windows
-      name: "Compiler MSVC"
-         
+      name: "MSVC"
+
 before_install:
-    - eval "${MATRIX_EVAL}"
+  - eval "${MATRIX_EVAL}"
 
 script:
-  - mkdir build
-  - cd build
-  - cmake ..
-  - cmake --build . -j 6
-  - ctest -C Debug --verbose
+  - mkdir build && cd build && cmake ..
+  - cmake --build . -j 6 --config Release
+  - ctest -V -C Release

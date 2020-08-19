@@ -24,6 +24,7 @@
 #define hkMagic2 0x10c0c010
 
 class BinReader;
+class BinWritter;
 struct hkxHeader;
 
 struct hkxHeaderlayout {
@@ -31,7 +32,7 @@ struct hkxHeaderlayout {
   This is basically pointer size, so 4 bytes for x86 and 8 bytes for x64
   architectures
   */
-  char bytesInPointer, big_endian,
+  uint8 bytesInPointer, littleEndian,
       /*
       derived classes start instead of base class end padding, rather after,
       very usefull thing this technique is applied only on non POD classes eg:
@@ -120,29 +121,41 @@ struct hkxSectionHeader : hkxSectionHeaderData {
   int LoadBuffer(BinReader *rd);
   int LinkBuffer();
   int LinkBuffer86();
+  void Finalize();
 };
 
 struct hkxHeaderData {
-  uint32 magic1, magic2, userTag, Version;
+  uint32 magic1, magic2, userTag, version;
   hkxHeaderlayout layout;
-  uint32 numSections, contentsSectionIndex, contentsSectionOffset,
+  int32 numSections, contentsSectionIndex, contentsSectionOffset,
       contentsClassNameSectionIndex, contentsClassNameSectionOffset;
   char contentsVersion[16];
   uint32 flags;
   int16 maxpredicate, predicateArraySizePlusPadding;
 
+  hkxHeaderData()
+      : magic1(hkMagic1), magic2(hkMagic2), userTag(), numSections(2),
+        contentsSectionIndex(1), contentsSectionOffset(0),
+        contentsClassNameSectionIndex(0), contentsClassNameSectionOffset(75),
+        flags(), maxpredicate(), predicateArraySizePlusPadding() {}
+
   void SwapEndian();
 };
 
 struct hkxHeader : hkxHeaderData, IhkPackFile {
-  char contentsVersionStripped[5];
+  hkToolset toolset;
 
   std::vector<hkxSectionHeader> sections;
 
+  hkxHeader() : toolset(HKUNKVER) {}
+
   int Load(BinReader &rd);
+  int Save(BinWritter &wr, const VirtualClasses &classes) const;
   hkxSectionHeader *GetDataSection() { return &sections[contentsSectionIndex]; }
   VirtualClasses &GetAllClasses() override {
     return GetDataSection()->virtualClasses;
   }
-  int32 GetVersion() const override;
+  hkToolset GetToolset() const override { return toolset; }
+private:
+  void GenerateToolset();
 };

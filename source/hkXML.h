@@ -16,6 +16,7 @@
 */
 
 #pragma once
+#include <cinttypes>
 
 static const char *_hkName = "name", *_hkObject = "hkobject",
                   *_hkClass = "class", *_hkNumElements = "numelements",
@@ -28,15 +29,12 @@ static inline void PointerToString(const void *ptr, std::string &str) {
   }
 
   str.append("0x");
-
   char buffer[20];
-  snprintf(buffer, 20, ES_X64 ? "%lluX" : "%uX",
-           reinterpret_cast<uintptr_t>(ptr));
+  snprintf(buffer, 20, "%" PRIXPTR, reinterpret_cast<uintptr_t>(ptr));
   str.append(buffer);
 }
 
-template <class C>
-static void ExportReflectedClass(C &input, XMLnode &parent) {
+template <class C> static void ExportReflectedClass(C &input, XMLnode &parent) {
   ReflectorWrapConst<C> refl(&input);
 
   for (int t = 0; t < refl.GetNumReflectedValues(); t++) {

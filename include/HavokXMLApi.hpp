@@ -20,24 +20,24 @@
 
 #define DECLARE_XMLCLASS(classname, parent)                                    \
   DECLARE_HKCLASS(classname)                                                   \
-  void SwapEndian() {}                                                         \
-  const void *GetPointer() const { return this; };                             \
-  void Process() {}                                                            \
-  void SetDataPointer(void *Ptr) {}                                            \
+  void SwapEndian() override {}                                                \
+  const void *GetPointer() const override { return this; };                    \
+  void Process() override {}                                                   \
+  void SetDataPointer(void *Ptr) override {}                                   \
                                                                                \
 public:                                                                        \
   classname() {                                                                \
-    this->hash = classname::HASH;                                              \
-    this->superHash = parent::HASH;                                            \
+    this->AddHash(classname::GetHash());                                       \
+    this->AddHash(parent::GetHash());                                          \
     this->name = #parent;                                                      \
   }
 
 class xmlHavokFile : public IhkPackFile {
   VirtualClasses classes;
-  int32 GetVersion() const override { return -1; }
+  hkToolset GetToolset() const override { return HKUNKVER; }
 
 public:
-  VirtualClasses &GetAllClasses() { return classes; }
+  VirtualClasses &GetAllClasses() override { return classes; }
   template <class C> C *NewClass() {
     C *cls = new C();
     classes.emplace_back(dynamic_cast<hkVirtualClass *>(cls));
@@ -78,7 +78,9 @@ class xmlAnimationContainer : public hkaAnimationContainerInternalInterface {
     return attachments.at(id);
   }
   size_t GetNumSkins() const override { return skins.size(); }
-  const hkaMeshBinding *GetSkin(size_t id) const { return skins.at(id); }
+  const hkaMeshBinding *GetSkin(size_t id) const override {
+    return skins.at(id);
+  }
 
   // private:
   std::vector<hkaSkeleton *> skeletons;
@@ -143,7 +145,7 @@ class xmlSkeleton : public hkaSkeletonInternalInterface {
 class xmlAnnotationTrack : public hkaAnnotationTrackInternalInterface {
   DECLARE_XMLCLASS(xmlAnnotationTrack, hkaAnnotationTrack);
 
-  es::string_view GetName() const { return name; }
+  es::string_view GetName() const override { return name; }
   std::string name;
 };
 
@@ -172,13 +174,13 @@ class xmlInterleavedAnimation
     : public xmlAnimation<hkaAnimationLerpSampler>,
       public hkaInterleavedAnimationInternalInterface {
   DECLARE_HKCLASS(xmlInterleavedAnimation)
-  void SwapEndian() {}
-  const void *GetPointer() const { return this; };
-  void Process() {}
-  void SetDataPointer(void *Ptr) {}
+  void SwapEndian() override {}
+  const void *GetPointer() const override { return this; };
+  void Process() override {}
+  void SetDataPointer(void *Ptr) override {}
 
 public:
-  xmlInterleavedAnimation() { xmlAnimation::hash = HASH; }
+  xmlInterleavedAnimation() { AddHash(GetHash()); }
   typedef std::vector<hkQTransform> Transform_Container;
   typedef std::vector<float> Float_Container;
 
@@ -188,11 +190,11 @@ public:
   size_t GetNumOfTransformTracks() const override { return transforms.size(); }
   size_t GetNumOfFloatTracks() const override { return floats.size(); }
 
-  es::string_view GetClassName(hkXMLToolsets toolset) const override {
-    if (toolset == HK550)
-      return "hkaInterleavedSkeletalAnimation";
-    else
+  es::string_view GetClassName(hkToolset toolset) const override {
+    if (toolset > HK550)
       return "hkaInterleavedUncompressedAnimation";
+    else
+      return "hkaInterleavedSkeletalAnimation";
   }
 
   void GetFrame(size_t trackID, int32 frame, hkQTransform &out) const override {

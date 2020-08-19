@@ -1,0 +1,9 @@
+#define havokpy_VERSION "1.0"
+#define havokpy_VERSION_MAJOR 1
+#define havokpy_VERSION_MINOR 0
+#define havokpy_VERSION_PATCH 0
+#define havokpy_VERSION_TWEAK 0
+#define havokpy_DESC ""
+#define havokpy_COPYRIGHT ""
+#define havokpy_PRODUCT_NAME ""
+#define havokpy_AUTHOR ""

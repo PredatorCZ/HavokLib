@@ -18,13 +18,14 @@
 #include "hkHeader.hpp"
 #include "datas/endian.hpp"
 #include "datas/jenkinshash.hpp"
-#include "datas/masterprinter.hpp"
+#include "datas/master_printer.hpp"
 #include "datas/pointer.hpp"
 #include <algorithm>
 #include <ctype.h>
 #include <string>
 
 #include "datas/binreader.hpp"
+#include "datas/binwritter.hpp"
 
 int hkxHeader::Load(BinReader &rd) {
   rd.Read<hkxHeaderData>(*this);
@@ -36,9 +37,7 @@ int hkxHeader::Load(BinReader &rd) {
 
   uint32 currentSectionID = 0;
 
-  layout.big_endian = 1 - layout.big_endian;
-
-  if (layout.big_endian) {
+  if (!layout.littleEndian) {
     SwapEndian();
     rd.SwapEndian(true);
   }
@@ -46,23 +45,7 @@ int hkxHeader::Load(BinReader &rd) {
   if (maxpredicate != -1)
     rd.Skip(predicateArraySizePlusPadding);
 
-  char *cs = contentsVersionStripped;
-  char *cc = contentsVersion;
-  uint32 numDots = 0, numChars = 0;
-
-  while (cc) {
-    if (*cc == '.')
-      numDots++;
-
-    if (isdigit(*cc)) {
-      *cs = *cc;
-      numChars++;
-      if (numDots > 1 || numChars > 3)
-        break;
-      cs++;
-    }
-    cc++;
-  }
+  GenerateToolset();
 
   sections.resize(numSections);
 
@@ -70,7 +53,7 @@ int hkxHeader::Load(BinReader &rd) {
     s.header = this;
     rd.Read<hkxSectionHeaderData>(s);
 
-    if (Version > 9)
+    if (version > 9)
       rd.Seek(16, std::ios_base::cur);
 
     s.sectionID = currentSectionID;
@@ -84,20 +67,135 @@ int hkxHeader::Load(BinReader &rd) {
     s.LoadBuffer(&rd);
 
   if (ES_X64 && layout.bytesInPointer == 4) {
-    for (auto &s : sections)
+    for (auto &s : sections) {
       s.LinkBuffer86();
+      s.Finalize();
+    }
   } else {
-    for (auto &s : sections)
+    for (auto &s : sections) {
       s.LinkBuffer();
+      s.Finalize();
+    }
   }
 
   return 0;
 }
 
-int32 hkxHeader::GetVersion() const { return atoi(contentsVersionStripped); }
+void hkxHeader::GenerateToolset() {
+  uint32 versions[3] = {};
+  char *cc = contentsVersion;
+  size_t cVer = 0;
+
+  while (cc && *cc && cVer < 3) {
+    if (isdigit(*cc)) {
+      char *endPtr = nullptr;
+      versions[cVer++] = std::strtol(cc, &endPtr, 10);
+      cc = endPtr;
+    } else {
+      cc++;
+    }
+  }
+
+  auto convert = [&]() {
+    switch (versions[0]) {
+    case 5: {
+      switch (versions[1]) {
+      case 0:
+        return HK500;
+      case 1:
+        return HK510;
+      case 5:
+        return HK550;
+      }
+      return HKUNKVER;
+    }
+
+    case 6: {
+      switch (versions[1]) {
+      case 0:
+        return HK600;
+      case 1:
+        return HK610;
+      case 5:
+        return HK650;
+      case 6:
+        return HK660;
+      }
+      return HKUNKVER;
+    }
+
+    case 7: {
+      switch (versions[1]) {
+      case 0:
+        return HK700;
+      case 1:
+        return HK710;
+      }
+      return HKUNKVER;
+    }
+
+    case 2010: {
+      switch (versions[1]) {
+      case 1:
+        return HK2010_1;
+      case 2:
+        return HK2010_2;
+      }
+      return HKUNKVER;
+    }
+
+    case 2011: {
+      switch (versions[1]) {
+      case 1:
+        return HK2011_1;
+      case 2:
+        return HK2011_2;
+      case 3:
+        return HK2011_3;
+      }
+      return HKUNKVER;
+    }
+
+    case 2012: {
+      switch (versions[1]) {
+      case 1:
+        return HK2012_1;
+      case 2:
+        return HK2012_2;
+      }
+      return HKUNKVER;
+    }
+
+    case 2013: {
+      switch (versions[1]) {
+      case 1:
+        return HK2013;
+      }
+      return HKUNKVER;
+    }
+
+    case 2014: {
+      switch (versions[1]) {
+      case 1:
+        return HK2014;
+      }
+      return HKUNKVER;
+    }
+
+    default:
+      return HKUNKVER;
+    }
+  };
+
+  toolset = convert();
+
+  if (toolset == HKUNKVER) {
+    printerror("[Havok] Unknown toolset version: " << contentsVersion);
+  }
+}
 
 void hkxHeaderData::SwapEndian() {
-  FByteswapper(Version);
+  FByteswapper(version);
   FByteswapper(numSections);
   FByteswapper(contentsSectionIndex);
   FByteswapper(contentsSectionOffset);
@@ -147,26 +245,6 @@ int hkxSectionHeader::LoadBuffer(BinReader *rd) {
   return 0;
 }
 
-std::string _hkGenerateClassname(hkxHeader *header,
-                                 const std::string &classname) {
-  std::string compiledClassname =
-      classname + "_t<" + classname + header->contentsVersionStripped;
-
-  if (header->layout.reusePaddingOptimization)
-    compiledClassname.append("_rp");
-
-  compiledClassname.append("_t<");
-
-  if (header->layout.bytesInPointer > 4)
-    compiledClassname.append("esPointerX64");
-  else
-    compiledClassname.append("esPointerX86");
-
-  compiledClassname.append(">>");
-
-  return compiledClassname;
-}
-
 int hkxSectionHeader::LinkBuffer() {
   char *sectionBuffer = &buffer[0];
   using ptrType = esPointerX64<char>;
@@ -185,38 +263,8 @@ int hkxSectionHeader::LinkBuffer() {
     }
   }
 
-  for (auto &vf : virtualFixups) {
-    if (vf.dataoffset != -1) {
-      const char *clName =
-          header->sections[vf.sectionid].buffer.data() + vf.classnameoffset;
-      std::string classname = _hkGenerateClassname(header, clName);
-
-      const JenHash _chash = JenkinsHash(classname.c_str());
-
-      hkVirtualClass *cls = IhkPackFile::ConstructClass(_chash);
-
-      if (cls) {
-        cls->SetDataPointer(sectionBuffer + vf.dataoffset);
-        cls->name = clName;
-        cls->superHash = JenkinsHash(clName);
-        cls->header = header;
-        if (header->layout.big_endian)
-          cls->SwapEndian();
-        virtualClasses.emplace_back(cls);
-        cls->Process();
-      }
-    }
-  }
-
-#ifdef _MSC_VER
-  localFixups.~vector();
-  globalFixups.~vector();
-  virtualFixups.~vector();
-#else
-  localFixups.clear();
-  globalFixups.clear();
-  virtualFixups.clear();
-#endif
+  auto t0 = std::move(localFixups);
+  auto t1 = std::move(globalFixups);
 
   return 0;
 }
@@ -237,40 +285,38 @@ int hkxSectionHeader::LinkBuffer86() {
       *ptrPtr = sectionBuffer + gf.destination;
     }
 
-  for (auto &vf : virtualFixups)
+  auto t0 = std::move(localFixups);
+  auto t1 = std::move(globalFixups);
+
+  return 0;
+}
+
+void hkxSectionHeader::Finalize() {
+  char *sectionBuffer = &buffer[0];
+
+  for (auto &vf : virtualFixups) {
     if (vf.dataoffset != -1) {
       const char *clName =
           header->sections[vf.sectionid].buffer.data() + vf.classnameoffset;
-      std::string classname = _hkGenerateClassname(header, clName);
-
-      const JenHash _chash = JenkinsHash(classname.c_str());
-
-      hkVirtualClass *cls = IhkPackFile::ConstructClass(_chash);
+      const JenHash _chash = JenkinsHash(clName);
+      CRule rule(header->toolset, header->layout.reusePaddingOptimization,
+                 header->layout.bytesInPointer > 4);
+      hkVirtualClass *cls = hkVirtualClass::Create(_chash, rule);
 
       if (cls) {
         cls->SetDataPointer(sectionBuffer + vf.dataoffset);
         cls->name = clName;
-        cls->superHash = JenkinsHash(clName);
+        cls->AddHash(clName);
         cls->header = header;
-        if (header->layout.big_endian)
+        if (!header->layout.littleEndian)
           cls->SwapEndian();
         virtualClasses.emplace_back(cls);
         cls->Process();
       }
     }
+  }
 
-    std::move(localFixups);
-#ifdef _MSC_VER
-  localFixups.~vector();
-  globalFixups.~vector();
-  virtualFixups.~vector();
-#else
-  localFixups.clear();
-  globalFixups.clear();
-  virtualFixups.clear();
-#endif
-
-  return 0;
+  auto t0 = std::move(virtualFixups);
 }
 
 void hkxSectionHeaderData::SwapEndian() {
@@ -281,4 +327,191 @@ void hkxSectionHeaderData::SwapEndian() {
   FByteswapper(exportsOffset);
   FByteswapper(importsOffset);
   FByteswapper(bufferSize);
+}
+
+int hkxHeader::Save(BinWritter &wr, const VirtualClasses &classes) const {
+  if (!sections.empty()) {
+    printerror("[Havok] Cannot save loaded header! Use "
+               "IhkPackFile::ToPackFile().") return 1;
+  }
+
+  wr.SwapEndian((layout.littleEndian != 0) != LittleEndian());
+  wr.Write<hkxHeaderData>(*this);
+
+  hkxSectionHeader classSection;
+  es::string_view classSectionTag = "__classnames__";
+  strncpy(classSection.sectionTag, classSectionTag.data(),
+          classSectionTag.size() + 1);
+
+  wr.Push();
+  wr.Write<hkxSectionHeaderData>(classSection);
+
+  if (version == 11) {
+    wr.Skip(16);
+  }
+
+  hkxSectionHeader mainSection;
+  es::string_view sectionTag = "__data__";
+  strncpy(mainSection.sectionTag, sectionTag.data(), sectionTag.size() + 1);
+
+  wr.Write<hkxSectionHeaderData>(mainSection);
+
+  if (version == 11) {
+    wr.Skip(16);
+  }
+
+  classSection.absoluteDataStart = static_cast<uint32>(wr.Tell());
+  wr.SetRelativeOrigin(wr.Tell(), false);
+
+  VirtualClasses refClasses;
+  hkFixups fixups;
+  std::unordered_map<const IhkVirtualClass *, IhkVirtualClass *> clsRemap;
+
+  static const es::string_view reqClassNames[] = {
+      "hkClass", "hkClassMember", "hkClassEnum", "hkClassEnumItem"};
+
+  for (auto &c : reqClassNames) {
+    wr.Write<uint32>(0);
+    wr.Write('\t');
+    wr.WriteContainer(c);
+    wr.Skip(1);
+  }
+
+  CRule rule(toolset, layout.reusePaddingOptimization,
+             layout.bytesInPointer > 4);
+
+  for (auto &c : classes) {
+    auto dc = dynamic_cast<const hkVirtualClass *>(c.get());
+    auto clName = dc->GetClassName(toolset);
+    auto nClass = hkVirtualClass::Create(JenkinsHash(clName), rule);
+
+    if (!nClass) {
+      printerror("[Havok] Cannot export unregistered class: " << clName);
+      continue;
+    }
+
+    clsRemap[c.get()] = nClass;
+    nClass->Reflect(c.get());
+
+    if (wr.SwappedEndian()) {
+      nClass->SwapEndian();
+    }
+
+    refClasses.emplace_back(nClass);
+
+    wr.Write<uint32>(0);
+    wr.Write('\t');
+
+    fixups.finals.emplace_back(wr.Tell());
+    wr.WriteContainer(clName);
+    wr.Skip(1);
+
+    if (toolset < HK700 && clName == "hkaSkeleton") {
+      wr.Write<uint32>(0);
+      wr.Write('\t');
+      
+      const size_t numBones = dynamic_cast<hkaSkeleton *>(c.get())->GetNumBones();
+
+      for (size_t i = 0; i < numBones; i++) {
+        fixups.finals.emplace_back(wr.Tell(), c.get());
+      }
+      wr.WriteT("hkaBone");
+    }
+  }
+
+  wr.ResetRelativeOrigin(false);
+  wr.ApplyPadding();
+  classSection.bufferSize =
+      static_cast<uint32>(wr.Tell() - classSection.absoluteDataStart);
+  classSection.exportsOffset = classSection.bufferSize;
+  classSection.globalFixupsOffset = classSection.bufferSize;
+  classSection.importsOffset = classSection.bufferSize;
+  classSection.localFixupsOffset = classSection.bufferSize;
+  classSection.virtualFixupsOffset = classSection.bufferSize;
+  wr.ApplyPadding();
+
+  mainSection.absoluteDataStart = static_cast<uint32>(wr.Tell());
+  wr.SetRelativeOrigin(wr.Tell(), false);
+
+  size_t curFixup = 0;
+  std::unordered_map<IhkVirtualClass *, size_t> savedClasses;
+
+  for (auto &c : refClasses) {
+    wr.ApplyPadding();
+    const auto clsOffset = wr.Tell();
+    savedClasses[c.get()] = clsOffset;
+    fixups.finals[curFixup++].destination = clsOffset;
+
+    auto cls = dynamic_cast<hkVirtualClass *>(c.get());
+    cls->Save(wr, fixups);
+
+    while (curFixup < fixups.finals.size() && fixups.finals[curFixup].destClass) {
+      curFixup++;
+    }
+  }
+
+  for (auto &l : fixups.locals) {
+    hkxSectionHeader::hkxLocalFixup lFix;
+    lFix.pointer = static_cast<int32>(l.strOffset);
+
+    if (l.destClass) {
+      auto sClass = clsRemap[l.destClass];
+      lFix.destination = static_cast<int32>(savedClasses[sClass]);
+    } else {
+      lFix.destination = static_cast<int32>(l.destination);
+    }
+
+    mainSection.localFixups.push_back(lFix);
+  }
+
+  for (auto &l : fixups.finals) {
+    hkxSectionHeader::hkxVirtualFixup lFix;
+    lFix.sectionid = 0;
+    lFix.classnameoffset = l.strOffset;
+    lFix.dataoffset = l.destination;
+    mainSection.virtualFixups.push_back(lFix);
+  }
+
+  for (auto &l : fixups.globals) {
+    hkxSectionHeader::hkxGlobalFixup lFix;
+    lFix.sectionid = 1;
+    lFix.pointer = l.strOffset;
+    lFix.destination = l.destination;
+    mainSection.globalFixups.push_back(lFix);
+  }
+
+  wr.ApplyPadding();
+  mainSection.localFixupsOffset = static_cast<int32>(wr.Tell());
+  wr.WriteContainer(mainSection.localFixups);
+  if (mainSection.localFixups.size() & 1) {
+    wr.Write<int64>(-1);
+  }
+
+  wr.ApplyPadding();
+  mainSection.globalFixupsOffset = static_cast<int32>(wr.Tell());
+  wr.WriteContainer(mainSection.globalFixups);
+  mainSection.virtualFixupsOffset = static_cast<int32>(wr.Tell());
+  wr.WriteContainer(mainSection.virtualFixups);
+
+  const size_t pad = GetPadding(wr.Tell(), 16) / 4;
+
+  for (size_t p = 0; p < pad; p++) {
+    wr.Write<int32>(-1);
+  }
+
+  mainSection.bufferSize = static_cast<int32>(wr.Tell());
+  mainSection.exportsOffset = mainSection.bufferSize;
+  mainSection.importsOffset = mainSection.bufferSize;
+
+  wr.ResetRelativeOrigin(false);
+  wr.Pop();
+  wr.Write<hkxSectionHeaderData>(classSection);
+
+  if (version == 11) {
+    wr.Skip(16);
+  }
+
+  wr.Write<hkxSectionHeaderData>(mainSection);
+
+  return 0;
 }

@@ -20,21 +20,81 @@
 #include "datas/endian.hpp"
 
 #include "HavokApi.hpp"
+#include "datas/binwritter_stream.hpp"
 #include "uni/list_vector.hpp"
 
+namespace std {
+template <> struct hash<CRule> {
+  size_t operator()(const CRule &s) const noexcept {
+    return reinterpret_cast<const uint32 &>(s);
+  }
+};
+} // namespace std
+
+struct hkFixup {
+  const IhkVirtualClass *destClass;
+  size_t strOffset;
+  size_t destination;
+
+  hkFixup(size_t offset, size_t dest)
+      : strOffset(offset), destination(dest), destClass() {}
+  hkFixup(size_t offset, const IhkVirtualClass *dest)
+      : strOffset(offset), destClass(dest), destination() {}
+  hkFixup(size_t offset) : strOffset(offset), destClass(), destination() {}
+};
+
+struct hkFixups {
+  std::vector<hkFixup> locals;
+  std::vector<hkFixup> finals;
+  std::vector<hkFixup> globals;
+};
+
 struct hkVirtualClass : IhkVirtualClass {
-  JenHash hash;
-  JenHash superHash;
+  JenHash hash[4]{};
+  CRule rule;
   es::string_view name;
   IhkPackFile *header;
 
-  virtual es::string_view GetClassName(hkXMLToolsets toolset) const {
-    return name;
+  void AddHash(JenHash hsh) {
+    for (size_t i = 0; i < 4; i++) {
+      if (!hash[i]) {
+        hash[i] = hsh;
+        return;
+      } else if (hash[i] == hsh) {
+        return;
+      }
+    }
+
+    throw std::overflow_error("New hash exceeded reserverd limit.");
   }
+
+  void AddHash(es::string_view name) { AddHash(JenkinsHash(name)); }
+
+  bool HasHash(JenHash hsh) const {
+    for (size_t i = 0; i < 4; i++) {
+      if (!hash[i]) {
+        return false;
+      } else if (hash[i] == hsh) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  bool HasHash(es::string_view name) const {
+    return HasHash(JenkinsHash(name));
+  }
+
+  virtual es::string_view GetClassName(hkToolset toolset) const { return name; }
   virtual void SwapEndian() = 0;
   virtual void Process(){};
   virtual void SetDataPointer(void *Ptr) = 0;
-  virtual void ToXML(XMLHandle hdl) const {};
+  virtual void ToXML(XMLHandle hdl) const {}
+  virtual void Reflect(IhkVirtualClass *input) {}
+  virtual void Save(BinWritterRef wr, hkFixups &fixups) const {};
+
+  static hkVirtualClass *Create(JenHash hash, CRule rule);
 };
 
 template <class C> struct hkRealArray {
@@ -44,12 +104,14 @@ template <class C> struct hkRealArray {
 
 struct hkRootLevelContainerInternalInterface : hkRootLevelContainer,
                                                hkVirtualClass {
-  void ToXML(XMLHandle hdl) const;
+  void ToXML(XMLHandle hdl) const override;
+  static hkVirtualClass *Create(CRule rule);
 };
 
 struct hkaAnimationContainerInternalInterface : hkaAnimationContainer,
                                                 hkVirtualClass {
-  void ToXML(XMLHandle hdl) const;
+  void ToXML(XMLHandle hdl) const override;
+  static hkVirtualClass *Create(CRule rule);
 };
 
 class hkFullBone : public uni::Bone {
@@ -78,16 +140,18 @@ struct hkaSkeletonInternalInterface : hkaSkeleton,
         dynamic_cast<const uni::List<uni::Bone> *>(this), false);
   }
   void ToXML(XMLHandle hdl) const override;
+  static hkVirtualClass *Create(CRule rule);
 };
 
 struct hkaAnimationBindingInternalInterface : hkaAnimationBinding,
                                               hkVirtualClass {
-  void ToXML(XMLHandle hdl) const;
+  void ToXML(XMLHandle hdl) const override;
+  static hkVirtualClass *Create(CRule rule);
 };
 
 struct hkaAnnotationTrackInternalInterface : hkaAnnotationTrack,
                                              hkVirtualClass {
-  void ToXML(XMLHandle hdl) const;
+  void ToXML(XMLHandle hdl) const override;
 };
 
 struct hkaAnimationInternalInterface;
@@ -121,14 +185,23 @@ struct hkaAniTrackHandleList : uni::List<uni::MotionTrack> {
 
 struct hkaAnimationInternalInterface : virtual hkaAnimation, hkVirtualClass {
   mutable uint32 frameRate;
+
+  hkaAnimationInternalInterface() {
+    this->AddHash(hkaAnimation::GetHash());
+  }
+
   virtual void GetValue(uni::RTSValue &output, float time,
                         size_t trackID) const = 0;
-  void ToXML(XMLHandle hdl) const;
+  void ToXML(XMLHandle hdl) const override;
 
   uint32 FrameRate() const override { return frameRate; }
 
   es::string_view Name() const override { return ""; }
   MotionType_e MotionType() const override { return Relative; }
+
+  es::string_view GetAnimationTypeName() const override {
+    return GetReflectedEnum<hkaAnimationType>()[GetAnimationType()];
+  }
 
   uni::MotionTracksConst Tracks() const override {
     return uni::MotionTracksConst(
@@ -152,7 +225,8 @@ struct hkaInterleavedAnimationInternalInterface
   virtual float GetFloat(size_t id) const = 0;
   // TODO floats
 
-  void ToXML(XMLHandle hdl) const;
+  void ToXML(XMLHandle hdl) const override;
+  static hkVirtualClass *Create(CRule rule);
 };
 
 struct hkaDeltaCompressedAnimationInternalInterface
@@ -169,37 +243,58 @@ struct hkaDeltaCompressedAnimationInternalInterface
   virtual size_t GetScalesOffset() const = 0;
   virtual size_t GetNumPreserved() const = 0;
   // void ToXML(XMLHandle hdl) const;
+  static hkVirtualClass *Create(CRule rule);
 };
 
 struct hkaWaveletCompressedAnimationInternalInterface
     : virtual hkaAnimationLerpSampler {
+
   // void ToXML(XMLHandle hdl) const;
+  static hkVirtualClass *Create(CRule rule);
 };
 
 struct hkaSplineCompressedAnimationInternalInterface
     : virtual hkaAnimationInternalInterface {
   virtual char *GetData() const = 0;
   virtual hkRealArray<uint32> GetBlockOffsets() const = 0;
+  virtual hkRealArray<uint32> GetFloatBlockOffsets() const = 0;
+  virtual hkRealArray<uint32> GetTransformOffsets() const = 0;
+  virtual hkRealArray<uint32> GetFloatOffsets() const = 0;
+  virtual uint32 GetNumFrames() const = 0;
+  virtual uint32 GetNumBlocks() const = 0;
+  virtual uint32 GetMaxFramesPerBlock() const = 0;
+  virtual float GetBlockDuration() const = 0;
+  virtual float GetBlockInverseDuration() const = 0;
+  virtual float GetFrameDuration() const = 0;
 
   // void ToXML(XMLHandle hdl) const;
+  static hkVirtualClass *Create(CRule rule);
 };
 
 struct hkxEnvironmentInternalInterface : hkxEnvironment, hkVirtualClass {
-  void ToXML(XMLHandle hdl) const;
+  void ToXML(XMLHandle hdl) const override;
+  static hkVirtualClass *Create(CRule rule);
 };
 
 struct hkaAnimatedReferenceFrameInternalInterface : hkaAnimatedReferenceFrame,
                                                     hkVirtualClass {
   uint32 frameRate;
+
   virtual float GetDuration() const = 0;
   virtual size_t GetNumFrames() const = 0;
-  virtual const Vector4 *GetRefFrame(size_t id) const = 0;
+  virtual const Vector4A16 &GetRefFrame(size_t id) const = 0;
 
   TrackType_e TrackType() const override {
     return uni::MotionTrack::PositionRotationScale;
   }
   size_t BoneIndex() const override { return -1; }
   void GetValue(uni::RTSValue &output, float time) const override;
-  
+
   // void ToXML(XMLHandle hdl) const;
+};
+
+struct hkaDefaultAnimatedReferenceFrameInternalInterface
+    : virtual hkaAnimatedReferenceFrameInternalInterface {
+  // void ToXML(XMLHandle hdl) const;
+  static hkVirtualClass *Create(CRule rule);
 };

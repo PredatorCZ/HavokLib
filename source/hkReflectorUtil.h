@@ -17,26 +17,18 @@
 
 #pragma once
 #define _REFLECTOR_ADDN_HASH(value) JenkinsHashC(#value),
-#define _REFLECTOR_ADDN_ENUMNAME(value) #value
+#define _REFLECTOR_ADDN_ENUMNAME(value) #value,
 
 #define REFLECTOR_ENUM_HASH(classname, ...)                                    \
-  static const int classname##_reflectedSize = VA_NARGS(__VA_ARGS__);          \
-  const JenHash classname##_hashed[classname##_reflectedSize] = {              \
-      StaticFor(_REFLECTOR_ADDN_HASH, __VA_ARGS__)};                           \
-  enum classname { StaticFor(_REFLECTOR_ADDN_ENUMVAL, __VA_ARGS__) };
+  static const JenHash *GetHashes() {                                          \
+    static const JenHash hashed[] = {                                          \
+        StaticFor(_REFLECTOR_ADDN_HASH, __VA_ARGS__)};                         \
+    return hashed;                                                             \
+  }
 
 #define _REFLECTOR_ADDN_REMAP(classname, _id, value)                           \
   {_REFLECTOR_ADDN_HASH(value) classname::value},
 
 #define REFLECTOR_ENUM_BUILD_REMAP(classname, ...)                             \
-  static const std::unordered_map<JenHash, classname> classname##_remap = {              \
+  static const std::unordered_map<JenHash, classname> classname##_remap = {    \
       StaticForArgID(_REFLECTOR_ADDN_REMAP, classname, __VA_ARGS__)};
-
-#define REFLECTOR_ENUM_WOENUM(classname, ...)                                  \
-  static const int classname##_reflectedSize = VA_NARGS(__VA_ARGS__);          \
-  static const char *classname##_reflected[classname##_reflectedSize] = {      \
-      StaticFor(_REFLECTOR_ADDN_ENUMNAME, __VA_ARGS__)};
-
-#define REFLECTOR_WOENUM_WREMAP(classname, classHash, ...)                     \
-  REFLECTOR_ENUM_WOENUM(classname, classHash, __VA_ARGS__)                     \
-  REFLECTOR_ENUM_BUILD_REMAP(classname, __VA_ARGS__)

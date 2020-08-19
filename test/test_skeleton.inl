@@ -16,46 +16,7 @@
 */
 
 #pragma once
-#include "HavokXMLApi.hpp"
-#include "datas/unit_testing.hpp"
-
-int test_rootcontainer(pugi::xml_node nde, IhkVirtualClass *hkNode) {
-  TEST_CHECK(hkNode);
-
-  auto rlCont = dynamic_cast<const hkRootLevelContainer *>(hkNode);
-
-  TEST_CHECK(rlCont);
-
-  const auto xmNamedVariants = nde.first_child().children();
-  auto xmVariant = xmNamedVariants.begin();
-
-  TEST_EQUAL(rlCont->Size(), std::distance(xmVariant, xmNamedVariants.end()));
-
-  for (auto &v : *rlCont) {
-    for (auto &b : *xmVariant) {
-      es::string_view paramName = b.attribute("name").as_string();
-
-      if (paramName == "className") {
-        auto xmText = b.text().as_string();
-        TEST_EQUAL(v.className, xmText);
-      } else if (paramName == "name") {
-        es::string_view xmlText = b.text().as_string();
-
-        if (xmlText == "hkaAnimationContainer") {
-          if (v.name != "Merged Animation Container") {
-            TEST_EQUAL(v.name, xmlText);
-          }
-        } else {
-          TEST_EQUAL(v.name, xmlText)
-        }
-      }
-    }
-
-    xmVariant++;
-  }
-
-  return 0;
-}
+#include "test_common.inl"
 
 int test_environment(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   TEST_CHECK(hkNode);
@@ -117,53 +78,57 @@ int test_skeleton(pugi::xml_node nde, IhkVirtualClass *hkNode) {
 
   xmParentIDs = es::SkipStartWhitespace(xmParentIDs, true);
 
-  auto getNumber = [](float hkNum, es::string_view &sw) {
-    char *strEnd = nullptr;
-    auto xmNum = std::strtof(sw.begin(), &strEnd);
-
-    TEST_NOT_EQUAL(strEnd, sw.begin());
-
-    TEST_EQUAL(hkNum, xmNum);
-
-    sw = es::SkipStartWhitespace<es::string_view>({strEnd, sw.end()}, true);
-
-    return 0;
-  };
-
   for (auto b : skel->BoneParentIDs()) {
-    TEST_NOT_CHECK(getNumber(b, xmParentIDs));
+    TEST_NOT_CHECK(GetNumber(b, xmParentIDs));
   }
 
   auto xmBones = nde.find_child_by_attribute("name", "bones");
 
   TEST_NOT_CHECK(xmBones.empty());
 
-  es::string_view xmBoneLinks = xmBones.text().as_string();
+  const auto cVersion =
+      dynamic_cast<const hkVirtualClass *>(hkNode)->rule.version;
 
-  xmBoneLinks = es::SkipStartWhitespace(xmBoneLinks, true);
+  if (cVersion < HK2010_1) {
+    es::string_view xmBoneLinks = xmBones.text().as_string();
 
-  auto xmParent = nde.parent();
-
-  for (auto b : skel->BoneNames()) {
-    auto fndEnd = xmBoneLinks.find_first_of("\n ");
-    const auto swNPOS = xmBoneLinks.npos;
-
-    TEST_NOT_EQUAL(fndEnd, swNPOS);
-
-    const std::string subName(xmBoneLinks.begin(), fndEnd);
-
-    auto xmBone = xmParent.find_child_by_attribute("name", subName.c_str());
-
-    TEST_NOT_CHECK(xmBone.empty());
-
-    auto xmBoneName = xmBone.find_child_by_attribute("name", "name");
-
-    TEST_NOT_CHECK(xmBoneName.empty());
-
-    TEST_EQUAL(b, xmBoneName.text().as_string());
-
-    xmBoneLinks.remove_prefix(fndEnd);
     xmBoneLinks = es::SkipStartWhitespace(xmBoneLinks, true);
+
+    auto xmParent = nde.parent();
+
+    for (auto b : skel->BoneNames()) {
+      auto fndEnd = xmBoneLinks.find_first_of("\n ");
+      const auto swNPOS = xmBoneLinks.npos;
+
+      TEST_NOT_EQUAL(fndEnd, swNPOS);
+
+      const std::string subName(xmBoneLinks.begin(), fndEnd);
+
+      auto xmBone = xmParent.find_child_by_attribute("name", subName.c_str());
+
+      TEST_NOT_CHECK(xmBone.empty());
+
+      auto xmBoneName = xmBone.find_child_by_attribute("name", "name");
+
+      TEST_NOT_CHECK(xmBoneName.empty());
+
+      TEST_EQUAL(b, xmBoneName.text().as_string());
+
+      xmBoneLinks.remove_prefix(fndEnd);
+      xmBoneLinks = es::SkipStartWhitespace(xmBoneLinks, true);
+    }
+  } else {
+    auto xmBone = xmBones.begin();
+
+    for (auto b : skel->BoneNames()) {
+      auto xmBoneName = xmBone->find_child_by_attribute("name", "name");
+
+      TEST_NOT_CHECK(xmBoneName.empty());
+
+      TEST_EQUAL(b, xmBoneName.text().as_string());
+
+      xmBone++;
+    }
   }
 
   auto xmRefPose = nde.find_child_by_attribute("name", "referencePose");
@@ -175,22 +140,74 @@ int test_skeleton(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   for (auto b : skel->BoneTransforms()) {
     xmRefPoses.remove_prefix(xmRefPoses.find_first_of('(') + 1);
 
-    TEST_NOT_CHECK(getNumber(b.translation.X, xmRefPoses));
-    TEST_NOT_CHECK(getNumber(b.translation.Y, xmRefPoses));
-    TEST_NOT_CHECK(getNumber(b.translation.Z, xmRefPoses));
+    TEST_NOT_CHECK(GetNumber(b->translation.X, xmRefPoses));
+    TEST_NOT_CHECK(GetNumber(b->translation.Y, xmRefPoses));
+    TEST_NOT_CHECK(GetNumber(b->translation.Z, xmRefPoses));
 
     xmRefPoses.remove_prefix(xmRefPoses.find_first_of('(') + 1);
 
-    TEST_NOT_CHECK(getNumber(b.rotation.X, xmRefPoses));
-    TEST_NOT_CHECK(getNumber(b.rotation.Y, xmRefPoses));
-    TEST_NOT_CHECK(getNumber(b.rotation.Z, xmRefPoses));
-    TEST_NOT_CHECK(getNumber(b.rotation.W, xmRefPoses));
+    TEST_NOT_CHECK(GetNumber(b->rotation.X, xmRefPoses));
+    TEST_NOT_CHECK(GetNumber(b->rotation.Y, xmRefPoses));
+    TEST_NOT_CHECK(GetNumber(b->rotation.Z, xmRefPoses));
+    TEST_NOT_CHECK(GetNumber(b->rotation.W, xmRefPoses));
 
     xmRefPoses.remove_prefix(xmRefPoses.find_first_of('(') + 1);
 
-    TEST_NOT_CHECK(getNumber(b.scale.X, xmRefPoses));
-    TEST_NOT_CHECK(getNumber(b.scale.Y, xmRefPoses));
-    TEST_NOT_CHECK(getNumber(b.scale.Z, xmRefPoses));
+    TEST_NOT_CHECK(GetNumber(b->scale.X, xmRefPoses));
+    TEST_NOT_CHECK(GetNumber(b->scale.Y, xmRefPoses));
+    TEST_NOT_CHECK(GetNumber(b->scale.Z, xmRefPoses));
+  }
+
+  auto xmFloatSlots = nde.find_child_by_attribute("name", "floatSlots");
+
+  if (!xmFloatSlots.empty()) {
+    TEST_EQUAL(skel->GetNumFloatSlots(),
+               xmFloatSlots.attribute("numelements").as_int());
+
+    auto xmflstBegin = xmFloatSlots.begin();
+
+    for (auto f : skel->FloatSlots()) {
+      TEST_EQUAL(f, xmflstBegin->text().as_string());
+      xmflstBegin++;
+    }
+  }
+
+  auto xmRefFloats = nde.find_child_by_attribute("name", "referenceFloats");
+
+  if (!xmRefFloats.empty()) {
+    TEST_EQUAL(skel->GetNumReferenceFloats(),
+               xmRefFloats.attribute("numelements").as_int());
+
+    es::string_view xmRefFloatsText = xmRefFloats.text().as_string();
+    xmRefFloatsText = es::SkipStartWhitespace(xmRefFloatsText, true);
+
+    for (auto f : skel->ReferenceFloats()) {
+      TEST_NOT_CHECK(GetNumber(f, xmRefFloatsText));
+    }
+  }
+
+  auto xmPartitions = nde.find_child_by_attribute("name", "partitions");
+
+  if (!xmPartitions.empty()) {
+    TEST_EQUAL(skel->GetNumPartitions(),
+               xmPartitions.attribute("numelements").as_int());
+    auto xmPartBegin = xmPartitions.begin();
+
+    for (auto p : skel->Partitions()) {
+      TEST_EQUAL(p.name, xmPartBegin->find_child_by_attribute("name", "name")
+                             .text()
+                             .as_string());
+      TEST_EQUAL(p.startBoneIndex,
+                 xmPartBegin->find_child_by_attribute("name", "startBoneIndex")
+                     .text()
+                     .as_int());
+      TEST_EQUAL(p.numBones,
+                 xmPartBegin->find_child_by_attribute("name", "numBones")
+                     .text()
+                     .as_int());
+
+      xmPartBegin++;
+    }
   }
 
   return 0;
@@ -198,12 +215,19 @@ int test_skeleton(pugi::xml_node nde, IhkVirtualClass *hkNode) {
 
 int test_skeleton() {
   pugi::xml_document doc;
-  doc.load_file("allosaur.xml");
+  doc.load_file("allosaur550.xml");
 
-  auto rootNode = doc.first_child().first_child();
   int overallResult = 0;
 
   for (auto &v : versions) {
+    if (!v.compare(0, 3, "201")) {
+      if (v[3] == '2') {
+        doc.load_file("allosaur2012.xml");
+      } else {
+        doc.load_file("allosaur2010.xml");
+      }
+    }
+
     for (auto &p : compiledFlags) {
       std::string curFile(v);
       curFile.append("allosaur");
@@ -213,6 +237,8 @@ int test_skeleton() {
       std::unique_ptr<IhkPackFile> curHk(IhkPackFile::Create(curFile));
 
       TEST_CHECK(curHk);
+
+      auto rootNode = doc.first_child().first_child();
 
       for (auto &c : rootNode) {
         es::string_view childName = c.attribute("class").as_string();
@@ -230,13 +256,13 @@ int test_skeleton() {
             auto curNode = cDoc.append_child("");
             xmlHavokFile xmHk;
             xmlEnvironment *env = xmHk.NewClass<xmlEnvironment>();
-            env->storage.emplace_back("asset", "rc/550/");
+            env->storage.emplace_back("asset", "resources/550/");
             env->storage.emplace_back(
                 "assetFolder",
-                "R:\\GitHub\\Havok\\HavokLib\\_samples\\Bin\\rc/550/");
+                "r:\\GitHub\\Havok\\HavokLib\\test\\resources/550/");
             env->storage.emplace_back(
                 "assetPath",
-                "R:\\GitHub\\Havok\\HavokLib\\_samples\\Bin\\rc/550/");
+                "r:\\GitHub\\Havok\\HavokLib\\test\\resources/550/");
             env->storage.emplace_back("out", "allosaur");
             env->storage.emplace_back("outFolder", "R:/CurUser/Desktop/");
             env->storage.emplace_back("outPath",
@@ -251,6 +277,10 @@ int test_skeleton() {
           auto allClasses = curHk->GetClasses(childName);
           TEST_NOT_CHECK(allClasses.empty());
           overallResult |= test_skeleton(c, *allClasses.begin());
+        } else if (childName == "hkaAnimationContainer") {
+          auto allClasses = curHk->GetClasses(childName);
+          TEST_NOT_CHECK(allClasses.empty());
+          overallResult |= test_animationcontainer(c, *allClasses.begin());
         }
       }
     }

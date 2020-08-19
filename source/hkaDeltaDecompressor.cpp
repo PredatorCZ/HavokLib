@@ -121,7 +121,7 @@ void hkaDeltaDecompressor::Assign(
   size_t curDynTrack = 0;
 
   for (size_t p = 0; p < numTracks; p++) {
-    StaticMask &mask = masks[p];
+    const StaticMask &mask = masks[p];
     MasterTrack *mtPtr = new MasterTrack(mask);
     tracks.emplace_back(mtPtr);
 
@@ -174,6 +174,8 @@ void hkaDeltaDecompressor::Assign(
 
       break;
     }
+    default:
+      break;
     }
 
     switch (mask.GetRotTrackType()) {
@@ -222,11 +224,15 @@ void hkaDeltaDecompressor::Assign(
       for (auto &t : tck->items) {
         if (t.W == 2.0f || t.W == -2.0f) {
           float basis = t.W * 0.5f;
-          t.QComputeElement() * basis;
+          t.W = 0.f;
+          t.QComputeElement();
+          t.W *= basis;
         }
       }
       break;
     }
+    default:
+      break;
     }
 
     switch (mask.GetScaleTrackType()) {
@@ -268,6 +274,8 @@ void hkaDeltaDecompressor::Assign(
 
       break;
     }
+    default:
+      break;
     }
 
     for (size_t f = numTracks; f < numFloatTracks + numTracks; f++) {
@@ -281,7 +289,7 @@ void hkaDeltaDecompressor::Assign(
         floats.emplace_back(new StaticTrack<float>(*staticBuffer++));
         break;
       case TT_DYNAMIC: {
-        auto cFloatTrack = new DynamicTrack<float>;
+        auto cFloatTrack = new DynamicTrack<float>();
         floats.emplace_back(cFloatTrack);
         cFloatTrack->items.swap(dynamicTracks[curDynTrack++].items);
         break;
@@ -291,7 +299,7 @@ void hkaDeltaDecompressor::Assign(
   }
 }
 
-MasterTrack::MasterTrack(StaticMask &mask) {
+MasterTrack::MasterTrack(const StaticMask &mask) {
   switch (mask.GetPosTrackType()) {
   case TT_IDENTITY:
   case TT_STATIC:

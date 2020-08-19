@@ -18,7 +18,7 @@
 #include "hkNewHeader.h"
 #include "datas/binreader.hpp"
 #include "datas/macroLoop.hpp"
-#include "datas/masterprinter.hpp"
+#include "datas/master_printer.hpp"
 #include <map>
 
 struct _chunkCC {
@@ -42,8 +42,31 @@ int chSDKVRead(BinReader *rd, hkChunk *, hkxNewHeader *root) {
   if (!root)
     return 1;
 
-  rd->ReadBuffer(root->contentsVersionStripped, 4);
-  rd->Skip(4);
+  char buff[8];
+
+  rd->Read(buff);
+  buff[4] = 0;
+
+  uint32 version = atoi(buff);
+
+  auto convert = [&]() {
+    switch (version) {
+    case 2015:
+      return HK2015;
+    case 2016:
+      return HK2016;
+    case 2017:
+      return HK2017;
+    default:
+      return HKUNKVER;
+    }
+  };
+
+  root->toolset = convert();
+
+  if (root->toolset == HKUNKVER) {
+    printerror("[Havok] Unknown toolset version: " << buff);
+  }
 
   return 0;
 }
@@ -171,12 +194,6 @@ int chITEMRead(BinReader *rd, hkChunk *holder, hkxNewHeader *root) {
   return 0;
 }
 
-std::string _hkGenerateClassnameNew(hkxNewHeader *hdr,
-                                    const std::string &className) {
-  return className + "_t<" + className + hdr->contentsVersionStripped + "_t<" +
-         "esPointerX64" + ">>";
-}
-
 int chPTCHRead(BinReader *rd, hkChunk *holder, hkxNewHeader *root) {
   if (!holder || !root)
     return 1;
@@ -228,33 +245,27 @@ int chPTCHRead(BinReader *rd, hkChunk *holder, hkxNewHeader *root) {
   }
 
   for (auto &f : root->classEntries) {
-    const uint32 clsID = f.Size() - 1;
+    const int32 clsID = f.Size() - 1;
 
     if (clsID < 0)
       continue;
 
     es::string_view clName = root->weldedClassNames[clsID].className;
-    std::string compiledClassname = _hkGenerateClassnameNew(root, clName);
-    const JenHash _chash = JenkinsHash(compiledClassname.c_str());
-
-    hkVirtualClass *cls = IhkPackFile::ConstructClass(_chash);
+    const JenHash _chash = JenkinsHash(clName);
+    CRule rule(root->toolset, false, 8); // No way to detect so far
+    hkVirtualClass *cls = hkVirtualClass::Create(_chash, rule);
 
     if (cls) {
       cls->SetDataPointer(&root->dataBuffer[0] + f.tag.hash);
       cls->name = clName;
-      cls->superHash = JenkinsHash(clName);
-      // cls->masterBuffer = root->dataBuffer;
+      cls->AddHash(clName);
       cls->header = root;
-
       root->virtualClasses.emplace_back(cls);
       cls->Process();
     }
   }
-#ifdef _MSC_VER
-  root->classEntries.~vector();
-#else
-  root->classEntries.clear();
-#endif
+
+  auto t0 = std::move(root->classEntries);
 
   return 0;
 }
@@ -305,10 +316,6 @@ int hkChunk::Read(BinReader *rd, hkxNewHeader *root) {
   }
 
   return 0;
-}
-
-int32 hkxNewHeader::GetVersion() const {
-  return atoi(contentsVersionStripped);
 }
 
 int hkxNewHeader::Load(BinReader *rd) {

@@ -16,7 +16,6 @@
 */
 
 #pragma once
-#include "datas/VectorsSimd.hpp"
 #include "datas/jenkinshash.hpp"
 #include "datas/reflector.hpp"
 #include "datas/string_view.hpp"
@@ -36,22 +35,14 @@ struct hkRootLevelContainer;
 struct hkVirtualClass;
 
 #define DECLARE_HKCLASS(classname)                                             \
-  static const JenHash HASH = JenkinsHashC(#classname);
+  static constexpr JenHash GetHash() { return JenkinsHashC(#classname); }
 
 //////////////////////////////////////////////////////// Havok Interface Classes
 
-enum hkXMLToolsets {
-  HKUNKVER,
-  HK550,
-  HK660,
-  HK710,
-  HK2010_2,
-  HK2011,
-  HK2011_2,
-  HK2012_2,
-  HK2013,
-  HK2014,
-};
+REFLECTOR_CREATE(hkToolset, ENUM, 1, 8, HKUNKVER, HK500, HK510, HK550, HK600,
+                 HK610, HK650, HK660, HK700, HK710, HK2010_1, HK2010_2,
+                 HK2011_1, HK2011_2, HK2011_3, HK2012_1, HK2012_2, HK2013,
+                 HK2014, HK2015, HK2016, HK2017);
 
 namespace pugi {
 class xml_node;
@@ -61,7 +52,7 @@ typedef pugi::xml_node XMLnode;
 
 struct XMLHandle {
   XMLnode *node;
-  hkXMLToolsets toolset;
+  hkToolset toolset;
 };
 
 struct IhkVirtualClass {
@@ -76,11 +67,14 @@ struct hkLocalFrameOnBone {
   int boneIndex;
 };
 
-struct hkaPartition {
-  DECLARE_REFLECTOR;
+struct hkaPartition : ReflectorInterface<hkaPartition> {
   std::string name;
   int16 startBoneIndex;
   uint16 numBones;
+
+  hkaPartition() = default;
+  hkaPartition(es::string_view iName, int16 stboneid, uint16 iNumBones)
+      : name(iName), startBoneIndex(stboneid), numBones(iNumBones) {}
 };
 
 struct hkaSkeleton : IhkVirtualClass, uni::Skeleton {
@@ -281,8 +275,9 @@ struct hkaAnimation : uni::Motion, IhkVirtualClass {
   virtual size_t GetNumAnnotations() const = 0;
   virtual hkaAnnotationTrackPtr GetAnnotation(size_t id) const = 0;
 
-  typedef uni::VirtualIteratorProxy<hkaAnimation, &hkaAnimation::GetNumAnnotations,
-                      hkaAnnotationTrackPtr, &hkaAnimation::GetAnnotation>
+  typedef uni::VirtualIteratorProxy<
+      hkaAnimation, &hkaAnimation::GetNumAnnotations, hkaAnnotationTrackPtr,
+      &hkaAnimation::GetAnnotation>
       interatorAnnotation;
 
   const interatorAnnotation Annotations() const {
@@ -295,7 +290,8 @@ struct hkxEnvironmentVariable {
   es::string_view value;
 };
 
-struct hkxEnvironment : IhkVirtualClass, virtual uni::Vector<hkxEnvironmentVariable> {
+struct hkxEnvironment : IhkVirtualClass,
+                        virtual uni::Vector<hkxEnvironmentVariable> {
   DECLARE_HKCLASS(hkxEnvironment)
 };
 
@@ -306,29 +302,37 @@ enum class hkaAnimatedReferenceFrameType : uint8 {
 };
 
 struct hkaAnimatedReferenceFrame : IhkVirtualClass, uni::MotionTrack {
-  virtual Vector4 GetUp() const = 0;
-  virtual Vector4 GetForward() const = 0;
+  virtual const Vector4A16 &GetUp() const = 0;
+  virtual const Vector4A16 &GetForward() const = 0;
   virtual hkaAnimatedReferenceFrameType GetType() const = 0;
 };
 struct hkaBoneAttachment : IhkVirtualClass {};
 struct hkaMeshBinding : IhkVirtualClass {};
+
+struct CRule {
+  hkToolset version;
+  bool reusePadding;
+  bool x64;
+  char reserved;
+
+  CRule() : version(HKUNKVER), reusePadding(false), x64(true), reserved() {}
+  CRule(hkToolset ver, bool rp, bool _x64)
+      : version(ver), reusePadding(rp), x64(_x64), reserved() {}
+
+  bool operator==(const CRule &s) const {
+    return reinterpret_cast<const uint32 &>(*this) ==
+           reinterpret_cast<const uint32 &>(s);
+  }
+};
 
 struct IhkPackFile {
   typedef std::unique_ptr<IhkVirtualClass> VirtualClass;
   typedef std::vector<VirtualClass> VirtualClasses;
   typedef std::vector<IhkVirtualClass *> VirtualClassesRef;
 
-private:
-  template <class _Ty>
-  int _ExportXML(const _Ty *fileName, hkXMLToolsets toolsetVersion);
-
-  void _GenerateXML(pugi::xml_document &doc, hkXMLToolsets toolsetVersion);
-
-public:
-  IhkPackFile();
   virtual VirtualClasses &GetAllClasses() = 0;
-  virtual int32 GetVersion() const = 0;
-  virtual ~IhkPackFile() {};
+  virtual hkToolset GetToolset() const = 0;
+  virtual ~IhkPackFile(){};
 
   VirtualClassesRef GetClasses(es::string_view hkClassName) {
     return GetClasses(JenkinsHash(hkClassName));
@@ -338,7 +342,7 @@ public:
 
   hkRootLevelContainer *GetRootLevelContainer() {
     return dynamic_cast<hkRootLevelContainer *>(
-        GetClasses(hkRootLevelContainer::HASH)[0]);
+        GetClasses(hkRootLevelContainer::GetHash())[0]);
   }
 
   const IhkVirtualClass *GetClass(const void *ptr);
@@ -348,13 +352,12 @@ public:
   static IhkPackFile *Create(es::string_view fileName,
                              bool suppressErrors = false);
 
-  int ExportXML(const wchar_t *fileName, hkXMLToolsets toolsetVersion) {
-    return _ExportXML(fileName, toolsetVersion);
-  }
-  int ExportXML(const char *fileName, hkXMLToolsets toolsetVersion) {
-    return _ExportXML(fileName, toolsetVersion);
-  }
+  int ToXML(es::string_view fileName, hkToolset toolset);
+  int ToXML(const std::string &fileName, hkToolset toolset);
 
-  // Internal use only
-  static hkVirtualClass *ConstructClass(JenHash hash);
+  pugi::xml_document ToXML(hkToolset toolset);
+
+  // rule must be as hex, ie. 0x4101
+  int ToPackFile(es::string_view fileName, hkToolset toolset, uint32 rule);
+  int ToPackFile(const std::string &fileName, hkToolset toolset, uint32 rule);
 };

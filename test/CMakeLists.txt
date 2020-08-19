@@ -6,15 +6,16 @@ file(GLOB_RECURSE RESOURCE_XML_FILES "${CMAKE_CURRENT_SOURCE_DIR}/resources/*.xm
 file(GLOB_RECURSE RESOURCE_HKX_FILES "${CMAKE_CURRENT_SOURCE_DIR}/resources/*.hkx")
 
 set(MAX_TMSTAMP 0)
+set(RESOURCESTOC "")
 
 foreach(E ${RESOURCE_XML_FILES} ${RESOURCE_HKX_FILES})
 	file(TIMESTAMP ${E} SS "%s" UTC)
+	string(APPEND RESOURCESTOC "${E}\n")
 
 	if(${SS} GREATER ${MAX_TMSTAMP})
 		set(MAX_TMSTAMP ${SS})
 	endif()
 endforeach()
-
 
 set(RES_ARCHIVE_NAME ${CMAKE_CURRENT_SOURCE_DIR}/resources.tar.zst)
 file(TIMESTAMP ${RES_ARCHIVE_NAME} RES_ARCHIVE_TIMESTAMP "%s" UTC)
@@ -25,14 +26,16 @@ endif()
 
 if(MAX_TMSTAMP GREATER RES_ARCHIVE_TIMESTAMP)
 	message("Creating resource archive")
+	file(WRITE resourcesTOC ${RESOURCESTOC})
 	execute_process(COMMAND
-		${CMAKE_COMMAND} -E tar c ${RES_ARCHIVE_NAME} --zstd --
-		${RESOURCE_XML_FILES} ${RESOURCE_HKX_FILES}
+		${CMAKE_COMMAND} -E tar c ${RES_ARCHIVE_NAME} --zstd 
+		--files-from=resourcesTOC
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+	file(REMOVE resourcesTOC)
 else()
 	message("Extracting resource archive")
 	if(${CMAKE_MINOR_VERSION} LESS 13)
-		execute_process(COMMAND zstd -d ${RES_ARCHIVE_NAME} -o ${RES_ARCHIVE_NAME}.d)
+		execute_process(COMMAND zstd -fd ${RES_ARCHIVE_NAME} -o ${RES_ARCHIVE_NAME}.d)
 		set(RES_ARCHIVE_NAME ${RES_ARCHIVE_NAME}.d)
 	endif()
 	execute_process(COMMAND
@@ -45,10 +48,6 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 4)
 else()
 	message(STATUS "Architecture: X64")
 endif()
-
-include(${PRECORE_SOURCE_DIR}/cmake/targetex.cmake)
-include(${PRECORE_SOURCE_DIR}/cmake/chartype.cmake)
-set(CMAKE_CXX_STANDARD 11)
 
 build_target(
 	TYPE APP

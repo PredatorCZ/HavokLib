@@ -59,18 +59,18 @@ public:
 
 private:
   union {
-    esFlags<uint8> data;
-    uint8 dataRaw;
+    esFlags<uint16> data;
+    uint16 dataRaw;
   };
-  TrackType GetTrackType(uint32 offset) {
+  TrackType GetTrackType(uint32 offset) const {
     return static_cast<TrackType>((dataRaw >> offset) & 3);
   }
 
 public:
-  TrackType GetPosTrackType() { return GetTrackType(ttPos); }
-  TrackType GetRotTrackType() { return GetTrackType(ttRot); }
-  TrackType GetScaleTrackType() { return GetTrackType(ttScale); }
-  bool UseSubTrack(MaskType type) { return data[type]; }
+  TrackType GetPosTrackType() const { return GetTrackType(ttPos); }
+  TrackType GetRotTrackType() const { return GetTrackType(ttRot); }
+  TrackType GetScaleTrackType() const { return GetTrackType(ttScale); }
+  bool UseSubTrack(MaskType type) const { return data[type]; }
 };
 
 template <class C> struct ITrack {
@@ -97,5 +97,5 @@ struct MasterTrack {
   typedef std::unique_ptr<VectorTrack> VectorTrackPtr;
   VectorTrackPtr pos, rot, scale;
 
-  MasterTrack(StaticMask &mask);
+  MasterTrack(const StaticMask &mask);
 };

@@ -16,198 +16,204 @@
 */
 
 #pragma once
-#include "HavokApi.hpp"
-#include "datas/reflector.hpp"
-#include "hkObjectBase.h"
 #include "hkReflectorUtil.h"
 #include "hkaAnnotation.h"
 #include <unordered_map>
 
-REFLECTOR_WOENUM_WREMAP(hkaAnimationType, HK_UNKNOWN_ANIMATION,
-                        HK_INTERLEAVED_ANIMATION, HK_DELTA_COMPRESSED_ANIMATION,
-                        HK_WAVELET_COMPRESSED_ANIMATION, HK_MIRRORED_ANIMATION,
-                        HK_SPLINE_COMPRESSED_ANIMATION,
-                        HK_QUANTIZED_COMPRESSED_ANIMATION,
-                        HK_PREDICTIVE_COMPRESSED_ANIMATION,
-                        HK_REFERENCE_POSE_ANIMATION);
+static const std::unordered_map<JenHash, hkaAnimationType>
+    hkaAnimationTypeRemaps{StaticForArgID(
+        _REFLECTOR_ADDN_REMAP, hkaAnimationType, HK_UNKNOWN_ANIMATION,
+        HK_INTERLEAVED_ANIMATION, HK_DELTA_COMPRESSED_ANIMATION,
+        HK_WAVELET_COMPRESSED_ANIMATION, HK_MIRRORED_ANIMATION,
+        HK_SPLINE_COMPRESSED_ANIMATION, HK_QUANTIZED_COMPRESSED_ANIMATION,
+        HK_PREDICTIVE_COMPRESSED_ANIMATION, HK_REFERENCE_POSE_ANIMATION)};
 
 struct AnimationType1 {
   REFLECTOR_ENUM_HASH(AnimationType, HK_UNKNOWN_ANIMATION,
                       HK_INTERLEAVED_ANIMATION, HK_DELTA_COMPRESSED_ANIMATION,
                       HK_WAVELET_COMPRESSED_ANIMATION, HK_MIRRORED_ANIMATION,
-                      HK_SPLINE_COMPRESSED_ANIMATION) // 550, 660, 710
-};
-struct AnimationType2010 {
-  REFLECTOR_ENUM_HASH(AnimationType, HK_UNKNOWN_ANIMATION,
-                      HK_INTERLEAVED_ANIMATION, HK_DELTA_COMPRESSED_ANIMATION,
-                      HK_WAVELET_COMPRESSED_ANIMATION, HK_MIRRORED_ANIMATION,
                       HK_SPLINE_COMPRESSED_ANIMATION,
-                      HK_QUANTIZED_COMPRESSED_ANIMATION)
+                      HK_QUANTIZED_COMPRESSED_ANIMATION) // < 2011
 };
-struct AnimationType2011 {
-  REFLECTOR_ENUM_HASH(AnimationType, HK_UNKNOWN_ANIMATION,
-                      HK_INTERLEAVED_ANIMATION, HK_MIRRORED_ANIMATION,
-                      HK_SPLINE_COMPRESSED_ANIMATION,
-                      HK_QUANTIZED_COMPRESSED_ANIMATION,
-                      HK_PREDICTIVE_COMPRESSED_ANIMATION)
-};
+
 struct AnimationType2 {
   REFLECTOR_ENUM_HASH(AnimationType, HK_UNKNOWN_ANIMATION,
                       HK_INTERLEAVED_ANIMATION, HK_MIRRORED_ANIMATION,
                       HK_SPLINE_COMPRESSED_ANIMATION,
                       HK_QUANTIZED_COMPRESSED_ANIMATION,
                       HK_PREDICTIVE_COMPRESSED_ANIMATION,
-                      HK_REFERENCE_POSE_ANIMATION) // 2012, 2013, 2014
+                      HK_REFERENCE_POSE_ANIMATION)
 };
 
 template <class C, class parentClass>
-struct hkaSkeletalAnimation_t : virtual parentClass {
-  C *Data;
-  hkClassConstructor_nohash(hkaSkeletalAnimation_t);
-  void SwapEndian() override { Data->SwapEndian(); }
-  es::string_view GetAnimationTypeName() const override {
-    return Data->GetAnimationTypeName();
+struct hkaAnimation_t : virtual parentClass {
+  uni::Element<C> data;
+  // std::unique_ptr<hkaAnimationSaver> saver;
+
+  void SetDataPointer(void *ptr) override {
+    data = {static_cast<C *>(ptr), false};
   }
+  const void *GetPointer() const override { return data.get(); }
+
+  void SwapEndian() override { data->SwapEndian(); }
+
   hkaAnimationType GetAnimationType() const override {
-    return Data->GetAnimationType();
+    return data->GetAnimationType();
   }
-  float Duration() const override { return Data->GetDuration(); }
+  float Duration() const override { return data->GetDuration(); }
   size_t GetNumOfTransformTracks() const override {
-    return Data->GetNumOfTransformTracks();
+    return data->GetNumOfTransformTracks();
   }
   size_t GetNumOfFloatTracks() const override {
-    return Data->GetNumOfFloatTracks();
+    return data->GetNumOfFloatTracks();
   }
   const hkaAnimatedReferenceFrame *GetExtractedMotion() const override {
-    return Data->GetExtractedMotion(this->header);
+    return data->GetExtractedMotion(this->header);
   }
   size_t GetNumAnnotations() const override {
-    return Data->GetNumAnnotations();
+    return data->GetNumAnnotations();
   }
   hkaAnnotationTrackPtr GetAnnotation(size_t id) const override {
-    return Data->GetAnnotation(id);
+    return data->GetAnnotation(id);
   }
 };
-template <class C, class parentClass> using hkaAnimation_t = hkaSkeletalAnimation_t<C, parentClass>;
 
-template <template <class C> class _ipointer, class AniType,
-          template <template <class C> class __ipointer, class _AniType>
+template <template <class C> class _ipointer, bool rp,
+          template <template <class C> class __ipointer, bool _rp>
           class _parent>
-struct hkaSkeletalAnimation_t_shared : _parent<_ipointer, AniType> {
-  typedef _parent<_ipointer, AniType> parent_class;
+struct hkaAnimation_t_shared : _parent<_ipointer, rp> {
+  typedef _parent<_ipointer, rp> parent_class;
+  typedef typename parent_class::annot_type annot_type;
+  typedef typename parent_class::anim_type anim_type;
 
-   const char *GetAnimationTypeName() const {
-    return hkaAnimationType_reflected[GetAnimationType()];
-  }
-   hkaAnimationType GetAnimationType() const {
-    const JenHash hsh =
-        AnimationType1{}
-            .AnimationType_hashed[static_cast<int>(this->animationType)];
-    return hkaAnimationType_remap.at(hsh);
+  hkaAnimationType GetAnimationType() const {
+    const JenHash hsh = anim_type::GetHashes()[this->animationType];
+    return hkaAnimationTypeRemaps.at(hsh);
   }
 
-   float GetDuration() const { return this->duration; }
-   size_t GetNumOfTransformTracks() const {
-    return this->numOfTransformTracks;
-  }
-   size_t GetNumOfFloatTracks() const {
-    return this->numOfFloatTracks;
-  }
-   const hkaAnimatedReferenceFrame *
+  float GetDuration() const { return this->duration; }
+
+  size_t GetNumOfTransformTracks() const { return this->numOfTransformTracks; }
+
+  const hkaAnimatedReferenceFrame *
   GetExtractedMotion(IhkPackFile *header) const {
     return dynamic_cast<const hkaAnimatedReferenceFrame *>(
         header->GetClass(this->extractedMotion));
   }
 
-  enablePtrPair(annotations) GetNumAnnotations() const {
-    return this->numAnnotations;
-  }
-  enablehkArray(annotations) GetNumAnnotations() const {
-    return this->annotations.count;
-  }
-  enablePtrPairRef(annotations) GetNumAnnotations() {
-    return this->numAnnotations;
-  }
-  enablehkArrayRef(annotations) GetNumAnnotations() {
-    return this->annotations.count;
-  }
+  GetNum(OfFloatTracks);
+  GetNum(Annotations);
 
-  typedef typename _parent<_ipointer, AniType>::annot_type annot_type;
-
-  enablePtrPairArg(annotations, hkaAnnotationTrackPtr)
-      GetAnnotation(size_t id) const {
+  AccessMethod2(Annotation, hkaAnnotationTrackPtr{}) {
     hkaAnnotation_t<annot_type> *ano = new hkaAnnotation_t<annot_type>;
-    ano->SetDataPointer(this->annotations[id]);
+    ano->SetDataPointer(this->Annotations[id]);
     return hkaAnnotationTrackPtr(ano);
   }
 
-  enablehkArrayArg(annotations, hkaAnnotationTrackPtr)
-      GetAnnotation(size_t id) const {
+  AccessMethod2Arr(Annotation, hkaAnnotationTrackPtr{}) {
     hkaAnnotation_t<annot_type> *ano = new hkaAnnotation_t<annot_type>;
-    ano->SetDataPointer(&this->annotations[id]);
+    ano->SetDataPointer(&this->Annotations[id]);
     return hkaAnnotationTrackPtr(ano);
   }
 
-  enablePtrPairArg(annotations, void) SwapAnnotations() {
+  SwapMethod2(Annotations) {
     for (size_t a = 0; a < GetNumAnnotations(); a++) {
-      this->annotations[a]->SwapEndian();
+      this->Annotations[a]->SwapEndian();
     }
   }
 
-  enablehkArrayArg(annotations, void) SwapAnnotations() {
+  SwapMethod2Arr(Annotations) {
     for (size_t a = 0; a < GetNumAnnotations(); a++) {
-      this->annotations[a].SwapEndian();
+      this->Annotations[a].SwapEndian();
     }
   }
 
-   void SwapEndian() {
+  void SwapEndian() {
     FByteswapper(this->animationType);
     FByteswapper(this->duration);
-    FByteswapper(this->numOfFloatTracks);
     FByteswapper(this->numOfTransformTracks);
+    FByteswapper(GetNumOfFloatTracks());
     FByteswapper(GetNumAnnotations());
     SwapAnnotations();
   }
 };
 
-template <template <class C> class _ipointer, class AniType>
-struct hkaSkeletalAnimation550_t_data : hkReferenceObject<_ipointer> {
-  typename AniType::AnimationType animationType;
+template <template <class C> class _ipointer, bool rp>
+struct hkaAnimation500_t_data : hkReferenceObject<_ipointer> {
+  using annot_type = hkaAnnotation_t_shared<_ipointer, hkaAnnotationTrack1>;
+  using anim_type = AnimationType1;
+
+  uint32 animationType;
   float duration;
   uint32 numOfTransformTracks;
-  uint32 numOfFloatTracks;
   _ipointer<hkaAnimatedReferenceFrame> extractedMotion;
-  typedef hkaAnnotation_t_shared<_ipointer, hkaAnnotationTrack1> annot_type;
-  mutable _ipointer<_ipointer<annot_type>> annotations;
+  mutable _ipointer<_ipointer<annot_type>> Annotations;
   uint32 numAnnotations;
 
   GNU_PADDING(4);
 };
 
 #pragma MSC_RP_PACK(4)
-template <template <class C> class _ipointer, class AniType>
-struct hkaSkeletalAnimation550_rp_t_data : hkReferenceObject_rp<_ipointer> {
-  typename AniType::AnimationType animationType;
+template <template <class C> class _ipointer>
+struct hkaAnimation500_t_data<_ipointer, true>
+    : hkReferenceObject_rp<_ipointer> {
+  using annot_type = hkaAnnotation_t_shared<_ipointer, hkaAnnotationTrack1>;
+  using anim_type = AnimationType1;
+
+  uint32 animationType;
+  float duration;
+  uint32 numOfTransformTracks;
+  _ipointer<hkaAnimatedReferenceFrame> extractedMotion;
+  mutable _ipointer<_ipointer<annot_type>> Annotations;
+  uint32 numAnnotations;
+};
+#pragma pack()
+
+template <template <class C> class _ipointer, bool rp>
+struct hkaAnimation550_t_data : hkReferenceObject<_ipointer> {
+  using annot_type = hkaAnnotation_t_shared<_ipointer, hkaAnnotationTrack1>;
+  using anim_type = AnimationType1;
+
+  uint32 animationType;
   float duration;
   uint32 numOfTransformTracks;
   uint32 numOfFloatTracks;
   _ipointer<hkaAnimatedReferenceFrame> extractedMotion;
-  typedef hkaAnnotation_t_shared<_ipointer, hkaAnnotationTrack1> annot_type;
-  mutable _ipointer<_ipointer<annot_type>> annotations;
+  mutable _ipointer<_ipointer<annot_type>> Annotations;
+  uint32 numAnnotations;
+
+  GNU_PADDING(4);
+};
+
+#pragma MSC_RP_PACK(4)
+template <template <class C> class _ipointer>
+struct hkaAnimation550_t_data<_ipointer, true>
+    : hkReferenceObject_rp<_ipointer> {
+  using annot_type = hkaAnnotation_t_shared<_ipointer, hkaAnnotationTrack1>;
+  using anim_type = AnimationType1;
+
+  uint32 animationType;
+  float duration;
+  uint32 numOfTransformTracks;
+  uint32 numOfFloatTracks;
+  _ipointer<hkaAnimatedReferenceFrame> extractedMotion;
+  mutable _ipointer<_ipointer<annot_type>> Annotations;
   uint32 numAnnotations;
 };
 #ifdef _MSC_VER
-template <class AniType>
-struct hkaSkeletalAnimation550_rp_t_data<esPointerX64, AniType>
+template <>
+struct hkaAnimation550_t_data<esPointerX64, true>
     : hkReferenceObject_rp<esPointerX64> {
-  typename AniType::AnimationType animationType;
+  using annot_type = hkaAnnotation_t_shared<esPointerX64, hkaAnnotationTrack1>;
+  using anim_type = AnimationType1;
+
+  uint32 animationType;
   float duration;
   uint32 numOfTransformTracks;
   uint32 numOfFloatTracks;
   uint32 _padding;
   esPointerX64<hkaAnimatedReferenceFrame> extractedMotion;
-  typedef hkaAnnotation_t_shared<esPointerX64, hkaAnnotationTrack1> annot_type;
-  mutable esPointerX64<esPointerX64<annot_type>> annotations;
+  mutable esPointerX64<esPointerX64<annot_type>> Annotations;
   uint32 numAnnotations;
 };
 #endif
@@ -215,97 +221,62 @@ struct hkaSkeletalAnimation550_rp_t_data<esPointerX64, AniType>
 
 template <template <class C> class _ipointer, class AniType,
           template <template <class C> class __ipointer> class _parent>
-struct hkaAnimation2k_sharedData_t : _parent<_ipointer> {
-  typename AniType::AnimationType animationType;
+struct hkaAnimation700_data_t : _parent<_ipointer> {
+  using annot_type = hkaAnnotation_t_shared<_ipointer, hkaAnnotationTrack2>;
+  using anim_type = AniType;
+
+  uint32 animationType;
   float duration;
   uint32 numOfTransformTracks;
   uint32 numOfFloatTracks;
   _ipointer<hkaAnimatedReferenceFrame> extractedMotion;
-  typedef hkaAnnotation_t_shared<_ipointer, hkaAnnotationTrack2> annot_type;
-  mutable hkArray<annot_type, _ipointer> annotations;
+  mutable hkArray<annot_type, _ipointer> Annotations;
 };
 
-template <template <class C> class _ipointer, class AniType>
-using hkaAnimation2k_t =
-    hkaAnimation2k_sharedData_t<_ipointer, AniType, hkReferenceObject>;
-template <template <class C> class _ipointer, class AniType>
-using hkaAnimation2k_rp_t =
-    hkaAnimation2k_sharedData_t<_ipointer, AniType, hkReferenceObject_rp>;
+template <template <class C> class _ipointer, bool rp>
+using hkaAnimation500 =
+    hkaAnimation_t_shared<_ipointer, rp, hkaAnimation500_t_data>;
+
+template <template <class C> class _ipointer, bool rp>
+using hkaAnimation550 =
+    hkaAnimation_t_shared<_ipointer, rp, hkaAnimation550_t_data>;
+
+template <template <class C> class _ipointer, bool rp>
+struct hkaAnimation700_t_data
+    : hkaAnimation700_data_t<_ipointer, AnimationType1, hkReferenceObject> {};
 
 template <template <class C> class _ipointer>
-using hkaSkeletalAnimation550_t =
-    hkaSkeletalAnimation_t_shared<_ipointer, AnimationType1,
-                                  hkaSkeletalAnimation550_t_data>;
-template <template <class C> class _ipointer>
-using hkaSkeletalAnimation550_rp_t =
-    hkaSkeletalAnimation_t_shared<_ipointer, AnimationType1,
-                                  hkaSkeletalAnimation550_rp_t_data>;
-template <template <class C> class _ipointer>
-struct hkaAnimation660_t : hkaSkeletalAnimation550_t<_ipointer> {};
-template <template <class C> class _ipointer>
-struct hkaAnimation660_rp_t : hkaSkeletalAnimation550_rp_t<_ipointer> {};
+struct hkaAnimation700_t_data<_ipointer, true>
+    : hkaAnimation700_data_t<_ipointer, AnimationType1, hkReferenceObject_rp> {
+};
+
+template <template <class C> class _ipointer, bool rp>
+using hkaAnimation700 =
+    hkaAnimation_t_shared<_ipointer, rp, hkaAnimation700_t_data>;
+
+template <template <class C> class _ipointer, bool rp>
+struct hkaAnimation2011_t_data
+    : hkaAnimation700_data_t<_ipointer, AnimationType2, hkReferenceObject> {};
 
 template <template <class C> class _ipointer>
-using hkaAnimation710_t =
-    hkaSkeletalAnimation_t_shared<_ipointer, AnimationType1, hkaAnimation2k_t>;
-template <template <class C> class _ipointer>
-using hkaAnimation2010_t =
-    hkaSkeletalAnimation_t_shared<_ipointer, AnimationType2010,
-                                  hkaAnimation2k_t>;
-template <template <class C> class _ipointer>
-using hkaAnimation2011_t =
-    hkaSkeletalAnimation_t_shared<_ipointer, AnimationType2011,
-                                  hkaAnimation2k_t>;
-template <template <class C> class _ipointer>
-using hkaAnimation2012_t =
-    hkaSkeletalAnimation_t_shared<_ipointer, AnimationType2, hkaAnimation2k_t>;
-template <template <class C> class _ipointer>
-struct hkaAnimation2013_t : hkaAnimation2012_t<_ipointer> {};
-template <template <class C> class _ipointer>
-struct hkaAnimation2014_t : hkaAnimation2012_t<_ipointer> {};
-template <template <class C> class _ipointer>
-struct hkaAnimation2015_t : hkaAnimation2012_t<_ipointer> {};
+struct hkaAnimation2011_t_data<_ipointer, true>
+    : hkaAnimation700_data_t<_ipointer, AnimationType2, hkReferenceObject_rp> {
+};
+
+template <template <class C> class _ipointer, bool rp>
+using hkaAnimation2011 =
+    hkaAnimation_t_shared<_ipointer, rp, hkaAnimation2011_t_data>;
+
+template <template <class C> class _ipointer, bool rp>
+struct hkaAnimation2016_t_data
+    : hkaAnimation700_data_t<_ipointer, AnimationType2, hkReferenceObject2016> {
+};
 
 template <template <class C> class _ipointer>
-using hkaAnimation710_rp_t =
-    hkaSkeletalAnimation_t_shared<_ipointer, AnimationType1,
-                                  hkaAnimation2k_rp_t>;
-template <template <class C> class _ipointer>
-using hkaAnimation2010_rp_t =
-    hkaSkeletalAnimation_t_shared<_ipointer, AnimationType2010,
-                                  hkaAnimation2k_rp_t>;
-template <template <class C> class _ipointer>
-using hkaAnimation2011_rp_t =
-    hkaSkeletalAnimation_t_shared<_ipointer, AnimationType2011,
-                                  hkaAnimation2k_rp_t>;
-template <template <class C> class _ipointer>
-using hkaAnimation2012_rp_t =
-    hkaSkeletalAnimation_t_shared<_ipointer, AnimationType2,
-                                  hkaAnimation2k_rp_t>;
-template <template <class C> class _ipointer>
-struct hkaAnimation2013_rp_t : hkaAnimation2012_rp_t<_ipointer> {};
-template <template <class C> class _ipointer>
-struct hkaAnimation2014_rp_t : hkaAnimation2012_rp_t<_ipointer> {};
-template <template <class C> class _ipointer>
-struct hkaAnimation2015_rp_t : hkaAnimation2012_rp_t<_ipointer> {};
+struct hkaAnimation2016_t_data<_ipointer, true>
+    : hkaAnimation700_data_t<_ipointer, AnimationType2,
+                             hkReferenceObject2016_rp> {};
 
-template <template <class C> class _ipointer, class AniType>
-using hkaAnimation2016_tt =
-    hkaAnimation2k_sharedData_t<_ipointer, AniType, hkReferenceObject2016>;
-template <template <class C> class _ipointer, class AniType>
-using hkaAnimation2016_rp_tt =
-    hkaAnimation2k_sharedData_t<_ipointer, AniType, hkReferenceObject2016_rp>;
-
-template <template <class C> class _ipointer>
-using hkaAnimation2016_t =
-    hkaSkeletalAnimation_t_shared<_ipointer, AnimationType2,
-                                  hkaAnimation2016_tt>;
-template <template <class C> class _ipointer>
-using hkaAnimation2016_rp_t =
-    hkaSkeletalAnimation_t_shared<_ipointer, AnimationType2,
-                                  hkaAnimation2016_rp_tt>;
-
-template <template <class C> class _ipointer>
-struct hkaAnimation2017_t : hkaAnimation2016_t<_ipointer> {};
-template <template <class C> class _ipointer>
-struct hkaAnimation2017_rp_t : hkaAnimation2016_rp_t<_ipointer> {};
+template <template <class C> class _ipointer, bool rp>
+using hkaAnimation2016 =
+    hkaAnimation_t_shared<_ipointer, rp, hkaAnimation2016_t_data>;
