@@ -43,12 +43,6 @@ else()
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
-if(CMAKE_SIZEOF_VOID_P EQUAL 4)
-	message(STATUS "Architecture: X86")
-else()
-	message(STATUS "Architecture: X64")
-endif()
-
 build_target(
 	TYPE APP
 	SOURCES 

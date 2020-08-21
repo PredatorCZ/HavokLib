@@ -117,7 +117,47 @@ struct hkaSkeletonSaver {
   }
 };
 
-template <class C> struct hkaSkeleton_t : hkaSkeletonInternalInterface {
+class hkFullBone : public uni::Bone {
+public:
+  es::string_view name;
+  const hkQTransform *tm;
+  hkFullBone *parent;
+  size_t id;
+
+  TransformType TMType() const override { return TMTYPE_RTS; }
+  void GetTM(uni::RTSValue &out) const override { out = *tm; }
+  const Bone *Parent() const override { return parent; }
+  size_t Index() const override { return id; }
+  es::string_view Name() const override { return name; }
+  operator uni::Element<const uni::Bone>() const {
+    return {static_cast<const uni::Bone *>(this), false};
+  }
+};
+
+struct hkaSkeletonBinInterface : hkaSkeletonInternalInterface,
+                                 uni::VectorList<uni::Bone, hkFullBone> {
+  void Process() override {
+    storage.resize(GetNumBones());
+    size_t curId = 0;
+
+    for (auto &b : storage) {
+      b.id = curId;
+      b.name = GetBoneName(curId);
+      int16 prentID = GetBoneParentID(curId);
+      b.parent = prentID < 0 ? nullptr : &storage[prentID];
+      b.tm = GetBoneTM(curId);
+
+      curId++;
+    }
+  }
+
+  uni::SkeletonBonesConst Bones() const override {
+    return uni::SkeletonBonesConst(
+        dynamic_cast<const uni::List<uni::Bone> *>(this), false);
+  }
+};
+
+template <class C> struct hkaSkeleton_t : hkaSkeletonBinInterface {
   uni::Element<C> data;
   std::unique_ptr<hkaSkeletonSaver> saver;
 

@@ -1,0 +1,62 @@
+@startuml diag
+title Basic library diagram
+
+[API interface] as api
+[Internal interface] as int
+[Binary shared interface] as bin
+[XML class definion] as xml
+
+rectangle "Bin class 0" as bc0
+rectangle "Bin class 1" as bc1
+rectangle "Bin class n" as bcn
+rectangle layout_0
+rectangle layout_1
+rectangle layout_n
+
+bcn .down. layout_0
+layout_0 .. layout_1
+layout_1 .. layout_n
+
+[Reflector] as rf0
+[Reflector] as rf1
+
+[UNI interface] <- api
+[Python wrapper] <-- api
+api <- int
+xml --> int
+int <- bin
+int <- [XML Exporter]
+
+bc0 --> bin
+bc1 --> bin
+bcn --> bin
+
+bin <- [Binary Saver]
+[Handler] -> bin
+int <-- rf0
+int <-- rf1
+bc0 . rf0
+rf0 . bc1
+bc1 . rf1
+rf1 . bcn
+
+package {
+    [Constructor factory class 0] as cf0
+    [Constructor factory class 1] as cf1
+    [Constructor factory class n] as cfn
+}
+[Constructor class factory] as ccf
+
+bin --> cf0
+cf0 .. cf1
+cf1 .. cfn
+
+cf0 --> ccf
+ccf <-- cfn
+ccf <- cf1
+
+[Binary loader] as ld
+
+ld <-- ccf
+
+@enduml

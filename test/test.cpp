@@ -35,24 +35,17 @@ static const es::string_view versions[] = {
 #include "test_interleaved.inl"
 #include "test_skeleton.inl"
 #include "test_spline.inl"
+#include "test_xml.inl"
 
-#ifdef _MSC_VER
-// Use Visual C++'s memory checking functionality
-#define _CRTDBG_MAP_ALLOC
-#include <crtdbg.h>
-#endif // _MSC_VER
+#include "test_sample.inl"
 
 int main() {
-#ifdef _MSC_VER
-  //_crtBreakAlloc = 121467;
-  _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-#endif // _MSC_VER
-
   printer.AddPrinterFunction(UPrintf);
 
   TEST_CASES(int resultVar, TEST_FUNC(test_skeleton),
              TEST_FUNC(test_defaultmotion), TEST_FUNC(test_spline),
-             TEST_FUNC(test_interleaved), TEST_FUNC(test_delta));
+             TEST_FUNC(test_interleaved), TEST_FUNC(test_delta),
+             TEST_FUNC(test_sample), TEST_FUNC(test_xml_base));
 
   return resultVar;
 }

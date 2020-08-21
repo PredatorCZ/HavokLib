@@ -209,21 +209,6 @@ IhkPackFile::VirtualClassesRef IhkPackFile::GetClasses(JenHash hash) {
   return buffa;
 }
 
-void hkaSkeletonInternalInterface::Process() {
-  storage.resize(GetNumBones());
-  size_t curId = 0;
-
-  for (auto &b : storage) {
-    b.id = curId;
-    b.name = GetBoneName(curId);
-    int16 prentID = GetBoneParentID(curId);
-    b.parent = prentID < 0 ? nullptr : &storage[prentID];
-    b.tm = GetBoneTM(curId);
-
-    curId++;
-  }
-}
-
 void hkaAniTrackHandle::GetValue(uni::RTSValue &output, float time) const {
   hdl->GetValue(output, time, index);
 }

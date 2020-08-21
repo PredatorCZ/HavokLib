@@ -2,12 +2,15 @@
 
 [![Build Status](https://travis-ci.org/PredatorCZ/HavokLib.svg?branch=master)](https://travis-ci.org/PredatorCZ/HavokLib)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Coverage Status](https://coveralls.io/repos/github/PredatorCZ/HavokLib/badge.svg?branch=master)](https://coveralls.io/github/PredatorCZ/HavokLib?branch=master)
 
 HavokLib is an independent Havok packfile serialize and XML store library for C++.\
 In addition, it can output packfile formats into XML/Bin under any available version. This library can possibly upgrade/downgrade between versions.\
 Library can also store classic data for XML direct export.\
 Library uses wrapper for a python 2.7 module.\
-Library is compilable under VS 2015+, GCC 5+, Clang 3.5+.
+Library is compilable under VS 2017+, GCC 5+, Clang 3.5+.
+
+![Library Diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.github.com/predatorcz/havoklib/master/doc/diag.puml)
 
 ## Supported formats/toolset versions
 
@@ -52,10 +55,12 @@ Binary exporting is an experimental feature for now.
 
 ## Binary export classes (v5 - v2014)
 
-* hkRootLevelContainer
-* hkaAnimationContainer
-* hkaSkeleton
-* hkxEnvironment
+* hkRootLevelContainer (read-only)
+* hkaAnimationContainer (read-only)
+* hkaSkeleton (read-only)
+* hkxEnvironment (read-only)
+* hkNamedVariant
+* hkaPartition
 
 ## License
 

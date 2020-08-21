@@ -88,7 +88,7 @@ struct hkaInterleavedAnimation_t_shared : _parent {
     for (; data != dataEnd; data++)
       FByteswapper(*data);
 
-    SwapFloats();
+    SwapFloats(0);
   }
 };
 

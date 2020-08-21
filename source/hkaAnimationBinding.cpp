@@ -94,7 +94,7 @@ struct hkaAnimationBinding_t_shared : _parent<_ipointer> {
     const size_t numPartitions = GetNumPartitionIndices(0);
 
     for (size_t i = 0; i < numPartitions; i++)
-      FByteswapper(this->partitionIndices[i]);
+      FByteswapper(this->PartitionIndices[i]);
   }
 
   SwapMethod(FloatTrackToFloatSlotIndices) {
@@ -103,7 +103,7 @@ struct hkaAnimationBinding_t_shared : _parent<_ipointer> {
         GetNumFloatTrackToFloatSlotIndices(0);
 
     for (size_t i = 0; i < numFloatTrackToFloatSlotIndices; i++)
-      FByteswapper(this->floatTrackToFloatSlotIndices[i]);
+      FByteswapper(this->FloatTrackToFloatSlotIndices[i]);
   }
 
   void SwapEndian() {
@@ -114,8 +114,8 @@ struct hkaAnimationBinding_t_shared : _parent<_ipointer> {
     for (size_t i = 0; i < numTransformTrackToBoneIndices; i++)
       FByteswapper(this->TransformTrackToBoneIndices[i]);
 
-    SwapPartitionIndices();
-    SwapFloatTrackToFloatSlotIndices();
+    SwapPartitionIndices(0);
+    SwapFloatTrackToFloatSlotIndices(0);
   }
 };
 

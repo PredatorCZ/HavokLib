@@ -2,9 +2,9 @@
 
 static PyMember hkaPartitionPyMembers[] = {
     {"name", T_OBJECT_EX, offsetof(hkaPartitionPy, name), 0, "Partition name."},
-    {"start_bone_index", T_ULONG, offsetof(hkaPartitionPy, startBoneIndex), 0,
+    {"start_bone_index", T_UINT, offsetof(hkaPartitionPy, startBoneIndex), 0,
      "Partition starts from bone index."},
-    {"num_bones", T_ULONG, offsetof(hkaPartitionPy, numBones), 0,
+    {"num_bones", T_UINT, offsetof(hkaPartitionPy, numBones), 0,
      "Number bones within parition."},
     {NULL},
 };
@@ -71,7 +71,7 @@ int hkaPartitionPy::Init(hkaPartitionPy *self, PyObject *args, PyObject *kwds) {
 
   static char *kwList[] = {"name", "start_bone_index", "num_bones", nullptr};
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "|Skk", kwList, &name,
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "|SII", kwList, &name,
                                    &self->startBoneIndex, &self->numBones)) {
     return -1;
   }

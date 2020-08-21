@@ -29,7 +29,7 @@ public:                                                                        \
   classname() {                                                                \
     this->AddHash(classname::GetHash());                                       \
     this->AddHash(parent::GetHash());                                          \
-    this->name = #parent;                                                      \
+    this->className = #parent;                                                 \
   }
 
 class xmlHavokFile : public IhkPackFile {
@@ -48,10 +48,10 @@ public:
 class xmlRootLevelContainer : public hkRootLevelContainerInternalInterface {
   DECLARE_XMLCLASS(xmlRootLevelContainer, hkRootLevelContainer)
 
-  const int GetNumVariants() const { return static_cast<int>(variants.size()); }
-  const hkNamedVariant GetVariant(int id) const { return variants.at(id); }
+  size_t Size() const override { return variants.size(); }
+  const hkNamedVariant At(size_t id) const override { return variants.at(id); }
   void AddVariant(hkVirtualClass *input) {
-    variants.push_back({input->name, input->name, input});
+    variants.push_back({input->className, input->className, input});
   }
 
 private:
@@ -90,19 +90,32 @@ class xmlAnimationContainer : public hkaAnimationContainerInternalInterface {
   std::vector<hkaMeshBinding *> skins;
 };
 
-struct xmlBone {
+struct xmlBone : uni::Bone {
   int16 ID;
   std::string name;
-  xmlBone *parent;
+  xmlBone *parent = nullptr;
   hkQTransform transform;
+
+  TransformType TMType() const override { return TMTYPE_RTS; }
+  void GetTM(uni::RTSValue &out) const override { out = transform; }
+  const Bone *Parent() const override { return parent; }
+  size_t Index() const override { return ID; }
+  es::string_view Name() const override { return name; }
+  operator uni::Element<const uni::Bone>() const {
+    return {static_cast<const uni::Bone *>(this), false};
+  }
 };
 
 struct xmlRefFloat {
   std::string name;
   float value;
+
+  xmlRefFloat() = default;
+  xmlRefFloat(es::string_view _name, float _value)
+      : name(_name), value(_value) {}
 };
 
-class xmlSkeleton : public hkaSkeletonInternalInterface {
+class xmlSkeleton : public hkaSkeletonInternalInterface, uni::List<uni::Bone> {
   DECLARE_XMLCLASS(xmlSkeleton, hkaSkeleton)
 
   es::string_view Name() const override { return name; }
@@ -135,6 +148,18 @@ class xmlSkeleton : public hkaSkeletonInternalInterface {
     return floats.at(id).name;
   }
 
+  uni::SkeletonBonesConst Bones() const override {
+    return uni::SkeletonBonesConst(
+        dynamic_cast<const uni::List<uni::Bone> *>(this), false);
+  }
+
+private:
+  size_t Size() const override { return bones.size(); }
+  uni::Element<const uni::Bone> At(size_t id) const override {
+    return {bones.at(id).get(), false};
+  }
+
+public:
   std::string name;
   std::vector<std::unique_ptr<xmlBone>> bones;
   std::vector<xmlRefFloat> floats;
@@ -145,6 +170,8 @@ class xmlSkeleton : public hkaSkeletonInternalInterface {
 class xmlAnnotationTrack : public hkaAnnotationTrackInternalInterface {
   DECLARE_XMLCLASS(xmlAnnotationTrack, hkaAnnotationTrack);
 
+  size_t Size() const override { return 0; }
+  const hkaAnnotationFrame At(size_t) const override { return {}; }
   es::string_view GetName() const override { return name; }
   std::string name;
 };
@@ -180,12 +207,14 @@ class xmlInterleavedAnimation
   void SetDataPointer(void *Ptr) override {}
 
 public:
+  using transform_container = std::vector<hkQTransform>;
+  using float_container = std::vector<float>;
+  using transform_ptr = uni::Element<transform_container>;
+  using float_ptr = uni::Element<float_container>;
   xmlInterleavedAnimation() { AddHash(GetHash()); }
-  typedef std::vector<hkQTransform> Transform_Container;
-  typedef std::vector<float> Float_Container;
 
-  std::vector<Transform_Container *> transforms;
-  std::vector<Float_Container *> floats;
+  std::vector<transform_ptr> transforms;
+  std::vector<float_ptr> floats;
 
   size_t GetNumOfTransformTracks() const override { return transforms.size(); }
   size_t GetNumOfFloatTracks() const override { return floats.size(); }
@@ -223,14 +252,6 @@ public:
   float GetFloat(size_t id) const override {
     const int numTracks = static_cast<int>(floats.size());
     return floats[id % numTracks]->at(id / numTracks);
-  }
-
-  ~xmlInterleavedAnimation() {
-    for (auto &t : transforms)
-      delete t;
-
-    for (auto &f : floats)
-      delete f;
   }
 };
 

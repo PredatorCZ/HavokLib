@@ -65,13 +65,13 @@ struct hkaAnimation_t : virtual parentClass {
     return data->GetNumOfTransformTracks();
   }
   size_t GetNumOfFloatTracks() const override {
-    return data->GetNumOfFloatTracks();
+    return data->GetNumOfFloatTracks(0);
   }
   const hkaAnimatedReferenceFrame *GetExtractedMotion() const override {
     return data->GetExtractedMotion(this->header);
   }
   size_t GetNumAnnotations() const override {
-    return data->GetNumAnnotations();
+    return data->GetNumAnnotations(0);
   }
   hkaAnnotationTrackPtr GetAnnotation(size_t id) const override {
     return data->GetAnnotation(id);
@@ -117,13 +117,13 @@ struct hkaAnimation_t_shared : _parent<_ipointer, rp> {
   }
 
   SwapMethod2(Annotations) {
-    for (size_t a = 0; a < GetNumAnnotations(); a++) {
+    for (size_t a = 0; a < GetNumAnnotations(0); a++) {
       this->Annotations[a]->SwapEndian();
     }
   }
 
   SwapMethod2Arr(Annotations) {
-    for (size_t a = 0; a < GetNumAnnotations(); a++) {
+    for (size_t a = 0; a < GetNumAnnotations(0); a++) {
       this->Annotations[a].SwapEndian();
     }
   }
@@ -132,9 +132,9 @@ struct hkaAnimation_t_shared : _parent<_ipointer, rp> {
     FByteswapper(this->animationType);
     FByteswapper(this->duration);
     FByteswapper(this->numOfTransformTracks);
-    FByteswapper(GetNumOfFloatTracks());
-    FByteswapper(GetNumAnnotations());
-    SwapAnnotations();
+    FByteswapper(GetNumOfFloatTracks(0));
+    FByteswapper(GetNumAnnotations(0));
+    SwapAnnotations(0);
   }
 };
 

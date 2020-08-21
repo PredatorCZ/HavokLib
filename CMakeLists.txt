@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.12)
 
+if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+	message(FATAL_ERROR "X86 architecture is not supported!")
+endif()
+
 project(HavokLib)
 
 option(PYTHON_MODULE "Build a module for Python 2.7 (enables PIC).")

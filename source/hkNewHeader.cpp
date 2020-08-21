@@ -257,7 +257,7 @@ int chPTCHRead(BinReader *rd, hkChunk *holder, hkxNewHeader *root) {
 
     if (cls) {
       cls->SetDataPointer(&root->dataBuffer[0] + f.tag.hash);
-      cls->name = clName;
+      cls->className = clName;
       cls->AddHash(clName);
       cls->header = root;
       root->virtualClasses.emplace_back(cls);

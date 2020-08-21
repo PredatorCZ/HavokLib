@@ -55,11 +55,15 @@ matrix:
 
     - os: windows
       name: "MSVC"
+      script:
+        - mkdir build && cd build && cmake .. -A x64
+        - cmake --build . -j 6 --config Release
+        - ctest -V -C Release
 
 before_install:
   - eval "${MATRIX_EVAL}"
 
 script:
   - mkdir build && cd build && cmake ..
-  - cmake --build . -j 6 --config Release
-  - ctest -V -C Release
+  - cmake --build . -j 6
+  - ctest -V

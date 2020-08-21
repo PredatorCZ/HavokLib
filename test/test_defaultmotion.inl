@@ -1,4 +1,4 @@
-/*  Havok Format Unit Tests for hkaSkeleton
+/*  Havok Format Unit Tests for Animated Reference Frame
     Copyright(C) 2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify

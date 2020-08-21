@@ -150,3 +150,17 @@ assert(nv1.class_name == 'testClass')
 assert(nv1.name == 'testName')
 assert(nv1.object == None)
 
+skpart0 = havokpy.hkaPartition('part0', 0, 1)
+assert(skpart0.name == 'part0')
+print(skpart0.start_bone_index)
+assert(skpart0.start_bone_index == 0)
+assert(skpart0.num_bones == 1)
+
+skpart1 = havokpy.hkaPartition(
+    name = 'part1',
+    num_bones = 2
+)
+
+assert(skpart1.name == 'part1')
+assert(skpart1.start_bone_index == 0)
+assert(skpart1.num_bones == 2)

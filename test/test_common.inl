@@ -1,4 +1,4 @@
-/*  Havok Format Unit Tests for hkaSkeleton
+/*  Havok Format Unit Tests for common classes
     Copyright(C) 2020 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
@@ -150,46 +150,32 @@ int test_animation(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   const auto cVersion =
       dynamic_cast<const hkVirtualClass *>(hkNode)->rule.version;
 
-  if (cVersion < HK2010_1) {
-    es::string_view xmBoneLinks = xmAnnots.text().as_string();
+  es::string_view xmBoneLinks = xmAnnots.text().as_string();
 
+  xmBoneLinks = es::SkipStartWhitespace(xmBoneLinks, true);
+
+  auto xmParent = nde.parent();
+
+  for (auto a : anim->Annotations()) {
+    auto fndEnd = xmBoneLinks.find_first_of("\n ");
+    const auto swNPOS = xmBoneLinks.npos;
+
+    TEST_NOT_EQUAL(fndEnd, swNPOS);
+
+    const std::string subName(xmBoneLinks.begin(), fndEnd);
+
+    auto xmBone = xmParent.find_child_by_attribute("name", subName.c_str());
+
+    TEST_NOT_CHECK(xmBone.empty());
+
+    auto xmBoneName = xmBone.find_child_by_attribute("name", "name");
+
+    TEST_NOT_CHECK(xmBoneName.empty());
+
+    TEST_EQUAL(a->GetName(), xmBoneName.text().as_string());
+
+    xmBoneLinks.remove_prefix(fndEnd);
     xmBoneLinks = es::SkipStartWhitespace(xmBoneLinks, true);
-
-    auto xmParent = nde.parent();
-
-    for (auto a : anim->Annotations()) {
-      auto fndEnd = xmBoneLinks.find_first_of("\n ");
-      const auto swNPOS = xmBoneLinks.npos;
-
-      TEST_NOT_EQUAL(fndEnd, swNPOS);
-
-      const std::string subName(xmBoneLinks.begin(), fndEnd);
-
-      auto xmBone = xmParent.find_child_by_attribute("name", subName.c_str());
-
-      TEST_NOT_CHECK(xmBone.empty());
-
-      auto xmBoneName = xmBone.find_child_by_attribute("name", "name");
-
-      TEST_NOT_CHECK(xmBoneName.empty());
-
-      TEST_EQUAL(a->GetName(), xmBoneName.text().as_string());
-
-      xmBoneLinks.remove_prefix(fndEnd);
-      xmBoneLinks = es::SkipStartWhitespace(xmBoneLinks, true);
-    }
-  } else {
-    auto xmBone = xmAnnots.begin();
-
-    for (auto a : anim->Annotations()) {
-      auto xmBoneName = xmBone->find_child_by_attribute("name", "name");
-
-      TEST_NOT_CHECK(xmBoneName.empty());
-
-      TEST_EQUAL(a->GetName(), xmBoneName.text().as_string());
-
-      xmBone++;
-    }
   }
 
   return 0;

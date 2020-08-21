@@ -305,7 +305,7 @@ void hkxSectionHeader::Finalize() {
 
       if (cls) {
         cls->SetDataPointer(sectionBuffer + vf.dataoffset);
-        cls->name = clName;
+        cls->className = clName;
         cls->AddHash(clName);
         cls->header = header;
         if (!header->layout.littleEndian)

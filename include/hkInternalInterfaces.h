@@ -52,7 +52,7 @@ struct hkFixups {
 struct hkVirtualClass : IhkVirtualClass {
   JenHash hash[4]{};
   CRule rule;
-  es::string_view name;
+  es::string_view className;
   IhkPackFile *header;
 
   void AddHash(JenHash hsh) {
@@ -86,7 +86,7 @@ struct hkVirtualClass : IhkVirtualClass {
     return HasHash(JenkinsHash(name));
   }
 
-  virtual es::string_view GetClassName(hkToolset toolset) const { return name; }
+  virtual es::string_view GetClassName(hkToolset toolset) const { return className; }
   virtual void SwapEndian() = 0;
   virtual void Process(){};
   virtual void SetDataPointer(void *Ptr) = 0;
@@ -114,31 +114,7 @@ struct hkaAnimationContainerInternalInterface : hkaAnimationContainer,
   static hkVirtualClass *Create(CRule rule);
 };
 
-class hkFullBone : public uni::Bone {
-public:
-  es::string_view name;
-  const hkQTransform *tm;
-  hkFullBone *parent;
-  size_t id;
-
-  TransformType TMType() const override { return TMTYPE_RTS; }
-  void GetTM(uni::RTSValue &out) const override { out = *tm; }
-  const Bone *Parent() const override { return parent; }
-  size_t Index() const override { return id; }
-  es::string_view Name() const override { return name; }
-  operator uni::Element<const uni::Bone>() const {
-    return {static_cast<const uni::Bone *>(this), false};
-  }
-};
-
-struct hkaSkeletonInternalInterface : hkaSkeleton,
-                                      hkVirtualClass,
-                                      uni::VectorList<uni::Bone, hkFullBone> {
-  void Process() override;
-  uni::SkeletonBonesConst Bones() const override {
-    return uni::SkeletonBonesConst(
-        dynamic_cast<const uni::List<uni::Bone> *>(this), false);
-  }
+struct hkaSkeletonInternalInterface : hkaSkeleton, hkVirtualClass {
   void ToXML(XMLHandle hdl) const override;
   static hkVirtualClass *Create(CRule rule);
 };
@@ -186,9 +162,7 @@ struct hkaAniTrackHandleList : uni::List<uni::MotionTrack> {
 struct hkaAnimationInternalInterface : virtual hkaAnimation, hkVirtualClass {
   mutable uint32 frameRate;
 
-  hkaAnimationInternalInterface() {
-    this->AddHash(hkaAnimation::GetHash());
-  }
+  hkaAnimationInternalInterface() { this->AddHash(hkaAnimation::GetHash()); }
 
   virtual void GetValue(uni::RTSValue &output, float time,
                         size_t trackID) const = 0;
