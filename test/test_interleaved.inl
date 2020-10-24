@@ -98,6 +98,10 @@ int test_interleaved() {
           auto allClasses = curHk->GetClasses(childName);
           TEST_NOT_CHECK(allClasses.empty());
           overallResult |= test_animationcontainer(c, *allClasses.begin());
+        } else if (childName == "hkaAnimationBinding") {
+          auto allClasses = curHk->GetClasses(childName);
+          TEST_NOT_CHECK(allClasses.empty());
+          overallResult |= test_animationbinding(c, *allClasses.begin());
         }
       }
     }

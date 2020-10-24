@@ -16,7 +16,7 @@
 */
 
 #pragma once
-#include "HavokXMLApi.hpp"
+#include "havok_xml.hpp"
 #include "datas/unit_testing.hpp"
 
 int test_rootcontainer(pugi::xml_node nde, IhkVirtualClass *hkNode) {
@@ -109,6 +109,40 @@ int GetInt(float hkNum, es::string_view &sw) {
 
   return 0;
 };
+
+int test_animationbinding(pugi::xml_node nde, IhkVirtualClass *hkNode) {
+  TEST_CHECK(hkNode);
+
+  auto aniBind = dynamic_cast<const hkaAnimationBinding *>(hkNode);
+
+  TEST_CHECK(aniBind);
+
+  for (auto &c : nde) {
+    es::string_view paramName = c.attribute("name").as_string();
+
+    if (paramName == "floatTrackToFloatSlotIndices") {
+      size_t numElements = c.attribute("numelements").as_uint();
+      TEST_EQUAL(aniBind->GetNumFloatTrackToFloatSlotIndices(), numElements);
+    } else if (paramName == "transformTrackToBoneIndices") {
+      size_t numElements = c.attribute("numelements").as_uint();
+      TEST_EQUAL(aniBind->GetNumTransformTrackToBoneIndices(), numElements);
+      es::string_view xmUpData = c.text().as_string();
+
+      for (size_t t = 0; t < numElements; t++) {
+        TEST_NOT_CHECK(
+            GetInt(aniBind->GetTransformTrackToBoneIndex(t), xmUpData));
+      }
+    } else if (paramName == "blendHint") {
+      es::string_view xmUpData = c.text().as_string();
+      BlendHint xmHint =
+          xmUpData == "ADDITIVE" ? BlendHint::ADDITIVE : BlendHint::NORMAL;
+
+      TEST_EQUAL(aniBind->GetBlendHint(), xmHint);
+    }
+  }
+
+  return 0;
+}
 
 int test_animation(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   TEST_CHECK(hkNode);

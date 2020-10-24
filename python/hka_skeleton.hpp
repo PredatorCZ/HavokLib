@@ -1,10 +1,11 @@
 #pragma once
 #include "hk_core.hpp"
+#include "hklib/hka_skeleton.hpp"
 #include "uni/python/pyskeleton.hpp"
 
 struct hkaPartitionPy {
     PyObject_HEAD;
-    
+
     PyObject *name;
     uint32 startBoneIndex;
     uint32 numBones;

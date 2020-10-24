@@ -1,5 +1,6 @@
 #pragma once
 #include "hk_core.hpp"
+#include "hklib/hka_animationcontainer.hpp"
 
 struct hkaAniContSkeletonListPy {
     PyObject_HEAD;

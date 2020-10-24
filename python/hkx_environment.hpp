@@ -1,5 +1,6 @@
 #pragma once
 #include "hk_core.hpp"
+#include "hklib/hkx_environment.hpp"
 
 struct hkxEnvironmentPy {
   PyObject_HEAD;

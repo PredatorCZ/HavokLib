@@ -1,5 +1,6 @@
 #pragma once
 #include "hk_core.hpp"
+#include "hklib/hk_rootlevelcontainer.hpp"
 
 struct hkNamedVariantPy {
   PyObject_HEAD;

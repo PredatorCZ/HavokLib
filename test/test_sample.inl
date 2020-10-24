@@ -16,7 +16,8 @@
 */
 
 #pragma once
-#include "HavokApi.hpp"
+#include "hklib/hk_packfile.hpp"
+#include "hklib/hka_animation.hpp"
 #include "datas/unit_testing.hpp"
 #include <random>
 

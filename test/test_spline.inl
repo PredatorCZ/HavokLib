@@ -17,6 +17,7 @@
 
 #pragma once
 #include "test_common.inl"
+#include "internal/hka_splineanimation.hpp"
 
 int test_spline(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   TEST_CHECK(hkNode);
@@ -137,6 +138,10 @@ int test_spline(const std::string &name) {
           auto allClasses = curHk->GetClasses(childName);
           TEST_NOT_CHECK(allClasses.empty());
           overallResult |= test_animationcontainer(c, *allClasses.begin());
+        } else if (childName == "hkaAnimationBinding") {
+          auto allClasses = curHk->GetClasses(childName);
+          TEST_NOT_CHECK(allClasses.empty());
+          overallResult |= test_animationbinding(c, *allClasses.begin());
         }
       }
     }

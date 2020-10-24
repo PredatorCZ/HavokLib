@@ -1,7 +1,9 @@
 
 #pragma once
-#include "HavokApi.hpp"
 #include <Python.h>
+#include <memory>
+
+struct IhkPackFile;
 
 struct IHavokPy {
   PyObject_HEAD;

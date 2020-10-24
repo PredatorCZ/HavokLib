@@ -1,6 +1,7 @@
 #include "hk_packfile.hpp"
 #include "datas/python/reflected_enum.hpp"
 #include "hk_core.hpp"
+#include "hklib/hk_packfile.hpp"
 #include "pugixml.hpp"
 #include <sstream>
 

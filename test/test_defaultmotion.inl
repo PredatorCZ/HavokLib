@@ -17,6 +17,7 @@
 
 #pragma once
 #include "test_common.inl"
+#include "internal/hka_animatedreferenceframe.hpp"
 
 int test_defaultmotion(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   TEST_CHECK(hkNode);
@@ -110,6 +111,10 @@ int test_defaultmotion() {
           auto allClasses = curHk->GetClasses(childName);
           TEST_NOT_CHECK(allClasses.empty());
           overallResult |= test_animationcontainer(c, *allClasses.begin());
+        } else if (childName == "hkaAnimationBinding") {
+          auto allClasses = curHk->GetClasses(childName);
+          TEST_NOT_CHECK(allClasses.empty());
+          overallResult |= test_animationbinding(c, *allClasses.begin());
         }
       }
     }

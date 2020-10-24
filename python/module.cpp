@@ -14,7 +14,7 @@
 
 #include <unordered_map>
 
-PyMODINIT_FUNC Py_GCC_ATTRIBUTE((visibility("default"))) inithavokpy() {
+extern "C" ES_EXPORT_FN(void) inithavokpy() {
   printer.AddPrinterFunction(
       reinterpret_cast<MasterPrinterThread::print_func>(printf));
   PyObject *m = Py_InitModule3(

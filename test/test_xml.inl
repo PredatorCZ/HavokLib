@@ -16,7 +16,7 @@
 */
 
 #pragma once
-#include "HavokXMLApi.hpp"
+#include "havok_xml.hpp"
 #include "datas/unit_testing.hpp"
 
 int test_xml_base() {

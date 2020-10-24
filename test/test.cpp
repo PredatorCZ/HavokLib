@@ -17,7 +17,6 @@
 
 #include "datas/master_printer.hpp"
 #include "datas/string_view.hpp"
-#include "hkInternalInterfaces.h"
 #include "pugixml.hpp"
 
 static const es::string_view compiledFlags[] = {
