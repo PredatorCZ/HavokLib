@@ -66,6 +66,18 @@ struct hkaAnimatedReferenceFrame2012_t_data<_ipointer, true>
 };
 
 template <template <class C> class _ipointer, bool rp>
+struct hkaAnimatedReferenceFrame2016_t_data : hkReferenceObject2016<_ipointer> {
+  hkaAnimatedReferenceFrameType FrameType;
+  GNU_PADDING(3);
+};
+
+template <template <class C> class _ipointer>
+struct hkaAnimatedReferenceFrame2016_t_data<_ipointer, true>
+    : hkReferenceObject2016_rp<_ipointer> {
+  hkaAnimatedReferenceFrameType FrameType;
+};
+
+template <template <class C> class _ipointer, bool rp>
 using hkaAnimatedReferenceFrame500 =
     hkaAnimatedReferenceFrame_t_shared<_ipointer,
                                        hkaAnimatedReferenceFrame500_t_data, rp>;
@@ -73,3 +85,7 @@ using hkaAnimatedReferenceFrame500 =
 template <template <class C> class _ipointer, bool rp>
 using hkaAnimatedReferenceFrame2012 = hkaAnimatedReferenceFrame_t_shared<
     _ipointer, hkaAnimatedReferenceFrame2012_t_data, rp>;
+
+template <template <class C> class _ipointer, bool rp>
+using hkaAnimatedReferenceFrame2016 = hkaAnimatedReferenceFrame_t_shared<
+    _ipointer, hkaAnimatedReferenceFrame2016_t_data, rp>;

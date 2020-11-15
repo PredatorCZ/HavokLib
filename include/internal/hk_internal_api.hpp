@@ -56,7 +56,7 @@ struct hkVirtualClass : IhkVirtualClass {
 
   void AddHash(JenHash hsh) {
     for (size_t i = 0; i < 4; i++) {
-      if (!hash[i]) {
+      if (!hash[i].raw()) {
         hash[i] = hsh;
         return;
       } else if (hash[i] == hsh) {
@@ -67,11 +67,9 @@ struct hkVirtualClass : IhkVirtualClass {
     throw std::overflow_error("New hash exceeded reserverd limit.");
   }
 
-  void AddHash(es::string_view name) { AddHash(JenkinsHash(name)); }
-
   bool HasHash(JenHash hsh) const {
     for (size_t i = 0; i < 4; i++) {
-      if (!hash[i]) {
+      if (!hash[i].raw()) {
         return false;
       } else if (hash[i] == hsh) {
         return true;
@@ -79,10 +77,6 @@ struct hkVirtualClass : IhkVirtualClass {
     }
 
     return false;
-  }
-
-  bool HasHash(es::string_view name) const {
-    return HasHash(JenkinsHash(name));
   }
 
   virtual es::string_view GetClassName(hkToolset toolset) const { return className; }

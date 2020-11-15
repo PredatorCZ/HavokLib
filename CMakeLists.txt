@@ -27,7 +27,7 @@ option(ODR_TEST "Enable ODR testing." OFF)
 option(BUILD_STATIC "Builds HavokLibStatic as a static library." OFF)
 option(BUILD_SHARED "Builds HavokLibShared shared library (enables PIC)." OFF)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 add_subdirectory(3rd_party/PreCore)
 add_subdirectory(3rd_party/PugiXml)
 

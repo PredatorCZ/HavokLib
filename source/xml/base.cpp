@@ -15,6 +15,7 @@
     along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "datas/except.hpp"
 #include "datas/master_printer.hpp"
 #include "hklib/hk_packfile.hpp"
 #include "pugixml.hpp"
@@ -107,9 +108,8 @@ const std::map<hkToolset, xmlToolsetProp> xmlToolsetProps = {
                             "hk_2014.1.0-r1"}},
 };
 
-pugi::xml_document IhkPackFile::ToXML(hkToolset toolsetVersion) {
-  pugi::xml_document doc;
-  pugi::xml_node master = doc.append_child("hkpackfile");
+void IhkPackFile::ToXML(pugi::xml_node nde, hkToolset toolsetVersion) {
+  pugi::xml_node master = nde.append_child("hkpackfile");
 
   const xmlToolsetProp &propRef = xmlToolsetProps.at(toolsetVersion);
 
@@ -144,16 +144,13 @@ pugi::xml_document IhkPackFile::ToXML(hkToolset toolsetVersion) {
 
     cls->ToXML({&classNode, toolsetVersion});
   }
-
-  return doc;
 }
 
-int IhkPackFile::ToXML(es::string_view fileName, hkToolset toolset) {
-  std::string fleName = fileName.to_string();
-  return ToXML(fleName, toolset);
-}
+void IhkPackFile::ToXML(const std::string &fileName, hkToolset toolset) {
+  pugi::xml_document doc;
+  ToXML(doc, toolset);
 
-int IhkPackFile::ToXML(const std::string &fileName, hkToolset toolset) {
-  auto xDoc = ToXML(toolset);
-  return !xDoc.save_file(fileName.data());
+  if (!doc.save_file(fileName.data())) {
+    throw es::FileInvalidAccessError(fileName);
+  }
 }

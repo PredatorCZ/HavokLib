@@ -246,135 +246,117 @@ void TransformSplineBlock::Assign(char *buffer, size_t numTracks,
   tracks.resize(numTracks);
 
   for (auto &m : masks) {
-    const bool usePosSpline = m.GetSubTrackType(ttPosX) == STT_DYNAMIC ||
-                              m.GetSubTrackType(ttPosY) == STT_DYNAMIC ||
-                              m.GetSubTrackType(ttPosZ) == STT_DYNAMIC;
+    auto MakeTrack = [&](QuantizationType qtype, float defVal,
+                         auto subTypes) -> TransformTrack::TrackType<Vector> {
+      using stype = decltype(subTypes);
+      const bool useSpline =
+          m.GetSubTrackType(static_cast<TransformType>(stype::X)) ==
+              STT_DYNAMIC ||
+          m.GetSubTrackType(static_cast<TransformType>(stype::Y)) ==
+              STT_DYNAMIC ||
+          m.GetSubTrackType(static_cast<TransformType>(stype::Z)) ==
+              STT_DYNAMIC;
 
-    if (usePosSpline) {
-      auto pTrack = new SplineDynamicTrackVector();
-      tracks[cTrack].pos = std::move(TransformTrack::TrackType<Vector>(pTrack));
-      uint16 numItems = *reinterpret_cast<const uint16 *>(buffer);
-      buffer += 2;
-      pTrack->degree = *reinterpret_cast<const uint8 *>(buffer++);
-      const int bufferSkip = numItems + pTrack->degree + 2;
-      es::allocator_hybrid_base::LinkStorage(
-          pTrack->knots, reinterpret_cast<uint8 *>(buffer), bufferSkip);
-      buffer += bufferSkip;
-      ApplyPadding(buffer);
+      if (useSpline) {
+        auto sTrack = std::make_unique<SplineDynamicTrackVector>();
+        uint16 numItems = *reinterpret_cast<const uint16 *>(buffer++);
+        buffer++;
+        sTrack->degree = *reinterpret_cast<const uint8 *>(buffer++);
+        const int bufferSkip = numItems + sTrack->degree + 2;
+        es::allocator_hybrid_base::LinkStorage(
+            sTrack->knots, reinterpret_cast<uint8 *>(buffer), bufferSkip);
+        buffer += bufferSkip;
+        ApplyPadding(buffer);
 
-      TrackBBOX extremes[3] = {};
+        TrackBBOX extremes[3] = {};
 
-      if (m.GetSubTrackType(ttPosX) == STT_DYNAMIC) {
-        extremes[0] = *reinterpret_cast<const TrackBBOX *>(buffer);
-        buffer += 8;
-        pTrack->tracks[0].resize(numItems + 1);
-      } else if (m.GetSubTrackType(ttPosX) == STT_STATIC) {
-        pTrack->tracks[0].push_back(*reinterpret_cast<const float *>(buffer));
-        buffer += 4;
-      } else
-        pTrack->tracks[0].resize(1);
+        auto MakeSubTrack = [&](auto type, size_t id) {
+          const auto ttype =
+              m.GetSubTrackType(static_cast<TransformType>(type));
 
-      if (m.GetSubTrackType(ttPosY) == STT_DYNAMIC) {
-        extremes[1] = *reinterpret_cast<const TrackBBOX *>(buffer);
-        buffer += 8;
-        pTrack->tracks[1].resize(numItems + 1);
-      } else if (m.GetSubTrackType(ttPosY) == STT_STATIC) {
-        pTrack->tracks[1].push_back(*reinterpret_cast<const float *>(buffer));
-        buffer += 4;
-      } else
-        pTrack->tracks[1].resize(1);
-
-      if (m.GetSubTrackType(ttPosZ) == STT_DYNAMIC) {
-        extremes[2] = *reinterpret_cast<const TrackBBOX *>(buffer);
-        buffer += 8;
-        pTrack->tracks[2].resize(numItems + 1);
-      } else if (m.GetSubTrackType(ttPosZ) == STT_STATIC) {
-        pTrack->tracks[2].push_back(*reinterpret_cast<const float *>(buffer));
-        buffer += 4;
-      } else
-        pTrack->tracks[2].resize(1);
-
-      if (m.GetPosQuantizationType() == QT_8bit) {
-        static const float fractal = 1.0f / 255.0f;
-
-        for (int t = 0; t <= numItems; t++) {
-          if (m.GetSubTrackType(ttPosX) == STT_DYNAMIC) {
-            float dVar =
-                static_cast<float>(*reinterpret_cast<const uint8 *>(buffer++)) *
-                fractal;
-            pTrack->tracks[0][t] =
-                extremes[0].min + (extremes[0].max - extremes[0].min) * dVar;
+          if (ttype == STT_DYNAMIC) {
+            extremes[id] = *reinterpret_cast<const TrackBBOX *>(buffer);
+            buffer += 8;
+            sTrack->tracks[id].resize(numItems + 1);
+          } else if (ttype == STT_STATIC) {
+            sTrack->tracks[id].push_back(
+                *reinterpret_cast<const float *>(buffer));
+            buffer += 4;
+          } else {
+            sTrack->tracks[id].push_back(defVal);
           }
+        };
 
-          if (m.GetSubTrackType(ttPosY) == STT_DYNAMIC) {
+        MakeSubTrack(stype::X, 0);
+        MakeSubTrack(stype::Y, 1);
+        MakeSubTrack(stype::Z, 2);
+
+        auto UnpackPoints8 = [&](auto type, size_t id, size_t sid) {
+          constexpr float fractal = 1.0f / 255.0f;
+          const auto ttype =
+              m.GetSubTrackType(static_cast<TransformType>(type));
+          if (ttype == STT_DYNAMIC) {
             float dVar =
                 static_cast<float>(*reinterpret_cast<const uint8 *>(buffer++)) *
                 fractal;
-            pTrack->tracks[1][t] =
-                extremes[1].min + (extremes[1].max - extremes[1].min) * dVar;
+            sTrack->tracks[id][sid] =
+                extremes[id].min + (extremes[id].max - extremes[id].min) * dVar;
           }
+        };
 
-          if (m.GetSubTrackType(ttPosZ) == STT_DYNAMIC) {
-            float dVar =
-                static_cast<float>(*reinterpret_cast<const uint8 *>(buffer++)) *
-                fractal;
-            pTrack->tracks[2][t] =
-                extremes[2].min + (extremes[2].max - extremes[2].min) * dVar;
+        auto UnpackPoints16 = [&](auto type, size_t id, size_t sid) {
+          constexpr float fractal = 1.0f / 0xffff;
+          const auto ttype =
+              m.GetSubTrackType(static_cast<TransformType>(type));
+          if (ttype == STT_DYNAMIC) {
+            float dVar = static_cast<float>(
+                             *reinterpret_cast<const uint16 *>(buffer++)) *
+                         fractal;
+            sTrack->tracks[id][sid] =
+                extremes[id].min + (extremes[id].max - extremes[id].min) * dVar;
+            buffer++;
+          }
+        };
+
+        if (qtype == QT_8bit) {
+          for (int t = 0; t <= numItems; t++) {
+            UnpackPoints8(stype::X, 0, t);
+            UnpackPoints8(stype::Y, 1, t);
+            UnpackPoints8(stype::Z, 2, t);
+          }
+        } else {
+          for (int t = 0; t <= numItems; t++) {
+            UnpackPoints16(stype::X, 0, t);
+            UnpackPoints16(stype::Y, 1, t);
+            UnpackPoints16(stype::Z, 2, t);
           }
         }
-      } else {
-        static const float fractal = 1.0f / 0xffff;
 
-        for (int t = 0; t <= numItems; t++) {
-          if (m.GetSubTrackType(ttPosX) == STT_DYNAMIC) {
-            float dVar = static_cast<float>(
-                             *reinterpret_cast<const uint16 *>(buffer++)) *
-                         fractal;
-            pTrack->tracks[0][t] =
-                extremes[0].min + (extremes[0].max - extremes[0].min) * dVar;
-            buffer++;
-          }
+        ApplyPadding(buffer);
+        return std::move(sTrack);
+      }
 
-          if (m.GetSubTrackType(ttPosY) == STT_DYNAMIC) {
-            float dVar = static_cast<float>(
-                             *reinterpret_cast<const uint16 *>(buffer++)) *
-                         fractal;
-            pTrack->tracks[1][t] =
-                extremes[1].min + (extremes[1].max - extremes[1].min) * dVar;
-            buffer++;
-          }
+      auto sTrack = std::make_unique<SplineStaticTrack<Vector>>();
+      auto MakeSubTrack = [&](auto type, size_t id) {
+        const auto ttype = m.GetSubTrackType(static_cast<TransformType>(type));
 
-          if (m.GetSubTrackType(ttPosZ) == STT_DYNAMIC) {
-            float dVar = static_cast<float>(
-                             *reinterpret_cast<const uint16 *>(buffer++)) *
-                         fractal;
-            pTrack->tracks[2][t] =
-                extremes[2].min + (extremes[2].max - extremes[2].min) * dVar;
-            buffer++;
-          }
+        if (ttype == STT_STATIC) {
+          sTrack->item[id] = *reinterpret_cast<const float *>(buffer);
+          buffer += 4;
+        } else {
+          sTrack->item[id] = defVal;
         }
-      }
+      };
 
-      ApplyPadding(buffer);
-    } else {
-      auto pTrack = new SplineStaticTrack<Vector>();
-      tracks[cTrack].pos = std::move(TransformTrack::TrackType<Vector>(pTrack));
+      MakeSubTrack(stype::X, 0);
+      MakeSubTrack(stype::Y, 1);
+      MakeSubTrack(stype::Z, 2);
 
-      if (m.GetSubTrackType(ttPosX) == STT_STATIC) {
-        pTrack->item.X = *reinterpret_cast<const float *>(buffer);
-        buffer += 4;
-      }
+      return std::move(sTrack);
+    };
 
-      if (m.GetSubTrackType(ttPosY) == STT_STATIC) {
-        pTrack->item.Y = *reinterpret_cast<const float *>(buffer);
-        buffer += 4;
-      }
-
-      if (m.GetSubTrackType(ttPosZ) == STT_STATIC) {
-        pTrack->item.Z = *reinterpret_cast<const float *>(buffer);
-        buffer += 4;
-      }
-    }
+    tracks[cTrack].pos =
+        MakeTrack(m.GetPosQuantizationType(), 0.f, TransformTypePos{});
 
     if (m.GetSubTrackType(ttRotation) == STT_DYNAMIC) {
       auto rTrack = new SplineDynamicTrackQuat();
@@ -401,9 +383,7 @@ void TransformSplineBlock::Assign(char *buffer, size_t numTracks,
             ReadQuat(m.GetRotQuantizationType(), (const char *&)buffer);
       }
     } else {
-      auto rTrack = new SplineStaticTrack<Vector4A16>();
-      tracks[cTrack].rotation =
-          std::move(TransformTrack::TrackType<Vector4A16>(rTrack));
+      auto rTrack = std::make_unique<SplineStaticTrack<Vector4A16>>();
 
       if (m.GetSubTrackType(ttRotation) == STT_STATIC) {
         rTrack->item =
@@ -411,147 +391,14 @@ void TransformSplineBlock::Assign(char *buffer, size_t numTracks,
       } else {
         rTrack->item.W = 1.0f;
       }
+
+      tracks[cTrack].rotation = std::move(rTrack);
     }
 
     ApplyPadding(buffer);
 
-    const bool useScaleSpline = m.GetSubTrackType(ttScaleX) == STT_DYNAMIC ||
-                                m.GetSubTrackType(ttScaleY) == STT_DYNAMIC ||
-                                m.GetSubTrackType(ttScaleZ) == STT_DYNAMIC;
-
-    if (useScaleSpline) {
-      auto sTrack = new SplineDynamicTrackVector();
-      tracks[cTrack].scale =
-          std::move(TransformTrack::TrackType<Vector>(sTrack));
-      uint16 numItems = *reinterpret_cast<const uint16 *>(buffer++);
-      buffer++;
-      sTrack->degree = *reinterpret_cast<const uint8 *>(buffer++);
-      const int bufferSkip = numItems + sTrack->degree + 2;
-      es::allocator_hybrid_base::LinkStorage(
-          sTrack->knots, reinterpret_cast<uint8 *>(buffer), bufferSkip);
-      buffer += bufferSkip;
-      ApplyPadding(buffer);
-
-      TrackBBOX extremes[3] = {};
-
-      if (m.GetSubTrackType(ttScaleX) == STT_DYNAMIC) {
-        extremes[0] = *reinterpret_cast<const TrackBBOX *>(buffer);
-        buffer += 8;
-        sTrack->tracks[0].resize(numItems + 1);
-      } else if (m.GetSubTrackType(ttScaleX) == STT_STATIC) {
-        sTrack->tracks[0].push_back(*reinterpret_cast<const float *>(buffer));
-        buffer += 4;
-      } else
-        sTrack->tracks[0].push_back(1.0f);
-
-      if (m.GetSubTrackType(ttScaleY) == STT_DYNAMIC) {
-        extremes[1] = *reinterpret_cast<const TrackBBOX *>(buffer);
-        buffer += 8;
-        sTrack->tracks[1].resize(numItems + 1);
-      } else if (m.GetSubTrackType(ttScaleY) == STT_STATIC) {
-        sTrack->tracks[1].push_back(*reinterpret_cast<const float *>(buffer));
-        buffer += 4;
-      } else
-        sTrack->tracks[1].push_back(1.0f);
-
-      if (m.GetSubTrackType(ttScaleZ) == STT_DYNAMIC) {
-        extremes[2] = *reinterpret_cast<const TrackBBOX *>(buffer);
-        buffer += 8;
-        sTrack->tracks[2].resize(numItems + 1);
-      } else if (m.GetSubTrackType(ttScaleZ) == STT_STATIC) {
-        sTrack->tracks[2].push_back(*reinterpret_cast<const float *>(buffer));
-        buffer += 4;
-      } else
-        sTrack->tracks[2].push_back(1.0f);
-
-      if (m.GetScaleQuantizationType() == QT_8bit) {
-        static const float fractal = 1.0f / 255.0f;
-
-        for (int t = 0; t <= numItems; t++) {
-          if (m.GetSubTrackType(ttScaleX) == STT_DYNAMIC) {
-            float dVar =
-                static_cast<float>(*reinterpret_cast<const uint8 *>(buffer++)) *
-                fractal;
-            sTrack->tracks[0][t] =
-                extremes[0].min + (extremes[0].max - extremes[0].min) * dVar;
-          }
-
-          if (m.GetSubTrackType(ttScaleY) == STT_DYNAMIC) {
-            float dVar =
-                static_cast<float>(*reinterpret_cast<const uint8 *>(buffer++)) *
-                fractal;
-            sTrack->tracks[1][t] =
-                extremes[1].min + (extremes[1].max - extremes[1].min) * dVar;
-          }
-
-          if (m.GetSubTrackType(ttScaleZ) == STT_DYNAMIC) {
-            float dVar =
-                static_cast<float>(*reinterpret_cast<const uint8 *>(buffer++)) *
-                fractal;
-            sTrack->tracks[2][t] =
-                extremes[2].min + (extremes[2].max - extremes[2].min) * dVar;
-          }
-        }
-      } else {
-        static const float fractal = 1.0f / 0xffff;
-
-        for (int t = 0; t <= numItems; t++) {
-          if (m.GetSubTrackType(ttScaleX) == STT_DYNAMIC) {
-            float dVar = static_cast<float>(
-                             *reinterpret_cast<const uint16 *>(buffer++)) *
-                         fractal;
-            sTrack->tracks[0][t] =
-                extremes[0].min + (extremes[0].max - extremes[0].min) * dVar;
-            buffer++;
-          }
-
-          if (m.GetSubTrackType(ttScaleY) == STT_DYNAMIC) {
-            float dVar = static_cast<float>(
-                             *reinterpret_cast<const uint16 *>(buffer++)) *
-                         fractal;
-            sTrack->tracks[1][t] =
-                extremes[1].min + (extremes[1].max - extremes[1].min) * dVar;
-            buffer++;
-          }
-
-          if (m.GetSubTrackType(ttScaleZ) == STT_DYNAMIC) {
-            float dVar = static_cast<float>(
-                             *reinterpret_cast<const uint16 *>(buffer++)) *
-                         fractal;
-            sTrack->tracks[2][t] =
-                extremes[2].min + (extremes[2].max - extremes[2].min) * dVar;
-            buffer++;
-          }
-        }
-      }
-
-      ApplyPadding(buffer);
-    } else {
-      auto sTrack = new SplineStaticTrack<Vector>();
-      tracks[cTrack].scale =
-          std::move(TransformTrack::TrackType<Vector>(sTrack));
-
-      if (m.GetSubTrackType(ttScaleX) == STT_STATIC) {
-        sTrack->item.X = *reinterpret_cast<const float *>(buffer);
-        buffer += 4;
-      } else {
-        sTrack->item.X = 1.0f;
-      }
-
-      if (m.GetSubTrackType(ttScaleY) == STT_STATIC) {
-        sTrack->item.Y = *reinterpret_cast<const float *>(buffer);
-        buffer += 4;
-      } else {
-        sTrack->item.Y = 1.0f;
-      }
-
-      if (m.GetSubTrackType(ttScaleZ) == STT_STATIC) {
-        sTrack->item.Z = *reinterpret_cast<const float *>(buffer);
-        buffer += 4;
-      } else {
-        sTrack->item.Z = 1.0f;
-      }
-    }
+    tracks[cTrack].scale =
+        MakeTrack(m.GetScaleQuantizationType(), 1.f, TransformTypeScale{});
 
     cTrack++;
   }

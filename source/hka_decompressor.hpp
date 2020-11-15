@@ -61,7 +61,7 @@ public:
 
 private:
   union {
-    esFlags<uint16> data;
+    es::Flags<uint16> data;
     uint16 dataRaw;
   };
   TrackType GetTrackType(uint32 offset) const {

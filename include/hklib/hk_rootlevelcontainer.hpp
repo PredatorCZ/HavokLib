@@ -28,9 +28,9 @@ struct hkNamedVariant {
     return dynamic_cast<const C *>(pointer);
   }
   operator es::string_view() const { return name; }
-  operator JenHash() const { return JenkinsHash(className); }
+  operator JenHash() const { return JenHash(className); }
   bool operator==(const JenHash iHash) const {
-    return static_cast<JenHash>(*this) == iHash;
+    return iHash == JenHash(className);
   }
 
 private:

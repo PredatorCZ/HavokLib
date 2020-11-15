@@ -190,7 +190,7 @@ PyObject *hkRootLevelContainerPy::SubscriptRaw(size_t index) {
   hkVar->className =
       PyString_FromStringAndSize(cVar.className.data(), cVar.className.size());
 
-  JenHash classHash = JenkinsHash(cVar.className);
+  JenHash classHash(cVar.className);
 
   auto foundCt = hkClasses.find(classHash);
 

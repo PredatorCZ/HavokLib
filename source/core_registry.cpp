@@ -29,9 +29,9 @@
 #include <map>
 
 #define hkRegisterCreator(cname)                                               \
-  {JenkinsHashC(#cname), cname##InternalInterface::Create},
+  {JenHash(#cname), cname##InternalInterface::Create},
 #define hkCreatorAlias(cname, aliasName)                                       \
-  { JenkinsHashC(#aliasName), cname##InternalInterface::Create }
+  { JenHash(#aliasName), cname##InternalInterface::Create }
 
 static const std::map<JenHash, hkVirtualClass *(*)(CRule)> hkConstrRegistry{
     hkCreatorAlias(hkaInterleavedAnimation, hkaInterleavedSkeletalAnimation),
@@ -56,7 +56,10 @@ hkVirtualClass *hkVirtualClass::Create(JenHash hash, CRule rule) {
   }
 
   auto madeClass = found->second(rule);
-  madeClass->rule = rule;
+
+  if (madeClass) {
+    madeClass->rule = rule;
+  }
 
   return madeClass;
 }

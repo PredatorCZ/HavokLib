@@ -33,7 +33,12 @@ void hkaAnimationInternalInterface::ToXML(XMLHandle hdl) const {
   durationNode.append_buffer(_buff.c_str(), _buff.size());
 
   pugi::xml_node numTransNode = hdl.node->append_child(_hkParam);
-  numTransNode.append_attribute(_hkName).set_value("numberOfTransformTracks");
+
+  if (hdl.toolset > HK510) {
+    numTransNode.append_attribute(_hkName).set_value("numberOfTransformTracks");
+  } else {
+    numTransNode.append_attribute(_hkName).set_value("numberOfTracks");
+  }
   _buff = std::to_string(GetNumOfTransformTracks());
   numTransNode.append_buffer(_buff.c_str(), _buff.size());
 

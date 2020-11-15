@@ -16,13 +16,13 @@
 */
 
 #pragma once
+#include "datas/binreader_stream.hpp"
+#include "datas/binwritter_stream.hpp"
 #include "hklib/hk_packfile.hpp"
 
 #define hkMagic1 0x57e0e057
 #define hkMagic2 0x10c0c010
 
-class BinReader;
-class BinWritter;
 struct hkxHeader;
 
 struct hkxHeaderlayout {
@@ -104,10 +104,10 @@ struct hkxSectionHeader : hkxSectionHeaderData {
   std::vector<hkxVirtualFixup> virtualFixups;
   IhkPackFile::VirtualClasses virtualClasses;
   hkxHeader *header;
-  int Load(BinReader *rd);
-  int LoadBuffer(BinReader *rd);
-  int LinkBuffer();
-  int LinkBuffer86();
+  void Load(BinReaderRef rd);
+  void LoadBuffer(BinReaderRef rd);
+  void LinkBuffer();
+  void LinkBuffer86();
   void Finalize();
 };
 
@@ -136,8 +136,8 @@ struct hkxHeader : hkxHeaderData, IhkPackFile {
 
   hkxHeader() : toolset(HKUNKVER) {}
 
-  int Load(BinReader &rd);
-  int Save(BinWritter &wr, const VirtualClasses &classes) const;
+  void Load(BinReaderRef rd);
+  void Save(BinWritterRef wr, const VirtualClasses &classes) const;
   hkxSectionHeader *GetDataSection() { return &sections[contentsSectionIndex]; }
   VirtualClasses &GetAllClasses() override {
     return GetDataSection()->virtualClasses;

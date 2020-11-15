@@ -15,7 +15,10 @@
     along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "datas/endian.hpp"
+
 #include "format_old.hpp"
+#include "datas/except.hpp"
 #include "datas/jenkinshash.hpp"
 #include "datas/master_printer.hpp"
 #include "datas/pointer.hpp"
@@ -25,16 +28,20 @@
 #include <algorithm>
 #include <ctype.h>
 #include <string>
+#include <unordered_map>
 
 #include "datas/binreader.hpp"
 #include "datas/binwritter.hpp"
 
-int hkxHeader::Load(BinReader &rd) {
+void hkxHeader::Load(BinReaderRef rd) {
   rd.Read<hkxHeaderData>(*this);
 
-  if (magic1 != hkMagic1 || magic2 != hkMagic2) {
-    printerror("[Havok] Invalid packfile.");
-    return 1;
+  if (magic1 != hkMagic1) {
+    throw es::InvalidHeaderError(magic1);
+  }
+
+  if (magic2 != hkMagic2) {
+    throw es::InvalidHeaderError(magic2);
   }
 
   uint32 currentSectionID = 0;
@@ -44,8 +51,9 @@ int hkxHeader::Load(BinReader &rd) {
     rd.SwapEndian(true);
   }
 
-  if (maxpredicate != -1)
+  if (maxpredicate != -1) {
     rd.Skip(predicateArraySizePlusPadding);
+  }
 
   GenerateToolset();
 
@@ -55,18 +63,21 @@ int hkxHeader::Load(BinReader &rd) {
     s.header = this;
     rd.Read<hkxSectionHeaderData>(s);
 
-    if (version > 9)
+    if (version > 9) {
       rd.Seek(16, std::ios_base::cur);
+    }
 
     s.sectionID = currentSectionID;
     currentSectionID++;
   }
 
-  for (auto &s : sections)
-    s.Load(&rd);
+  for (auto &s : sections) {
+    s.Load(rd);
+  }
 
-  for (auto &s : sections)
-    s.LoadBuffer(&rd);
+  for (auto &s : sections) {
+    s.LoadBuffer(rd);
+  }
 
   if (ES_X64 && layout.bytesInPointer == 4) {
     for (auto &s : sections) {
@@ -79,8 +90,6 @@ int hkxHeader::Load(BinReader &rd) {
       s.Finalize();
     }
   }
-
-  return 0;
 }
 
 void hkxHeader::GenerateToolset() {
@@ -192,7 +201,7 @@ void hkxHeader::GenerateToolset() {
   toolset = convert();
 
   if (toolset == HKUNKVER) {
-    printerror("[Havok] Unknown toolset version: " << contentsVersion);
+    throw es::InvalidVersionError(toolset);
   }
 }
 
@@ -208,8 +217,8 @@ void hkxHeaderData::SwapEndian() {
   FByteswapper(predicateArraySizePlusPadding);
 }
 
-int hkxSectionHeader::Load(BinReader *rd) {
-  rd->SetRelativeOrigin(absoluteDataStart);
+void hkxSectionHeader::Load(BinReaderRef rd) {
+  rd.SetRelativeOrigin(absoluteDataStart);
 
   const int32 virtualEOF =
       (exportsOffset == -1 ? importsOffset : exportsOffset);
@@ -224,30 +233,26 @@ int hkxSectionHeader::Load(BinReader *rd) {
   globalFixups.reserve(circaNumGlobalFixps);
   virtualFixups.reserve(circaNumVirtualFixps);
 
-  rd->Seek(localFixupsOffset);
-  rd->ReadContainer(localFixups, circaNumLocalFixps);
-  rd->Seek(globalFixupsOffset);
-  rd->ReadContainer(globalFixups, circaNumGlobalFixps);
-  rd->Seek(virtualFixupsOffset);
-  rd->ReadContainer(virtualFixups, circaNumVirtualFixps);
+  rd.Seek(localFixupsOffset);
+  rd.ReadContainer(localFixups, circaNumLocalFixps);
+  rd.Seek(globalFixupsOffset);
+  rd.ReadContainer(globalFixups, circaNumGlobalFixps);
+  rd.Seek(virtualFixupsOffset);
+  rd.ReadContainer(virtualFixups, circaNumVirtualFixps);
 
-  rd->ResetRelativeOrigin();
-
-  return 0;
+  rd.ResetRelativeOrigin();
 }
 
-int hkxSectionHeader::LoadBuffer(BinReader *rd) {
+void hkxSectionHeader::LoadBuffer(BinReaderRef rd) {
 
   if (!bufferSize)
-    return 0;
+    return;
 
-  rd->Seek(absoluteDataStart);
-  rd->ReadContainer(buffer, localFixupsOffset);
-
-  return 0;
+  rd.Seek(absoluteDataStart);
+  rd.ReadContainer(buffer, localFixupsOffset);
 }
 
-int hkxSectionHeader::LinkBuffer() {
+void hkxSectionHeader::LinkBuffer() {
   char *sectionBuffer = &buffer[0];
   using ptrType = esPointerX64<char>;
 
@@ -265,32 +270,30 @@ int hkxSectionHeader::LinkBuffer() {
     }
   }
 
-  auto t0 = std::move(localFixups);
-  auto t1 = std::move(globalFixups);
-
-  return 0;
+  es::Dispose(localFixups);
+  es::Dispose(globalFixups);
 }
 
-int hkxSectionHeader::LinkBuffer86() {
+void hkxSectionHeader::LinkBuffer86() {
   char *sectionBuffer = &buffer[0];
   using ptrType = esPointerX86<char>;
 
-  for (auto &lf : localFixups)
+  for (auto &lf : localFixups) {
     if (lf.pointer != -1) {
       ptrType *ptrPtr = reinterpret_cast<ptrType *>(sectionBuffer + lf.pointer);
       *ptrPtr = sectionBuffer + lf.destination;
     }
+  }
 
-  for (auto &gf : globalFixups)
+  for (auto &gf : globalFixups) {
     if (gf.pointer != -1) {
       ptrType *ptrPtr = reinterpret_cast<ptrType *>(sectionBuffer + gf.pointer);
       *ptrPtr = sectionBuffer + gf.destination;
     }
+  }
 
-  auto t0 = std::move(localFixups);
-  auto t1 = std::move(globalFixups);
-
-  return 0;
+  es::Dispose(localFixups);
+  es::Dispose(globalFixups);
 }
 
 void hkxSectionHeader::Finalize() {
@@ -298,12 +301,12 @@ void hkxSectionHeader::Finalize() {
 
   for (auto &vf : virtualFixups) {
     if (vf.dataoffset != -1) {
-      const char *clName =
+      es::string_view clName =
           header->sections[vf.sectionid].buffer.data() + vf.classnameoffset;
-      const JenHash _chash = JenkinsHash(clName);
+      const JenHash chash(clName);
       CRule rule(header->toolset, header->layout.reusePaddingOptimization,
                  header->layout.bytesInPointer > 4);
-      hkVirtualClass *cls = hkVirtualClass::Create(_chash, rule);
+      hkVirtualClass *cls = hkVirtualClass::Create(chash, rule);
 
       if (cls) {
         cls->SetDataPointer(sectionBuffer + vf.dataoffset);
@@ -318,7 +321,7 @@ void hkxSectionHeader::Finalize() {
     }
   }
 
-  auto t0 = std::move(virtualFixups);
+  es::Dispose(virtualFixups);
 }
 
 void hkxSectionHeader::hkxLocalFixup::SwapEndian() {
@@ -348,10 +351,10 @@ void hkxSectionHeaderData::SwapEndian() {
   FByteswapper(bufferSize);
 }
 
-int hkxHeader::Save(BinWritter &wr, const VirtualClasses &classes) const {
+void hkxHeader::Save(BinWritterRef wr, const VirtualClasses &classes) const {
   if (!sections.empty()) {
-    printerror("[Havok] Cannot save loaded header! Use "
-               "IhkPackFile::ToPackFile().") return 1;
+    throw std::logic_error(
+        "Cannot save loaded header! Use IhkPackFile::ToPackFile().");
   }
 
   wr.SwapEndian((layout.littleEndian != 0) != LittleEndian());
@@ -402,7 +405,7 @@ int hkxHeader::Save(BinWritter &wr, const VirtualClasses &classes) const {
   for (auto &c : classes) {
     auto dc = dynamic_cast<const hkVirtualClass *>(c.get());
     auto clName = dc->GetClassName(toolset);
-    auto nClass = hkVirtualClass::Create(JenkinsHash(clName), rule);
+    auto nClass = hkVirtualClass::Create(clName, rule);
 
     if (!nClass) {
       printerror("[Havok] Cannot export unregistered class: " << clName);
@@ -533,6 +536,4 @@ int hkxHeader::Save(BinWritter &wr, const VirtualClasses &classes) const {
   }
 
   wr.Write<hkxSectionHeaderData>(mainSection);
-
-  return 0;
 }

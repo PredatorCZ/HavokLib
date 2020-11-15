@@ -16,32 +16,23 @@
 */
 
 #pragma once
+#include "datas/binreader_stream.hpp"
 #include "hklib/hk_packfile.hpp"
 
 #define hkHederTAG 0x30474154
 
-class BinReader;
 struct hkxNewHeader;
 
-union chunkCC {
-  char fourCC[4];
-  uint32 hash;
-  bool operator==(uint32 input) { return input == hash; }
-  bool operator!=(uint32 input) { return input != hash; }
-};
-
-class hkChunk {
+struct hkChunk {
   uint32 sizeAndFlags;
+  uint32 tag;
 
-public:
-  chunkCC tag;
   void Reorder();
   uint32 Size() const { return sizeAndFlags & 0xffffff; }
   bool IsSubChunk() const { return (sizeAndFlags & 0x40000000) != 0; }
-  int Read(BinReader *rd, hkxNewHeader *root);
+  void Read(BinReaderRef rd, hkxNewHeader *root);
 };
 
-typedef std::vector<es::string_view> _clVec;
 struct ClassName;
 
 struct ClassTemplateArgument {
@@ -59,19 +50,20 @@ struct classEntryFixup : hkChunk {
 };
 
 struct hkxNewHeader : IhkPackFile, hkChunk {
+  using StrVec = std::vector<es::string_view>;
   hkToolset toolset;
   std::string dataBuffer;
   std::string classNamesBuffer;
   std::string memberNamesBuffer;
 
-  _clVec classNames;
-  _clVec memberNames;
+  StrVec classNames;
+  StrVec memberNames;
   std::vector<ClassName> weldedClassNames;
   std::vector<classEntryFixup> classEntries;
   VirtualClasses virtualClasses;
 
   VirtualClasses &GetAllClasses() override { return virtualClasses; }
   hkToolset GetToolset() const override { return toolset; }
-  int Load(BinReader *rd);
+  void Load(BinReaderRef rd);
   void DumpClassNames(std::ostream &str);
 };

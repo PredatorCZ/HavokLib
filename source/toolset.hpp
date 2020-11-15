@@ -22,7 +22,7 @@
 
 struct xmlToolsetProp {
   enum xmlToolsetPropFlags : uint8 { TopLevelObject, MaxPredicate };
-  esFlags<uint8, xmlToolsetPropFlags> flags;
+  es::Flags<xmlToolsetPropFlags> flags;
   uint8 version;
   const char name[16];
 };

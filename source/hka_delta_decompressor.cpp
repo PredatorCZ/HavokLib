@@ -121,8 +121,8 @@ void hkaDeltaDecompressor::Assign(
 
   for (size_t p = 0; p < numTracks; p++) {
     const StaticMask &mask = masks[p];
-    MasterTrack *mtPtr = new MasterTrack(mask);
-    tracks.emplace_back(mtPtr);
+    tracks.emplace_back(std::make_unique<MasterTrack>(mask));
+    auto &mRef = tracks.back();
 
     auto CopyDynamic = [&](StaticMask::MaskType msk, size_t id,
                            DynamicTrack<Vector4A16> *tck) {
@@ -137,14 +137,14 @@ void hkaDeltaDecompressor::Assign(
     switch (mask.GetPosTrackType()) {
     case TT_STATIC: {
       StaticTrack<Vector4A16> *tck =
-          static_cast<StaticTrack<Vector4A16> *>(mtPtr->pos.get());
+          static_cast<StaticTrack<Vector4A16> *>(mRef->pos.get());
       tck->track = reinterpret_cast<Vector &>(*staticBuffer);
       staticBuffer += 3;
       break;
     }
     case TT_DYNAMIC: {
       DynamicTrack<Vector4A16> *tck =
-          static_cast<DynamicTrack<Vector4A16> *>(mtPtr->pos.get());
+          static_cast<DynamicTrack<Vector4A16> *>(mRef->pos.get());
 
       Vector staticValues;
 
@@ -180,14 +180,14 @@ void hkaDeltaDecompressor::Assign(
     switch (mask.GetRotTrackType()) {
     case TT_STATIC: {
       StaticTrack<Vector4A16> *tck =
-          static_cast<StaticTrack<Vector4A16> *>(mtPtr->rot.get());
+          static_cast<StaticTrack<Vector4A16> *>(mRef->rot.get());
       tck->track = reinterpret_cast<Vector4A16 &>(*staticBuffer);
       staticBuffer += 4;
       break;
     }
     case TT_DYNAMIC: {
       DynamicTrack<Vector4A16> *tck =
-          static_cast<DynamicTrack<Vector4A16> *>(mtPtr->rot.get());
+          static_cast<DynamicTrack<Vector4A16> *>(mRef->rot.get());
 
       Vector4A16 staticValues;
 
@@ -237,14 +237,14 @@ void hkaDeltaDecompressor::Assign(
     switch (mask.GetScaleTrackType()) {
     case TT_STATIC: {
       StaticTrack<Vector4A16> *tck =
-          static_cast<StaticTrack<Vector4A16> *>(mtPtr->scale.get());
+          static_cast<StaticTrack<Vector4A16> *>(mRef->scale.get());
       tck->track = reinterpret_cast<Vector &>(*staticBuffer);
       staticBuffer += 3;
       break;
     }
     case TT_DYNAMIC: {
       DynamicTrack<Vector4A16> *tck =
-          static_cast<DynamicTrack<Vector4A16> *>(mtPtr->scale.get());
+          static_cast<DynamicTrack<Vector4A16> *>(mRef->scale.get());
 
       Vector staticValues;
 
@@ -282,15 +282,16 @@ void hkaDeltaDecompressor::Assign(
 
       switch (m.GetPosTrackType()) {
       case TT_IDENTITY:
-        floats.emplace_back(new StaticTrack<float>);
+        floats.emplace_back(std::make_unique<StaticTrack<float>>());
         break;
       case TT_STATIC:
-        floats.emplace_back(new StaticTrack<float>(*staticBuffer++));
+        floats.emplace_back(
+            std::make_unique<StaticTrack<float>>(*staticBuffer++));
         break;
       case TT_DYNAMIC: {
-        auto cFloatTrack = new DynamicTrack<float>();
-        floats.emplace_back(cFloatTrack);
+        auto cFloatTrack = std::make_unique<DynamicTrack<float>>();
         cFloatTrack->items.swap(dynamicTracks[curDynTrack++].items);
+        floats.emplace_back(std::move(cFloatTrack));
         break;
       }
       }
@@ -302,34 +303,35 @@ MasterTrack::MasterTrack(const StaticMask &mask) {
   switch (mask.GetPosTrackType()) {
   case TT_IDENTITY:
   case TT_STATIC:
-    pos = VectorTrackPtr(new StaticTrack<Vector4A16>());
+    pos = std::make_unique<StaticTrack<Vector4A16>>();
     break;
   case TT_DYNAMIC:
-    pos = VectorTrackPtr(new DynamicTrack<Vector4A16>());
+    pos = std::make_unique<DynamicTrack<Vector4A16>>();
     break;
   }
 
   switch (mask.GetRotTrackType()) {
   case TT_IDENTITY:
-    rot = VectorTrackPtr(new StaticTrack<Vector4A16>({{}, 1.f}));
+    rot = std::make_unique<StaticTrack<Vector4A16>>(Vector4A16{{}, 1.f});
     break;
   case TT_STATIC:
-    rot = VectorTrackPtr(new StaticTrack<Vector4A16>());
+    rot = std::make_unique<StaticTrack<Vector4A16>>();
     break;
   case TT_DYNAMIC:
-    rot = VectorTrackPtr(new DynamicTrack<Vector4A16>());
+    rot = std::make_unique<DynamicTrack<Vector4A16>>();
     break;
   }
 
   switch (mask.GetScaleTrackType()) {
   case TT_IDENTITY:
-    scale = VectorTrackPtr(new StaticTrack<Vector4A16>({1.f, 1.f, 1.f, 0.f}));
+    scale = std::make_unique<StaticTrack<Vector4A16>>(
+        Vector4A16{1.f, 1.f, 1.f, 0.f});
     break;
   case TT_STATIC:
-    scale = VectorTrackPtr(new StaticTrack<Vector4A16>());
+    scale = std::make_unique<StaticTrack<Vector4A16>>();
     break;
   case TT_DYNAMIC:
-    scale = VectorTrackPtr(new DynamicTrack<Vector4A16>());
+    scale = std::make_unique<DynamicTrack<Vector4A16>>();
     break;
   }
 }

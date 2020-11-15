@@ -20,6 +20,7 @@
 #include "datas/pointer.hpp"
 #include "fixups.hpp"
 #include "hklib/hk_packfile.hpp"
+#include <unordered_map>
 
 #ifndef _MSC_VER
 #define MSC_RP_PACK(packingVal) pack()

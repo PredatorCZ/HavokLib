@@ -124,6 +124,12 @@ using hkaDefaultAnimatedReferenceFrame2012 =
         _ipointer, hkaDefaultAnimatedReferenceFrame700_t_data<
                        _ipointer, hkaAnimatedReferenceFrame2012, rp>>;
 
+template <template <class C> class _ipointer, bool rp>
+using hkaDefaultAnimatedReferenceFrame2016 =
+    hkaDefaultAnimatedReferenceFrame_t_shared<
+        _ipointer, hkaDefaultAnimatedReferenceFrame700_t_data<
+                       _ipointer, hkaAnimatedReferenceFrame2016, rp>>;
+
 template <hkToolset ts, template <class C> class _ipointer, bool rp>
 struct hkaDefaultAnimatedReferenceFrameTier
     : hkaDefaultAnimatedReferenceFrame700<_ipointer, rp> {};
@@ -139,12 +145,12 @@ hkClassTier1Alias(hkaDefaultAnimatedReferenceFrame, 2012, 2012_1);
 hkClassTier1Alias(hkaDefaultAnimatedReferenceFrame, 2012, 2012_2);
 hkClassTier1Alias(hkaDefaultAnimatedReferenceFrame, 2012, 2013);
 hkClassTier1Alias(hkaDefaultAnimatedReferenceFrame, 2012, 2014);
+hkClassTier1Alias(hkaDefaultAnimatedReferenceFrame, 2012, 2015);
+hkClassTier1Alias(hkaDefaultAnimatedReferenceFrame, 2016, 2016);
+hkClassTier1Alias(hkaDefaultAnimatedReferenceFrame, 2016, 2017);
 
 static const std::unordered_map<CRule, hkVirtualClass *(*)()> registry{
-    hkRegisterVersionedClasses(hkaDefaultAnimatedReferenceFrame, 500, 510, 550,
-                               600, 610, 650, 660, 700, 710, 2010_1, 2010_2,
-                               2011_1, 2011_2, 2011_3, 2012_1, 2012_2, 2013,
-                               2014)};
+    hkRegisterFullClass(hkaDefaultAnimatedReferenceFrame)};
 } // namespace
 
 hkVirtualClass *

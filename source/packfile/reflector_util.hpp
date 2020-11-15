@@ -16,7 +16,7 @@
 */
 
 #pragma once
-#define _REFLECTOR_ADDN_HASH(value) JenkinsHashC(#value),
+#define _REFLECTOR_ADDN_HASH(value) JenHash(#value),
 #define _REFLECTOR_ADDN_ENUMNAME(value) #value,
 
 #define REFLECTOR_ENUM_HASH(classname, ...)                                    \

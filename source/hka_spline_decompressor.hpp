@@ -41,8 +41,24 @@ enum TransformType {
   ttScaleZ
 };
 
+struct TransformTypePos {
+  enum dummy {
+    X = ttPosX,
+    Y,
+    Z,
+  };
+};
+
+struct TransformTypeScale {
+  enum dummy {
+    X = ttScaleX,
+    Y,
+    Z,
+  };
+};
+
 struct TransformMask {
-  enum FlagOffset {
+  enum FlagOffset : uint8 {
     staticX,
     staticY,
     staticZ,
@@ -54,9 +70,9 @@ struct TransformMask {
   };
 
   uint8 quantizationTypes;
-  esFlags<uint8, FlagOffset> positionTypes;
+  es::Flags<FlagOffset> positionTypes;
   uint8 rotationTypes;
-  esFlags<uint8, FlagOffset> scaleTypes;
+  es::Flags<FlagOffset> scaleTypes;
 
   QuantizationType GetPosQuantizationType() const {
     return static_cast<QuantizationType>(quantizationTypes & 3);

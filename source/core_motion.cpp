@@ -63,9 +63,10 @@ void hkaAnimationLerpSampler::GetValue(uni::RTSValue &output, float time,
   const float frameFull = time * frameRate;
   int32 frame = static_cast<int32>(frameFull);
   float delta = frameFull - frame;
+  const int32 endFrame = static_cast<int32>(numFrames - 1);
 
-  if (frame >= numFrames) {
-    frame = static_cast<int32>(numFrames - 1);
+  if (frameFull >= endFrame) {
+    frame = endFrame;
     delta = 0.f;
   }
 
@@ -86,8 +87,8 @@ void hkaAnimationLerpSampler::GetValue(uni::RTSValue &output, float time,
 static uni::RTSValue ConvertRefFrame(const Vector4A16 &input) {
   uni::RTSValue retVal;
   retVal.translation = Vector4A16(input, 1.f);
-  retVal.rotation.Z = sinf(input.W * 0.5);
-  retVal.rotation.W = cosf(input.W * 0.5);
+  retVal.rotation.Z = sinf(input.W * 0.5f);
+  retVal.rotation.W = cosf(input.W * 0.5f);
   return retVal;
 }
 
@@ -97,9 +98,10 @@ void hkaAnimatedReferenceFrameInternalInterface::GetValue(uni::RTSValue &output,
   int32 frame = static_cast<int32>(frameFull);
   float delta = frameFull - frame;
   const auto numFrames = GetNumFrames();
+  const int32 endFrame = static_cast<int32>(numFrames - 1);
 
-  if (frame >= numFrames) {
-    frame = static_cast<int32>(numFrames - 1);
+  if (frameFull >= endFrame) {
+    frame = endFrame;
     delta = 0.f;
   }
 

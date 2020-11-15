@@ -21,7 +21,7 @@
 #include "uni/common.hpp"
 
 #define DECLARE_HKCLASS(classname)                                             \
-  static constexpr JenHash GetHash() { return JenkinsHashC(#classname); }
+  static constexpr JenHash GetHash() { return JenHash(#classname); }
 
 REFLECTOR_CREATE(hkToolset, ENUM, 1, 8, HKUNKVER, HK500, HK510, HK550, HK600,
                  HK610, HK650, HK660, HK700, HK710, HK2010_1, HK2010_2,

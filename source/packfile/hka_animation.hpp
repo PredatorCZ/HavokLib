@@ -20,9 +20,9 @@
 #include "hklib/hka_animatedreferenceframe.hpp"
 #include "internal/hka_animation.hpp"
 #include "reflector_util.hpp"
-#include <unordered_map>
+#include <map>
 
-static const std::unordered_map<JenHash, hkaAnimationType>
+static const std::map<JenHash, hkaAnimationType>
     hkaAnimationTypeRemaps{StaticForArgID(
         _REFLECTOR_ADDN_REMAP, hkaAnimationType, HK_UNKNOWN_ANIMATION,
         HK_INTERLEAVED_ANIMATION, HK_DELTA_COMPRESSED_ANIMATION,

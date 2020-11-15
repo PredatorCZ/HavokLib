@@ -16,8 +16,8 @@
 */
 
 #pragma once
-#include "havok_xml.hpp"
 #include "datas/unit_testing.hpp"
+#include "havok_xml.hpp"
 
 int test_xml_base() {
   xmlHavokFile xmHk;
@@ -147,15 +147,16 @@ int test_xml_base() {
   anicont->animations.emplace_back(anim);
   anicont->bindings.emplace_back(aniBind);
   rt->AddVariant(anicont);
+  pugi::xml_document doc;
 
-  xmHk.ToXML(HK500);
-  xmHk.ToXML(HK550);
-  xmHk.ToXML(HK600);
-  xmHk.ToXML(HK660);
-  xmHk.ToXML(HK700);
-  xmHk.ToXML(HK2010_1);
-  xmHk.ToXML(HK2012_1);
-  xmHk.ToXML(HK2014);
+  xmHk.ToXML(doc, HK500);
+  xmHk.ToXML(doc, HK550);
+  xmHk.ToXML(doc, HK600);
+  xmHk.ToXML(doc, HK660);
+  xmHk.ToXML(doc, HK700);
+  xmHk.ToXML(doc, HK2010_1);
+  xmHk.ToXML(doc, HK2012_1);
+  xmHk.ToXML(doc, HK2014);
 
   return 0;
 }

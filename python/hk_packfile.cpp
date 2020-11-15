@@ -93,7 +93,7 @@ PyObject *IHavokPy::GetClasses(IHavokPy *self, PyObject *args) {
     return nullptr;
   }
 
-  JenHash classHash = JenkinsHash(classNameRaw);
+  JenHash classHash(classNameRaw);
 
   auto foundItems = self->file->GetClasses(classHash);
   PyObject *rtlist = PyList_New(0);
@@ -124,9 +124,10 @@ PyObject *IHavokPy::ToXML(IHavokPy *self, PyObject *args) {
     self->file->ToXML(fileName, toolsetVersion);
     return Py_None;
   } else {
-    auto xDoc = self->file->ToXML(toolsetVersion);
+    pugi::xml_document doc;
+    self->file->ToXML(doc, toolsetVersion);
     std::stringstream ss;
-    xDoc.save(ss);
+    doc.save(ss);
     std::string str = ss.str();
 
     return PyString_FromString(str.data());

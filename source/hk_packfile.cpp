@@ -19,58 +19,38 @@
 
 #include "datas/binreader.hpp"
 #include "datas/binwritter.hpp"
+#include "datas/except.hpp"
 #include "datas/master_printer.hpp"
-#include "hklib/hk_rootlevelcontainer.hpp"
-#include "internal/hk_internal_api.hpp"
 #include "format_new.hpp"
 #include "format_old.hpp"
+#include "hklib/hk_rootlevelcontainer.hpp"
+#include "internal/hk_internal_api.hpp"
 
-IhkPackFile *IhkPackFile::Create(const std::string &fileName,
-                                 bool suppressErrors) {
+IhkPackFile::Ptr IhkPackFile::Create(const std::string &fileName) {
   BinReader rd(fileName);
 
   if (!rd.IsValid()) {
-    if (!suppressErrors) {
-      printerror("[Havok] Cannot open file. " << fileName);
-    }
-
-    return nullptr;
+    throw es::FileNotFoundError(fileName);
   }
 
   struct {
-    int ID1, ID2;
+    uint32 ID1, ID2;
   } testerStruct;
 
   rd.Read(testerStruct);
   rd.Seek(0);
 
   if (testerStruct.ID1 == hkMagic1 && testerStruct.ID2 == hkMagic2) {
-    hkxHeader *hdr = new hkxHeader{};
-
-    if (hdr->Load(rd)) {
-      delete hdr;
-      hdr = nullptr;
-    }
-    return hdr;
+    auto hdr = std::make_unique<hkxHeader>();
+    hdr->Load(rd);
+    return std::move(hdr);
   } else if (testerStruct.ID2 == hkHederTAG) {
-    hkxNewHeader *hdr = new hkxNewHeader{};
-
-    if (hdr->Load(&rd)) {
-      delete hdr;
-      hdr = nullptr;
-    }
-    return hdr;
-  } else if (!suppressErrors) {
-    printerror("[Havok] Invalid packfile.");
+    auto hdr = std::make_unique<hkxNewHeader>();
+    hdr->Load(rd);
+    return std::move(hdr);
   }
 
-  return nullptr;
-}
-
-IhkPackFile *IhkPackFile::Create(es::string_view fileName,
-                                 bool suppressErrors) {
-  std::string fleName = fileName.to_string();
-  return Create(fleName);
+  throw es::InvalidHeaderError(testerStruct.ID1);
 }
 
 const IhkVirtualClass *IhkPackFile::GetClass(const void *ptr) {
@@ -101,16 +81,10 @@ IhkPackFile::VirtualClassesRef IhkPackFile::GetClasses(JenHash hash) {
   return buffa;
 }
 
-int IhkPackFile::ToPackFile(const std::string &fileName, hkToolset toolset,
-                            uint32 rule) {
-  if (toolset == HKUNKVER) {
-    printerror("[Havok] Unknown toolset version.");
-    return 1;
-  }
-
-  if (toolset > HK2014) {
-    printerror("[Havok] Unsupported toolset version.");
-    return 2;
+void IhkPackFile::ToPackFile(const std::string &fileName, hkToolset toolset,
+                             uint32 rule) {
+  if (toolset == HKUNKVER || toolset > HK2014) {
+    throw es::InvalidVersionError(toolset);
   }
 
   hkxHeaderlayout layout;
@@ -149,7 +123,7 @@ int IhkPackFile::ToPackFile(const std::string &fileName, hkToolset toolset,
   BinWritter wr(fileName);
 
   if (!wr.IsValid()) {
-    printerror("[Havok] Cannot create file.") return 3;
+    throw es::FileInvalidAccessError(fileName);
   }
 
   auto prop = xmlToolsetProps.at(toolset);
@@ -160,11 +134,9 @@ int IhkPackFile::ToPackFile(const std::string &fileName, hkToolset toolset,
   hkHead.toolset = toolset;
   strncpy(hkHead.contentsVersion, prop.name, strlen(prop.name) + 1);
   hkHead.Save(wr, GetAllClasses());
-
-  return 0;
 }
 
 hkRootLevelContainer *IhkPackFile::GetRootLevelContainer() {
   return dynamic_cast<hkRootLevelContainer *>(
-    GetClasses(hkRootLevelContainer::GetHash())[0]);
+      GetClasses(hkRootLevelContainer::GetHash())[0]);
 }
