@@ -84,14 +84,6 @@ void hkaAnimationLerpSampler::GetValue(uni::RTSValue &output, float time,
   }
 }
 
-static uni::RTSValue ConvertRefFrame(const Vector4A16 &input) {
-  uni::RTSValue retVal;
-  retVal.translation = Vector4A16(input, 1.f);
-  retVal.rotation.Z = sinf(input.W * 0.5f);
-  retVal.rotation.W = cosf(input.W * 0.5f);
-  return retVal;
-}
-
 void hkaAnimatedReferenceFrameInternalInterface::GetValue(uni::RTSValue &output,
                                                           float time) const {
   const float frameFull = time * frameRate;
@@ -104,6 +96,17 @@ void hkaAnimatedReferenceFrameInternalInterface::GetValue(uni::RTSValue &output,
     frame = endFrame;
     delta = 0.f;
   }
+
+  auto ConvertRefFrame = [&](const Vector4A16 &input) {
+    uni::RTSValue retVal;
+    retVal.translation = Vector4A16(input, 1.f);
+    retVal.rotation.X = sinf(input.W * 0.5f);
+    retVal.rotation.Y = retVal.rotation.X;
+    retVal.rotation.Z = retVal.rotation.X;
+    retVal.rotation *= GetUp();
+    retVal.rotation.W = cosf(input.W * 0.5f);
+    return retVal;
+  };
 
   if (!delta) {
     auto cFrame = GetRefFrame(frame);
