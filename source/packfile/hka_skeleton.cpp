@@ -126,7 +126,9 @@ public:
   size_t id;
 
   TransformType TMType() const override { return TMTYPE_RTS; }
-  void GetTM(uni::RTSValue &out) const override { out = *tm; }
+  void GetTM(uni::RTSValue &out) const override {
+    out = tm ? *tm : uni::RTSValue{};
+  }
   const Bone *Parent() const override { return parent; }
   size_t Index() const override { return id; }
   std::string Name() const override { return name; }
