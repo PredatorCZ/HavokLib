@@ -17,8 +17,8 @@
 
 #include "datas/except.hpp"
 #include "datas/master_printer.hpp"
+#include "datas/pugiex.hpp"
 #include "hklib/hk_packfile.hpp"
-#include "pugixml.hpp"
 #include "toolset.hpp"
 #include <cinttypes>
 
@@ -149,8 +149,5 @@ void IhkPackFile::ToXML(pugi::xml_node nde, hkToolset toolsetVersion) {
 void IhkPackFile::ToXML(const std::string &fileName, hkToolset toolset) {
   pugi::xml_document doc;
   ToXML(doc, toolset);
-
-  if (!doc.save_file(fileName.data())) {
-    throw es::FileInvalidAccessError(fileName);
-  }
+  XMLToFile(fileName, doc);
 }

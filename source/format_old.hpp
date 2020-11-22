@@ -16,8 +16,7 @@
 */
 
 #pragma once
-#include "datas/binreader_stream.hpp"
-#include "datas/binwritter_stream.hpp"
+#include "datas/bincore_fwd.hpp"
 #include "hklib/hk_packfile.hpp"
 
 #define hkMagic1 0x57e0e057

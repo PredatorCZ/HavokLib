@@ -29,10 +29,6 @@
 IhkPackFile::Ptr IhkPackFile::Create(const std::string &fileName) {
   BinReader rd(fileName);
 
-  if (!rd.IsValid()) {
-    throw es::FileNotFoundError(fileName);
-  }
-
   struct {
     uint32 ID1, ID2;
   } testerStruct;
@@ -121,10 +117,6 @@ void IhkPackFile::ToPackFile(const std::string &fileName, hkToolset toolset,
   }
 
   BinWritter wr(fileName);
-
-  if (!wr.IsValid()) {
-    throw es::FileInvalidAccessError(fileName);
-  }
 
   auto prop = xmlToolsetProps.at(toolset);
 
