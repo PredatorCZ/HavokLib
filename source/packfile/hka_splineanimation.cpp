@@ -75,6 +75,10 @@ struct hkaSplineCompressedAnimation_t
     size_t blockID = static_cast<size_t>(time * GetBlockInverseDuration());
     float localTime = time - (static_cast<float>(blockID) * GetBlockDuration());
 
+    if (localTime < 0.f) {
+      localTime = 0.f;
+    }
+
     decomp.blocks[blockID].GetValue(trackID, localTime * frameRate, output);
   }
 };
