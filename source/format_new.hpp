@@ -17,6 +17,7 @@
 
 #pragma once
 #include "datas/bincore_fwd.hpp"
+#include "datas/flags.hpp"
 #include "hklib/hk_packfile.hpp"
 
 #define hkHederTAG 0x30474154
@@ -33,16 +34,59 @@ struct hkChunk {
   void Read(BinReaderRef rd, hkxNewHeader *root);
 };
 
-struct ClassName;
+struct ClassDesc;
 
 struct ClassTemplateArgument {
   es::string_view argName;
-  ClassName *argType;
+  ClassDesc *argType = nullptr;
 };
 
-struct ClassName {
+enum class BodyLayoutFlags : uint16 {
+  Flags,
+  IsPointer,
+  Version,
+  ObjectSize,
+  AbstractValue, //?? default value?
+  IsClass,
+  Interfaces,
+  Unknown,
+};
+
+enum class BodyFlags : uint32 {
+  Pointer = 3,
+  InlineArray = 5,
+};
+
+enum class MemberFlags {
+  IgnoreSerialization,
+};
+
+struct BodyMember {
+  es::string_view name;
+  es::Flags<MemberFlags> flags;
+  uint32 offset;
+  ClassDesc *type = nullptr;
+};
+
+struct BodyInterface {
+  ClassDesc *type;
+  uint32 flags;
+};
+
+struct ClassDesc {
   es::string_view className;
   std::vector<ClassTemplateArgument> templateArguments;
+
+  ClassDesc *base = nullptr;
+  ClassDesc *pointer = nullptr;
+  es::Flags<BodyLayoutFlags> layout;
+  es::Flags<BodyFlags> flags;
+  uint16 size = 0;
+  uint16 alignment = 0;
+  uint32 version = 0;
+  uint64 absstrVal = 0;
+  std::vector<BodyMember> members;
+  std::vector<BodyInterface> interfaces;
 };
 
 struct classEntryFixup : hkChunk {
@@ -58,12 +102,13 @@ struct hkxNewHeader : IhkPackFile, hkChunk {
 
   StrVec classNames;
   StrVec memberNames;
-  std::vector<ClassName> weldedClassNames;
+  std::vector<ClassDesc> typeDescriptors;
   std::vector<classEntryFixup> classEntries;
   VirtualClasses virtualClasses;
 
   VirtualClasses &GetAllClasses() override { return virtualClasses; }
   hkToolset GetToolset() const override { return toolset; }
   void Load(BinReaderRef rd);
-  void DumpClassNames(std::ostream &str);
+  void DumpClassDeclarationsAsCPP(std::ostream &str) const;
+  void ToXML(pugi::xml_node node) const;
 };
