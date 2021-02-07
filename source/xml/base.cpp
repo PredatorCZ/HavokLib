@@ -39,7 +39,7 @@ static void PointerToString(const void *ptr, std::string &str) {
 }
 
 template <class C> static void ExportReflectedClass(C &input, XMLnode &parent) {
-  ReflectorWrapConst<C> refl(&input);
+  ReflectorWrap<const C> refl(input);
 
   for (int t = 0; t < refl.GetNumReflectedValues(); t++) {
     Reflector::KVPair pair = refl.GetReflectedPair(t);

@@ -26,7 +26,7 @@ struct hkLocalFrameOnBone {
   int boneIndex;
 };
 
-struct hkaPartition : ReflectorInterface<hkaPartition> {
+struct hkaPartition {
   std::string name;
   int16 startBoneIndex;
   uint16 numBones;
