@@ -18,6 +18,7 @@
 #include "datas/except.hpp"
 #include "datas/master_printer.hpp"
 #include "datas/pugiex.hpp"
+#include "datas/vectors_string.hpp"
 #include "hklib/hk_packfile.hpp"
 #include "toolset.hpp"
 #include <cinttypes>
@@ -52,11 +53,12 @@ template <class C> static void ExportReflectedClass(C &input, XMLnode &parent) {
 std::string to_string(const hkQTransform &tm) {
   std::string retVal;
   retVal.push_back('(');
-  retVal.append(reinterpret_cast<const Vector &>(tm.translation).ToString())
+  retVal
+      .append(std::to_string(reinterpret_cast<const Vector &>(tm.translation)))
       .append(")(")
-      .append(tm.rotation.ToString())
+      .append(std::to_string(tm.rotation))
       .append(")(")
-      .append(reinterpret_cast<const Vector &>(tm.scale).ToString())
+      .append(std::to_string(reinterpret_cast<const Vector &>(tm.scale)))
       .push_back(')');
   return retVal;
 }

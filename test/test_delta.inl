@@ -36,19 +36,19 @@ int test_delta(pugi::xml_node nde, IhkVirtualClass *hkNode) {
     } else if (paramName == "blockSize") {
       TEST_EQUAL(b.text().as_int(), delta->GetBlockSize());
     } else if (paramName == "qFormat") {
-      for (auto q : *nde.begin()) {
-        es::string_view qParamName = b.attribute("name").as_string();
+      for (auto q : b.first_child()) {
+        es::string_view qParamName = q.attribute("name").as_string();
 
         if (qParamName == "bitWidthIdx") {
-          TEST_EQUAL(b.text().as_int(), delta->GetBitWidthOffset());
+          TEST_EQUAL(q.text().as_int(), delta->GetBitWidthOffset());
         } else if (qParamName == "preserved") {
-          TEST_EQUAL(b.text().as_int(), delta->GetNumPreserved());
+          TEST_EQUAL(q.text().as_int(), delta->GetNumPreserved());
         } else if (qParamName == "offsetIdx") {
-          TEST_EQUAL(b.text().as_int(), delta->GetOffsetsOffset());
+          TEST_EQUAL(q.text().as_int(), delta->GetOffsetsOffset());
         } else if (qParamName == "scaleIdx") {
-          TEST_EQUAL(b.text().as_int(), delta->GetScalesOffset());
+          TEST_EQUAL(q.text().as_int(), delta->GetScalesOffset());
         } else if (qParamName == "numD") {
-          TEST_EQUAL(b.text().as_int(), delta->GetNumDynamicTracks());
+          TEST_EQUAL(q.text().as_int(), delta->GetNumDynamicTracks());
         }
       }
     } else if (paramName == "quantizedDataIdx") {

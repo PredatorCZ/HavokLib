@@ -4,35 +4,38 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 4)
   message(FATAL_ERROR "X86 architecture is not supported!")
 endif()
 
-project(HavokLib)
+project(HavokLib VERSION 1)
 
 # ~~~
 # Valid targets:
-#  - HavokLibStatic: if BUILD_STATIC then it's target for static library,
-#                    otherwise this target will contain objects for static libraries or non-PIE executables
-#  - HavokLib: objects for shared libraries or PIE executables
-#  - HavokLibShared (only if BUILD_SHARED): target for shared library
-#
-# NOTE: HavokLibStatic and HavokLib are same for WIN
-# NOTE: if BUILD_SHARED then HavokLib will have exported symbols (HK_EXPORT)
+#  - havok-static: static library target (BUILD_STATIC_LIBS == ON OR BUILD_STATIC_OBJECTS == ON)
+#  - havok-objects: static objects target (BUILD_STATIC_OBJECTS == ON)
+#  - havok-shared: PIC objects target (BUILD_SHARED_OBJECTS == ON OR BUILD_SHARED_LIBS == ON)
+#  - havok: shared library target (BUILD_SHARED_LIBS == ON), havok-shared target will have exported symbols
 #
 # Definitions:
-#  - HK_EXPORT: use to export dynamic symbols from HavokLib target
+#  - HK_EXPORT: use to export dynamic symbols from HavokLib target (BUILD_SHARED_LIBS == ON)
 #  - HK_IMPORT: use to import dynamic symbols from shared library (API only)
 # ~~~
 
-option(PYTHON_MODULE "Build a module for Python 2.7 (enables PIC)." OFF)
-option(USE_PIC "HavokLib target will use PIC." OFF)
+option(PYTHON_MODULE "Build a module for Python 2.7 (enables BUILD_SHARED_OBJECTS)." OFF)
 option(ODR_TEST "Enable ODR testing." OFF)
-option(BUILD_STATIC "Builds HavokLibStatic as a static library." OFF)
-option(BUILD_SHARED "Builds HavokLibShared shared library (enables PIC)." OFF)
+option(BUILD_STATIC_OBJECTS "Builds havok-objects target." ON)
+option(BUILD_SHARED_OBJECTS "Builds havok-shared target." OFF)
+option(BUILD_STATIC_LIBS "Builds havok-static target." OFF)
+option(BUILD_SHARED_LIBS "Builds havok target." OFF)
+option(PUGI_AS_SHARED "pugixml target will be shared library instead of being embedded." OFF)
 
 set(CMAKE_CXX_STANDARD 14)
 add_subdirectory(3rd_party/PreCore)
-add_subdirectory(3rd_party/PugiXml)
+include(targetex)
+include(chartype)
 
-include(${PRECORE_SOURCE_DIR}/cmake/targetex.cmake)
-include(${PRECORE_SOURCE_DIR}/cmake/chartype.cmake)
+set(BUILD_SHARED_LIBS_ ${BUILD_SHARED_LIBS})
+set(BUILD_SHARED_LIBS ${PUGI_AS_SHARED})
+add_subdirectory(3rd_party/PugiXml)
+set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_})
+
 
 if(${PYTHON_MODULE})
   if(NOT ${RELEASEVER})
@@ -45,18 +48,9 @@ elseif(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR}
   find_package(Python2 COMPONENTS Development Interpreter)
 endif()
 
-if(Python2_FOUND OR BUILD_SHARED)
-  set(USE_PIC ON)
-endif()
-
 if(Python2_FOUND)
+  set(BUILD_SHARED_OBJECTS ON)
   add_subdirectory(python)
-endif()
-
-set(STATIC_TYPE OBJECT)
-
-if(BUILD_STATIC)
-  set(STATIC_TYPE STATIC)
 endif()
 
 add_subdirectory(source)
@@ -64,9 +58,4 @@ add_subdirectory(source)
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
   enable_testing()
   add_subdirectory(test)
-endif()
-
-if(BUILD_SHARED)
-  target_compile_definitions(HavokLib PRIVATE -DHK_EXPORT)
-  build_target(NAME HavokLibShared TYPE SHARED LINKS HavokLib)
 endif()

@@ -17,6 +17,7 @@
 
 #include "format_new.hpp"
 #include "datas/binreader.hpp"
+#include "datas/binwritter.hpp"
 #include "datas/except.hpp"
 #include "datas/master_printer.hpp"
 #include "internal/hk_internal_api.hpp"

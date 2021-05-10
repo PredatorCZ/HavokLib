@@ -17,8 +17,9 @@
 
 #pragma once
 #include "datas/jenkinshash.hpp"
+#include "datas/pugi_fwd.hpp"
 #include "datas/reflector.hpp"
-#include "uni/common.hpp"
+#include "uni/rts.hpp"
 
 #define DECLARE_HKCLASS(classname)                                             \
   static constexpr JenHash GetHash() { return JenHash(#classname); }
@@ -28,11 +29,7 @@ REFLECTOR_CREATE(hkToolset, ENUM, 1, 8, HKUNKVER, HK500, HK510, HK550, HK600,
                  HK2011_1, HK2011_2, HK2011_3, HK2012_1, HK2012_2, HK2013,
                  HK2014, HK2015, HK2016, HK2017);
 
-namespace pugi {
-class xml_node;
-class xml_document;
-}; // namespace pugi
-typedef pugi::xml_node XMLnode;
+using XMLnode = pugi::xml_node;
 
 struct XMLHandle {
   XMLnode *node;

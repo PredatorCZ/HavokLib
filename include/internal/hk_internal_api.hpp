@@ -16,10 +16,8 @@
 */
 
 #pragma once
-#include "datas/endian.hpp"
+#include "datas/bincore_fwd.hpp"
 #include "hklib/hk_base.hpp"
-
-#include "datas/binwritter_stream.hpp"
 
 struct hkFixups;
 struct IhkPackFile;
@@ -79,13 +77,15 @@ struct hkVirtualClass : IhkVirtualClass {
     return false;
   }
 
-  virtual es::string_view GetClassName(hkToolset toolset) const { return className; }
+  virtual es::string_view GetClassName(hkToolset toolset) const {
+    return className;
+  }
   virtual void SwapEndian() = 0;
   virtual void Process(){};
   virtual void SetDataPointer(void *Ptr) = 0;
   virtual void ToXML(XMLHandle hdl) const {}
   virtual void Reflect(IhkVirtualClass *input) {}
-  virtual void Save(BinWritterRef wr, hkFixups &fixups) const {};
+  virtual void Save(BinWritterRef wr, hkFixups &fixups) const;
 
   static hkVirtualClass *Create(JenHash hash, CRule rule);
 };

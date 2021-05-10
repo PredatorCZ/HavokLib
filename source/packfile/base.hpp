@@ -16,6 +16,7 @@
 */
 
 #pragma once
+#include "datas/binwritter.hpp"
 #include "datas/macroLoop.hpp"
 #include "datas/pointer.hpp"
 #include "fixups.hpp"

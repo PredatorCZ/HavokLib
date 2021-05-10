@@ -181,7 +181,7 @@ void hkaDeltaDecompressor::Assign(
     case TT_STATIC: {
       StaticTrack<Vector4A16> *tck =
           static_cast<StaticTrack<Vector4A16> *>(mRef->rot.get());
-      tck->track = reinterpret_cast<Vector4A16 &>(*staticBuffer);
+      memcpy(&tck->track, staticBuffer, sizeof(Vector4A16));
       staticBuffer += 4;
       break;
     }

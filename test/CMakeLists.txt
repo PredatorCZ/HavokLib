@@ -8,7 +8,7 @@ build_target(
   SOURCES
   test.cpp
   LINKS
-  HavokLibStatic
+  havok-objects
   NO_PROJECT_H
   NO_VERINFO)
 

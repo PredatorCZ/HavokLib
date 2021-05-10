@@ -8,7 +8,7 @@ build_target(
     SOURCES 
         ${PYTHON_SOURCE_FILES}
     LINKS
-        HavokLib
+        havok-shared
 )
 
 set_precore_sources(havokpy uni_python)

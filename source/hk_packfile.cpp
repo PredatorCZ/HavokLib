@@ -132,3 +132,5 @@ hkRootLevelContainer *IhkPackFile::GetRootLevelContainer() {
   return dynamic_cast<hkRootLevelContainer *>(
       GetClasses(hkRootLevelContainer::GetHash())[0]);
 }
+
+void hkVirtualClass::Save(BinWritterRef wr, hkFixups &fixups) const {}
