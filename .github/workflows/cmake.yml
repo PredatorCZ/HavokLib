@@ -1,0 +1,89 @@
+name: build
+
+on: [push]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-16.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - CC: gcc-5
+            CXX: g++-5
+            #use-gcov: true #currently broken af
+          - CC: gcc-9
+            CXX: g++-9
+          - CC: clang-3.5
+            CXX: clang++-3.5
+            install: true
+            use-odr: true
+          - CC: clang-9
+            CXX: clang++-9
+
+    env:
+      CC: ${{matrix.CC}}
+      CXX: ${{matrix.CXX}}
+      USE_GCOV: ${{matrix.use-gcov == true}}
+      ODR_TEST: ${{matrix.odr-test == true}}
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Install compiler
+        if: ${{matrix.install == true}}
+        run: sudo apt install ${{matrix.CC}}
+
+      - name: Configure stuff
+        run: |
+          sudo apt install zstd
+          mkdir ${{github.workspace}}/build
+          cd ${{github.workspace}}/build
+          cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DUSE_GCOV=$USE_GCOV -DODR_TEST=$ODR_TEST ..
+
+      - name: Build
+        working-directory: ${{github.workspace}}/build
+        run: cmake --build . -j 6
+
+      - name: Test
+        working-directory: ${{github.workspace}}/build
+        run: ctest --output-on-failure
+
+      - name: Upload coverage report
+        working-directory: ${{github.workspace}}
+        if: ${{matrix.use-gcov == true}}
+        run: |
+          pip install --user idna==2.10 cryptography==2.9.2 cpp-coveralls
+          export PATH="$HOME/.local/bin:$PATH"
+          "service_name: github-ci\n" > .coveralls.yml 
+          export TRAVIS_JOB_ID="#${GITHUB_RUN_ID}"
+          coveralls --verbose -E ".*/build/.*.c((pp)|(c)|(xx))?$" -e test -e 3rd_party --gcov-options '\-lp'
+
+  build-widle:
+    runs-on: windows-2019
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Configure stuff
+        run: |
+          mkdir ${{github.workspace}}/build
+          cd ${{github.workspace}}/build
+          cmake -DCMAKE_BUILD_TYPE=Release -A x64 ..
+      - name: Build
+        working-directory: ${{github.workspace}}/build
+        run: cmake --build . -j 6 --config Release
+
+      - name: Test
+        working-directory: ${{github.workspace}}/build
+        run: ctest --output-on-failure -C Release
