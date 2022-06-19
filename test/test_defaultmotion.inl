@@ -1,5 +1,5 @@
 /*  Havok Format Unit Tests for Animated Reference Frame
-    Copyright(C) 2020 Lukas Cone
+    Copyright(C) 2020-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ int test_defaultmotion(pugi::xml_node nde, IhkVirtualClass *hkNode) {
       dynamic_cast<const hkaAnimatedReferenceFrameInternalInterface *>(hkNode);
   TEST_CHECK(defan);
 
-  TEST_EQUAL(defan->GetType(), hkaAnimatedReferenceFrameType::DEFAULT);
+  TEST_EQUAL(defan->GetType(), hkaAnimatedReferenceFrameType::UNKNOWN);
 
   auto xmUp = nde.find_child_by_attribute("name", "up");
   TEST_NOT_CHECK(xmUp.empty());

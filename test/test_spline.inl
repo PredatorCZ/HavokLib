@@ -1,5 +1,5 @@
 /*  Havok Format Unit Tests for Spline Animation
-    Copyright(C) 2020 Lukas Cone
+    Copyright(C) 2020-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -48,39 +48,39 @@ int test_spline(pugi::xml_node nde, IhkVirtualClass *hkNode) {
       TEST_GT(b.text().as_float(), spline->GetFrameDuration() - 0.0001f);
     } else if (paramName == "blockOffsets") {
       auto boffs = spline->GetBlockOffsets();
-      TEST_EQUAL(b.attribute("numelements").as_int(), boffs.count);
+      TEST_EQUAL(b.attribute("numelements").as_int(), boffs.size());
       es::string_view xmDataData = b.text().as_string();
       xmDataData = es::SkipStartWhitespace(xmDataData, true);
 
-      for (size_t i = 0; i < boffs.count; i++) {
-        TEST_NOT_CHECK(GetInt(boffs.data[i], xmDataData));
+      for (auto b : boffs) {
+        TEST_NOT_CHECK(GetInt(b, xmDataData));
       }
     } else if (paramName == "floatBlockOffsets") {
       auto boffs = spline->GetFloatBlockOffsets();
-      TEST_EQUAL(b.attribute("numelements").as_int(), boffs.count);
+      TEST_EQUAL(b.attribute("numelements").as_int(), boffs.size());
       es::string_view xmDataData = b.text().as_string();
       xmDataData = es::SkipStartWhitespace(xmDataData, true);
 
-      for (size_t i = 0; i < boffs.count; i++) {
-        TEST_NOT_CHECK(GetInt(boffs.data[i], xmDataData));
+      for (auto b : boffs) {
+        TEST_NOT_CHECK(GetInt(b, xmDataData));
       }
     } else if (paramName == "transformOffsets") {
       auto boffs = spline->GetTransformOffsets();
-      TEST_EQUAL(b.attribute("numelements").as_int(), boffs.count);
+      TEST_EQUAL(b.attribute("numelements").as_int(), boffs.size());
       es::string_view xmDataData = b.text().as_string();
       xmDataData = es::SkipStartWhitespace(xmDataData, true);
 
-      for (size_t i = 0; i < boffs.count; i++) {
-        TEST_NOT_CHECK(GetInt(boffs.data[i], xmDataData));
+      for (auto b : boffs) {
+        TEST_NOT_CHECK(GetInt(b, xmDataData));
       }
     } else if (paramName == "floatOffsets") {
       auto boffs = spline->GetFloatOffsets();
-      TEST_EQUAL(b.attribute("numelements").as_int(), boffs.count);
+      TEST_EQUAL(b.attribute("numelements").as_int(), boffs.size());
       es::string_view xmDataData = b.text().as_string();
       xmDataData = es::SkipStartWhitespace(xmDataData, true);
 
-      for (size_t i = 0; i < boffs.count; i++) {
-        TEST_NOT_CHECK(GetInt(boffs.data[i], xmDataData));
+      for (auto b : boffs) {
+        TEST_NOT_CHECK(GetInt(b, xmDataData));
       }
     }
   }

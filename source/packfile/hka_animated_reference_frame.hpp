@@ -15,21 +15,17 @@
     along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
 
-#pragma once
-#include "datas/binwritter.hpp"
-#include "datas/pointer.hpp"
-#include "fixups.hpp"
-#include "hklib/hk_packfile.hpp"
+#include "base.hpp"
+#include "internal/hka_animatedreferenceframe.hpp"
 
-template <class C, template <class _C> class _ipointer> struct hkArray {
-  typedef C value_type;
+#include "hka_animated_reference_frame.inl"
 
-  _ipointer<C> data;
-  uint32 count;
-  uint32 capacityAndFlags;
+struct hkaAnimatedReferenceFrameMidInterface
+    : virtual hkaAnimatedReferenceFrameInternalInterface {
 
-  hkArray() : data(), count(0), capacityAndFlags(0x80000000) {}
+  virtual clgen::hkaAnimatedReferenceFrame::Interface Base() const = 0;
 
-  operator C *() { return data; }
-  operator const C *() const { return data; }
+  hkaAnimatedReferenceFrameType GetType() const override {
+      return Base().FrameType();
+  }
 };

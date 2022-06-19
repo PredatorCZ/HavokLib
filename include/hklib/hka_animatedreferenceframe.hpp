@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2020 Lukas Cone
+    Copyright(C) 2016-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ enum class hkaAnimatedReferenceFrameType : uint8 {
 };
 
 struct hkaAnimatedReferenceFrame : IhkVirtualClass, uni::MotionTrack {
-  virtual const Vector4A16 &GetUp() const = 0;
-  virtual const Vector4A16 &GetForward() const = 0;
+  virtual const Vector4A16 GetUp() const = 0;
+  virtual const Vector4A16 GetForward() const = 0;
   virtual hkaAnimatedReferenceFrameType GetType() const = 0;
 };

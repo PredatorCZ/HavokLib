@@ -17,7 +17,7 @@ if(BUILD_STATIC_OBJECTS OR (MSVC AND BUILD_SHARED_OBJECTS))
     SOURCES
     ${CORE_SOURCE_FILES}
     LINKS
-    pugixml
+    pugixml-objects
     NO_VERINFO
     NO_PROJECT_H)
 

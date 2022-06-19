@@ -26,16 +26,13 @@ option(BUILD_STATIC_LIBS "Builds havok-static target." OFF)
 option(BUILD_SHARED_LIBS "Builds havok target." OFF)
 option(PUGI_AS_SHARED "pugixml target will be shared library instead of being embedded." OFF)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 20)
+
+set(PUGI_STATIC_OBJECTS ON CACHE BOOL "")
+
 add_subdirectory(3rd_party/PreCore)
+
 include(targetex)
-include(chartype)
-
-set(BUILD_SHARED_LIBS_ ${BUILD_SHARED_LIBS})
-set(BUILD_SHARED_LIBS ${PUGI_AS_SHARED})
-add_subdirectory(3rd_party/PugiXml)
-set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_})
-
 
 if(${PYTHON_MODULE})
   if(NOT ${RELEASEVER})
@@ -54,6 +51,7 @@ if(Python2_FOUND)
 endif()
 
 add_subdirectory(source)
+add_subdirectory(classgen)
 
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
   enable_testing()

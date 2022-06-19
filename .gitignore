@@ -7,3 +7,4 @@
 build/
 test/resources*
 lib/
+__pycache__/

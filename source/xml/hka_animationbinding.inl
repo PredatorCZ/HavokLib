@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2020 Lukas Cone
+    Copyright(C) 2016-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -126,8 +126,8 @@ void hkaAnimationBindingInternalInterface::ToXML(XMLHandle hdl) const {
   blendNode.append_attribute(_hkName).set_value("blendHint");
 
   BlendHint blendHint = GetBlendHint();
-  auto blendName = GetReflectedEnum<
-      BlendHint>()[blendHint + (!blendHint || hdl.toolset > HK700 ? 0 : 1)];
+  es::string_view blendName = GetReflectedEnum<
+      BlendHint>()->names[blendHint + (!blendHint || hdl.toolset > HK700 ? 0 : 1)];
 
   blendNode.append_buffer(blendName.data(), blendName.size());
 }

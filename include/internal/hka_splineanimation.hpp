@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2020 Lukas Cone
+    Copyright(C) 2016-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -17,14 +17,15 @@
 
 #pragma once
 #include "hka_animation.hpp"
+#include <span>
 
 struct hkaSplineCompressedAnimationInternalInterface
     : virtual hkaAnimationInternalInterface {
   virtual char *GetData() const = 0;
-  virtual hkRealArray<uint32> GetBlockOffsets() const = 0;
-  virtual hkRealArray<uint32> GetFloatBlockOffsets() const = 0;
-  virtual hkRealArray<uint32> GetTransformOffsets() const = 0;
-  virtual hkRealArray<uint32> GetFloatOffsets() const = 0;
+  virtual std::span<const uint32> GetBlockOffsets() const = 0;
+  virtual std::span<const uint32> GetFloatBlockOffsets() const = 0;
+  virtual std::span<const uint32> GetTransformOffsets() const = 0;
+  virtual std::span<const uint32> GetFloatOffsets() const = 0;
   virtual uint32 GetNumFrames() const = 0;
   virtual uint32 GetNumBlocks() const = 0;
   virtual uint32 GetMaxFramesPerBlock() const = 0;

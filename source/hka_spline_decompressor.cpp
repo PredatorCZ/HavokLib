@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2020 Lukas Cone
+    Copyright(C) 2016-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@
 
 #include "hka_spline_decompressor.hpp"
 #include <cmath>
+#include <cstring>
 
 Vector4A16 Read32Quat(const char *&buffer) {
   constexpr uint64 rMask = (1 << 10) - 1;
@@ -223,7 +224,7 @@ Vector SplineDynamicTrackVector::GetValue(float localFrame) {
 }
 
 void ApplyPadding(char *&buffer, int alignment = 4) {
-  const size_t iterPos = reinterpret_cast<esIntPtr>(buffer);
+  const size_t iterPos = reinterpret_cast<intptr_t>(buffer);
   const size_t result = iterPos & (alignment - 1);
 
   if (!result)
@@ -362,7 +363,6 @@ void TransformSplineBlock::Assign(char *buffer, size_t numTracks,
       auto rTrack = new SplineDynamicTrackQuat();
       tracks[cTrack].rotation =
           std::move(TransformTrack::TrackType<Vector4A16>(rTrack));
-      esIntPtr savePtr = reinterpret_cast<esIntPtr>(buffer);
       uint16 numItems = *reinterpret_cast<const uint16 *>(buffer++);
       buffer++;
       rTrack->degree = *reinterpret_cast<const uint8 *>(buffer++);
@@ -406,13 +406,13 @@ void TransformSplineBlock::Assign(char *buffer, size_t numTracks,
 
 void hkaSplineDecompressor::Assign(
     hkaSplineCompressedAnimationInternalInterface *input) {
-  hkRealArray<uint32> blockOffsets = input->GetBlockOffsets();
+  auto blockOffsets = input->GetBlockOffsets();
   char *data = input->GetData();
-  blocks.resize(blockOffsets.count);
+  blocks.resize(blockOffsets.size());
   int cBlock = 0;
 
   for (auto &b : blocks) {
-    b.Assign(data + *(blockOffsets.data + cBlock),
+    b.Assign(data + *(blockOffsets.data() + cBlock),
              input->GetNumOfTransformTracks(), input->GetNumOfFloatTracks());
     cBlock++;
   }
