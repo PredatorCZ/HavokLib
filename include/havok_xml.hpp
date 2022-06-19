@@ -104,7 +104,7 @@ struct xmlBone : uni::Bone {
   xmlBone *parent = nullptr;
   hkQTransform transform;
 
-  TransformType TMType() const override { return TMTYPE_RTS; }
+  uni::TransformType TMType() const override { return uni::TransformType::TMTYPE_RTS; }
   void GetTM(uni::RTSValue &out) const override { out = transform; }
   const Bone *Parent() const override { return parent; }
   size_t Index() const override { return ID; }
@@ -188,7 +188,7 @@ template <class _parent> class xmlAnimation : public virtual _parent {
   DECLARE_XMLCLASS(xmlAnimation, hkaAnimation);
 
   es::string_view GetAnimationTypeName() const override {
-    return GetReflectedEnum<hkaAnimationType>()[animType];
+    return GetReflectedEnum<hkaAnimationType>()->names[animType];
   }
   hkaAnimationType GetAnimationType() const override { return animType; }
   float Duration() const override { return duration; }

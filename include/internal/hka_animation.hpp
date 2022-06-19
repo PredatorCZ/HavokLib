@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2020 Lukas Cone
+    Copyright(C) 2016-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -63,7 +63,7 @@ struct hkaAnimationInternalInterface : virtual hkaAnimation, hkVirtualClass {
   MotionType_e MotionType() const override { return Relative; }
 
   es::string_view GetAnimationTypeName() const override {
-    return GetReflectedEnum<hkaAnimationType>()[GetAnimationType()];
+    return GetReflectedEnum<hkaAnimationType>()->names[GetAnimationType()];
   }
 
   uni::MotionTracksConst Tracks() const override {

@@ -1,5 +1,5 @@
 /*  Havok Format Unit Tests for xml generation
-    Copyright(C) 2020 Lukas Cone
+    Copyright(C) 2020-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -81,7 +81,7 @@ int test_xml_base() {
   TEST_EQUAL(iBone0->Index(), 0);
   TEST_EQUAL(iBone0->Name(), "bone0");
   TEST_EQUAL(iBone0->Parent(), nullptr);
-  TEST_EQUAL(iBone0->TMType(), uni::Bone::TMTYPE_RTS);
+  TEST_EQUAL(iBone0->TMType(), uni::TransformType::TMTYPE_RTS);
   iBone0->GetTM(btm);
   TEST_EQUAL(btm, bne0->transform);
 
@@ -90,7 +90,7 @@ int test_xml_base() {
   TEST_EQUAL(iBone1->Index(), 1);
   TEST_EQUAL(iBone1->Name(), "bone1");
   TEST_EQUAL(iBone1->Parent(), iBone0.get());
-  TEST_EQUAL(iBone1->TMType(), uni::Bone::TMTYPE_RTS);
+  TEST_EQUAL(iBone1->TMType(), uni::TransformType::TMTYPE_RTS);
   iBone1->GetTM(btm);
   TEST_EQUAL(btm, bne1->transform);
 

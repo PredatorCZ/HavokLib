@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2020 Lukas Cone
+    Copyright(C) 2016-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
     along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "internal/custom/hka_losslesscompressedanimation.hpp"
 #include "internal/hk_rootlevelcontainer.hpp"
 #include "internal/hka_animationbinding.hpp"
 #include "internal/hka_animationcontainer.hpp"
@@ -26,7 +27,6 @@
 #include "internal/hka_splineanimation.hpp"
 #include "internal/hka_waveletanimation.hpp"
 #include "internal/hkx_environment.hpp"
-#include "internal/custom/hka_losslesscompressedanimation.hpp"
 #include <map>
 
 #define hkRegisterCreator(cname)                                               \
@@ -65,4 +65,5 @@ hkVirtualClass *hkVirtualClass::Create(JenHash hash, CRule rule) {
   return madeClass;
 }
 
-REFLECTOR_CREATE(hkaPartition, 1, VARNAMES, name, startBoneIndex, numBones);
+REFLECT(CLASS(hkaPartition), MEMBER(name), MEMBER(startBoneIndex),
+        MEMBER(numBones));

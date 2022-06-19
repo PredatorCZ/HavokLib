@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2020 Lukas Cone
+    Copyright(C) 2016-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -24,13 +24,15 @@ struct hkaAnnotationTrack;
 
 using hkaAnnotationTrackPtr = uni::Element<hkaAnnotationTrack>;
 
-REFLECTOR_CREATE(hkaAnimationType, ENUM, 0, HK_UNKNOWN_ANIMATION,
-                 HK_INTERLEAVED_ANIMATION, HK_DELTA_COMPRESSED_ANIMATION,
-                 HK_WAVELET_COMPRESSED_ANIMATION, HK_MIRRORED_ANIMATION,
-                 HK_SPLINE_COMPRESSED_ANIMATION,
-                 HK_QUANTIZED_COMPRESSED_ANIMATION,
-                 HK_PREDICTIVE_COMPRESSED_ANIMATION,
-                 HK_REFERENCE_POSE_ANIMATION);
+MAKE_ENUM(ENUM(hkaAnimationType), EMEMBER(HK_UNKNOWN_ANIMATION),
+          EMEMBER(HK_INTERLEAVED_ANIMATION),
+          EMEMBER(HK_DELTA_COMPRESSED_ANIMATION),
+          EMEMBER(HK_WAVELET_COMPRESSED_ANIMATION),
+          EMEMBER(HK_MIRRORED_ANIMATION),
+          EMEMBER(HK_SPLINE_COMPRESSED_ANIMATION),
+          EMEMBER(HK_QUANTIZED_COMPRESSED_ANIMATION),
+          EMEMBER(HK_PREDICTIVE_COMPRESSED_ANIMATION),
+          EMEMBER(HK_REFERENCE_POSE_ANIMATION));
 
 struct hkaAnimation : uni::Motion, IhkVirtualClass {
   DECLARE_HKCLASS(hkaAnimation)

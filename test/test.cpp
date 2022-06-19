@@ -1,5 +1,5 @@
 /*  Havok Format Unit Tests
-    Copyright(C) 2020 Lukas Cone
+    Copyright(C) 2020-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ static const es::string_view versions[] = {
 #include "test_sample.inl"
 
 int main() {
-  printer.AddPrinterFunction(UPrintf);
+  es::print::AddPrinterFunction(es::Print);
 
   TEST_CASES(int resultVar, TEST_FUNC(test_skeleton),
              TEST_FUNC(test_defaultmotion), TEST_FUNC(test_spline),

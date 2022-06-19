@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2020 Lukas Cone
+    Copyright(C) 2016-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -22,7 +22,9 @@
 struct hkaAnimation;
 
 // ADDITIVE_DEPRECATED since 2010
-REFLECTOR_CREATE(BlendHint, ENUM, 1, 8, NORMAL, ADDITIVE_DEPRECATED, ADDITIVE)
+MAKE_ENUM(ENUMSCOPE(BlendHint
+                    : uint8, BlendHint),
+          EMEMBER(NORMAL), EMEMBER(ADDITIVE_DEPRECATED), EMEMBER(ADDITIVE))
 
 struct hkaAnimationBinding : IhkVirtualClass {
   DECLARE_HKCLASS(hkaAnimationBinding)
