@@ -1,5 +1,5 @@
 /*  Havok Format Unit Tests for hkaSkeleton
-    Copyright(C) 2020 Lukas Cone
+    Copyright(C) 2020-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -73,7 +73,7 @@ int test_sample() {
 
         std::unique_ptr<IhkPackFile> curHk(IhkPackFile::Create(curFile));
 
-        const auto hkAnim = dynamic_cast<const hkaAnimation *>(
+        const auto hkAnim = checked_deref_cast<const hkaAnimation>(
             curHk->GetClasses("hkaAnimation")[0]);
         const auto hkTracks = hkAnim->Tracks();
         Vector4A16::SetEpsilon(0.35f);
@@ -156,7 +156,7 @@ int test_sample_old() {
 
         std::unique_ptr<IhkPackFile> curHk(IhkPackFile::Create(curFile));
 
-        const auto hkAnim = dynamic_cast<const hkaAnimation *>(
+        const auto hkAnim = checked_deref_cast<const hkaAnimation>(
             curHk->GetClasses("hkaAnimation")[0]);
         const auto hkTracks = hkAnim->Tracks();
         Vector4A16::SetEpsilon(0.35f);

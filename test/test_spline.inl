@@ -16,14 +16,15 @@
 */
 
 #pragma once
-#include "test_common.inl"
 #include "internal/hka_splineanimation.hpp"
+#include "test_common.inl"
 
 int test_spline(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   TEST_CHECK(hkNode);
   auto spline =
-      dynamic_cast<const hkaSplineCompressedAnimationInternalInterface *>(
-          hkNode);
+      checked_deref_cast<const hkaSplineCompressedAnimationInternalInterface>(
+          static_cast<const hkaAnimationInternalInterface *>(
+              checked_deref_cast<const hkaAnimation>(hkNode)));
   TEST_CHECK(spline);
 
   TEST_EQUAL(spline->GetAnimationType(), HK_SPLINE_COMPRESSED_ANIMATION);

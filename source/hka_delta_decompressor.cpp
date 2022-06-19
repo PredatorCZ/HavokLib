@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2020 Lukas Cone
+    Copyright(C) 2016-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -55,7 +55,7 @@ void Decompress(float offset, float scale, char *buffer, char bitWidth,
 void hkaDeltaDecompressor::Assign(
     hkaDeltaCompressedAnimationInternalInterface *input) {
   char *buffer = const_cast<char *>(input->GetData());
-  hkaAnimation *anim = dynamic_cast<hkaAnimation *>(input);
+  auto anim = static_cast<const hkaAnimation *>(input);
   const size_t numTracks = anim->GetNumOfTransformTracks();
   const size_t numFloatTracks = anim->GetNumOfFloatTracks();
   const size_t numDynTracks = input->GetNumDynamicTracks();

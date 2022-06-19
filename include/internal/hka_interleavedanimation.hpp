@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2020 Lukas Cone
+    Copyright(C) 2016-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ struct hkaInterleavedAnimationInternalInterface
   virtual const hkQTransform *GetTransform(size_t id) const = 0;
   virtual float GetFloat(size_t id) const = 0;
   // TODO floats
-
+  operator hkaInterleavedAnimationInternalInterface const *() const override { return this; }
   void ToXML(XMLHandle hdl) const override;
   static hkVirtualClass *Create(CRule rule);
 };

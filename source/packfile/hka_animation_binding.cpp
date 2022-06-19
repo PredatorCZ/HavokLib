@@ -64,7 +64,7 @@ struct hkaAnimationBindingMidInterface : hkaAnimationBindingInternalInterface {
   }
 
   const hkaAnimation *GetAnimation() const override {
-    return dynamic_cast<const hkaAnimation *>(
+    return safe_deref_cast<const hkaAnimation>(
         header->GetClass(interface.Animation()));
   }
 

@@ -25,7 +25,7 @@ enum class hkaAnimatedReferenceFrameType : uint8 {
   PARAMETRIC
 };
 
-struct hkaAnimatedReferenceFrame : IhkVirtualClass, uni::MotionTrack {
+struct hkaAnimatedReferenceFrame : virtual IhkVirtualClass, uni::MotionTrack {
   virtual const Vector4A16 GetUp() const = 0;
   virtual const Vector4A16 GetForward() const = 0;
   virtual hkaAnimatedReferenceFrameType GetType() const = 0;

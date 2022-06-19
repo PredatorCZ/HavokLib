@@ -16,13 +16,13 @@
 */
 
 #pragma once
-#include "test_common.inl"
 #include "internal/hka_animatedreferenceframe.hpp"
+#include "test_common.inl"
 
 int test_defaultmotion(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   TEST_CHECK(hkNode);
-  auto defan =
-      dynamic_cast<const hkaAnimatedReferenceFrameInternalInterface *>(hkNode);
+  auto defan = static_cast<const hkaAnimatedReferenceFrameInternalInterface *>(
+      checked_deref_cast<const hkaAnimatedReferenceFrame>(hkNode));
   TEST_CHECK(defan);
 
   TEST_EQUAL(defan->GetType(), hkaAnimatedReferenceFrameType::UNKNOWN);

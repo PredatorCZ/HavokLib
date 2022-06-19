@@ -1,5 +1,5 @@
 /*  Havok Format Unit Tests for Animation Sampling
-    Copyright(C) 2020 Lukas Cone
+    Copyright(C) 2020-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -16,9 +16,9 @@
 */
 
 #pragma once
+#include "datas/unit_testing.hpp"
 #include "hklib/hk_packfile.hpp"
 #include "hklib/hka_animation.hpp"
-#include "datas/unit_testing.hpp"
 #include <random>
 
 int test_sample() {
@@ -31,7 +31,7 @@ int test_sample() {
 
   std::unique_ptr<IhkPackFile> interFile(
       IhkPackFile::Create(es::string_view("550/allosaur_run[4101].hkx")));
-  const hkaAnimation *interAnim = dynamic_cast<const hkaAnimation *>(
+  auto interAnim = checked_deref_cast<const hkaAnimation>(
       interFile->GetClasses("hkaAnimation")[0]);
   auto interTracks = interAnim->Tracks();
   auto numTracks = interTracks->Size();
@@ -60,7 +60,7 @@ int test_sample() {
         curFile.append(r);
 
         std::unique_ptr<IhkPackFile> animFile(IhkPackFile::Create(curFile));
-        const hkaAnimation *hkAnim = dynamic_cast<const hkaAnimation *>(
+        const hkaAnimation *hkAnim = checked_deref_cast<const hkaAnimation>(
             animFile->GetClasses("hkaAnimation")[0]);
         auto animTracks = hkAnim->Tracks();
         numFiles++;

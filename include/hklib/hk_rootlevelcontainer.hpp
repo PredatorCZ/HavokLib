@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2020 Lukas Cone
+    Copyright(C) 2016-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ struct hkNamedVariant {
   const IhkVirtualClass *pointer;
 
   template <class C> operator const C *() const {
-    return dynamic_cast<const C *>(pointer);
+    return safe_deref_cast<const C>(pointer);
   }
   operator es::string_view() const { return name; }
   operator JenHash() const { return JenHash(className); }
@@ -38,6 +38,6 @@ private:
   void ToXML(XMLHandle hdl) const;
 };
 
-struct hkRootLevelContainer : uni::Vector<hkNamedVariant>, IhkVirtualClass {
+struct hkRootLevelContainer : uni::Vector<hkNamedVariant>, virtual IhkVirtualClass {
   DECLARE_HKCLASS(hkRootLevelContainer)
 };

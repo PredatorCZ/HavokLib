@@ -403,7 +403,7 @@ void hkxHeader::Save(BinWritterRef wr, const VirtualClasses &classes) const {
              layout.bytesInPointer > 4);
 
   for (auto &c : classes) {
-    auto dc = dynamic_cast<const hkVirtualClass *>(c.get());
+    auto dc = checked_deref_cast<const hkVirtualClass>(c.get());
     auto clName = dc->GetClassName(toolset);
     auto nClass = hkVirtualClass::Create(clName, rule);
 
@@ -433,7 +433,7 @@ void hkxHeader::Save(BinWritterRef wr, const VirtualClasses &classes) const {
       wr.Write('\t');
 
       const size_t numBones =
-          dynamic_cast<hkaSkeleton *>(c.get())->GetNumBones();
+          checked_deref_cast<const hkaSkeleton>(c.get())->GetNumBones();
 
       for (size_t i = 0; i < numBones; i++) {
         fixups.finals.emplace_back(wr.Tell(), c.get());
@@ -465,7 +465,7 @@ void hkxHeader::Save(BinWritterRef wr, const VirtualClasses &classes) const {
     savedClasses[c.get()] = clsOffset;
     fixups.finals[curFixup++].destination = clsOffset;
 
-    auto cls = dynamic_cast<hkVirtualClass *>(c.get());
+    auto cls = checked_deref_cast<const hkVirtualClass>(c.get());
     cls->Save(wr, fixups);
 
     while (curFixup < fixups.finals.size() &&

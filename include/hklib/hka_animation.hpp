@@ -34,7 +34,7 @@ MAKE_ENUM(ENUM(hkaAnimationType), EMEMBER(HK_UNKNOWN_ANIMATION),
           EMEMBER(HK_PREDICTIVE_COMPRESSED_ANIMATION),
           EMEMBER(HK_REFERENCE_POSE_ANIMATION));
 
-struct hkaAnimation : uni::Motion, IhkVirtualClass {
+struct hkaAnimation : uni::Motion, virtual IhkVirtualClass {
   DECLARE_HKCLASS(hkaAnimation)
 
   virtual es::string_view GetAnimationTypeName() const = 0;

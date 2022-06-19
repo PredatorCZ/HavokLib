@@ -57,7 +57,8 @@ struct hkaSkeletonSaver {
       wr.ApplyPadding(8);
       locals.emplace_back(sBegin + out->m(mm::bones), wr.Tell());
       size_t curFixup = locals.size();
-      const auto boneType = clgen::GetLayout(clgen::hkaBone::LAYOUTS, out->lookup);
+      const auto boneType =
+          clgen::GetLayout(clgen::hkaBone::LAYOUTS, out->lookup);
 
       if (out->LayoutVersion() < HK700) {
         size_t curGFixup = fixups.globals.size();
@@ -130,8 +131,7 @@ struct hkaSkeletonMidInterface : hkaSkeletonInternalInterface {
   std::unique_ptr<hkaSkeletonSaver> saver;
   uni::VectorList<uni::Bone, hkFullBone> bones;
 
-  hkaSkeletonMidInterface(clgen::LayoutLookup rules, char *data)
-      : interface {
+  hkaSkeletonMidInterface(clgen::LayoutLookup rules, char *data) : interface {
     data, rules
   } {
   }
@@ -260,16 +260,12 @@ struct hkaSkeletonMidInterface : hkaSkeletonInternalInterface {
     }
   }
 
-  void Reflect(IhkVirtualClass *other) override {
+  void Reflect(const IhkVirtualClass *other) override {
     interface.data = static_cast<char *>(malloc(interface.layout->totalSize));
     saver = std::make_unique<hkaSkeletonSaver>();
-    saver->in = dynamic_cast<hkaSkeletonInternalInterface *>(other);
+    saver->in = static_cast<const hkaSkeletonInternalInterface *>(
+        checked_deref_cast<const hkaSkeleton>(other));
     saver->out = &interface;
-
-    if (!saver->in) {
-      throw std::runtime_error("Incorrect interface class!");
-    }
-
     interface.NumBones(saver->in->GetNumBones());
     interface.NumParentIndices(saver->in->GetNumBones());
     interface.NumTransforms(saver->in->GetNumBones());
@@ -293,5 +289,4 @@ struct hkaSkeletonMidInterface : hkaSkeletonInternalInterface {
 hkVirtualClass *hkaSkeletonInternalInterface::Create(CRule rule) {
   return new hkaSkeletonMidInterface{
       clgen::LayoutLookup{rule.version, rule.x64, rule.reusePadding}, nullptr};
-
 }

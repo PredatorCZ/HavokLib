@@ -17,7 +17,7 @@ if(BUILD_STATIC_OBJECTS OR (MSVC AND BUILD_SHARED_OBJECTS))
     SOURCES
     ${CORE_SOURCE_FILES}
     LINKS
-    pugixml-objects
+    precore-objects
     NO_VERINFO
     NO_PROJECT_H)
 
@@ -25,9 +25,6 @@ if(BUILD_STATIC_OBJECTS OR (MSVC AND BUILD_SHARED_OBJECTS))
     havok-objects
     PUBLIC ../include
     PRIVATE .)
-
-  set_precore_sources(havok-objects master_printer matrix44 reflector
-                      reflector_xml)
 endif()
 
 if(BUILD_SHARED_OBJECTS)
@@ -38,6 +35,12 @@ if(BUILD_SHARED_OBJECTS)
     OBJECT
     SOURCES
     ${CORE_SOURCE_FILES}
+    LINKS
+if(PUGI_SHARED_LIBS)
+    pugixml
+else()
+    pugixml-shared
+endif()
     PROPERTIES
     POSITION_INDEPENDENT_CODE
     ON
@@ -51,13 +54,6 @@ if(BUILD_SHARED_OBJECTS)
 
   set_precore_sources(havok-shared master_printer matrix44 reflector
                       reflector_xml)
-
-  if(PUGI_AS_SHARED)
-    target_link_libraries(havok-shared pugixml)
-  else()
-    target_include_directories(havok-shared PUBLIC ../3rd_party/PugiXml/src)
-    target_sources(havok-shared PRIVATE ../3rd_party/PugiXml/src/pugixml.cpp)
-  endif()
 endif()
 
 if(BUILD_STATIC_LIBS)

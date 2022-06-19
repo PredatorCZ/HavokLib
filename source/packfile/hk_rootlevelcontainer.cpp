@@ -82,23 +82,19 @@ struct hkRootLevelContainerMidInterface
     auto item = interface.Variants().Next(id);
     if (interface.LayoutVersion() >= HK700) {
       return {item.Name(), item.ClassName(),
-              reinterpret_cast<const IhkVirtualClass *>(item.VariantHK700())};
+              header->GetClass(item.VariantHK700())};
     }
 
     return {item.Name(), item.ClassName(),
-            reinterpret_cast<const IhkVirtualClass *>(item.Variant().Object())};
+            header->GetClass(item.Variant().Object())};
   }
 
-  void Reflect(IhkVirtualClass *other) override {
+  void Reflect(const IhkVirtualClass *other) override {
     interface.data = static_cast<char *>(malloc(interface.layout->totalSize));
     saver = std::make_unique<hkRootLevelContainerSaver>();
-    saver->in = dynamic_cast<hkRootLevelContainerInternalInterface *>(other);
+    saver->in = static_cast<const hkRootLevelContainerInternalInterface *>(
+        checked_deref_cast<const hkRootLevelContainer>(other));
     saver->out = &interface;
-
-    if (!saver->in) {
-      throw std::runtime_error("Incorrect interface class!");
-    }
-
     interface.NumVariants(saver->in->Size());
   }
 

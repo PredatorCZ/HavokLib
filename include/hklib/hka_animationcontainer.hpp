@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2020 Lukas Cone
+    Copyright(C) 2016-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ struct hkaAnimationBinding;
 struct hkaBoneAttachment;
 struct hkaMeshBinding;
 
-struct hkaAnimationContainer : IhkVirtualClass {
+struct hkaAnimationContainer : virtual IhkVirtualClass {
   DECLARE_HKCLASS(hkaAnimationContainer)
 
   virtual size_t GetNumSkeletons() const = 0;

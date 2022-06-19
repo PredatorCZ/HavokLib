@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2020 Lukas Cone
+    Copyright(C) 2016-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@ struct hkaAnimatedReferenceFrameInternalInterface : hkaAnimatedReferenceFrame,
   virtual float GetDuration() const = 0;
   virtual size_t GetNumFrames() const = 0;
   virtual const Vector4A16 &GetRefFrame(size_t id) const = 0;
+  operator hkaAnimatedReferenceFrame const *() const override { return this; }
 
   TrackType_e TrackType() const override {
     return uni::MotionTrack::PositionRotationScale;

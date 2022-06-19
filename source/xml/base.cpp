@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2020 Lukas Cone
+    Copyright(C) 2016-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -129,7 +129,7 @@ void IhkPackFile::ToXML(pugi::xml_node nde, hkToolset toolsetVersion) {
   const VirtualClasses &allClasses = GetAllClasses();
 
   for (auto &c : allClasses) {
-    hkVirtualClass *cls = dynamic_cast<hkVirtualClass *>(c.get());
+    auto cls = checked_deref_cast<const hkVirtualClass>(c.get());
     pugi::xml_node classNode = dataSection.append_child(_hkObject);
     pugi::xml_attribute addrAttr = classNode.append_attribute(_hkName);
 

@@ -1,5 +1,5 @@
 /*  Havok Format Unit Tests for Interleaved Animation
-    Copyright(C) 2020 Lukas Cone
+    Copyright(C) 2020-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -21,7 +21,9 @@
 int test_interleaved(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   TEST_CHECK(hkNode);
   auto inter =
-      dynamic_cast<const hkaInterleavedAnimationInternalInterface *>(hkNode);
+      checked_deref_cast<const hkaInterleavedAnimationInternalInterface>(
+          static_cast<const hkaAnimationInternalInterface *>(
+              checked_deref_cast<const hkaAnimation>(hkNode)));
   TEST_CHECK(inter);
 
   TEST_EQUAL(inter->GetAnimationType(), HK_INTERLEAVED_ANIMATION);

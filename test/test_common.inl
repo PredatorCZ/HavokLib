@@ -1,5 +1,5 @@
 /*  Havok Format Unit Tests for common classes
-    Copyright(C) 2020 Lukas Cone
+    Copyright(C) 2020-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -16,13 +16,13 @@
 */
 
 #pragma once
-#include "havok_xml.hpp"
 #include "datas/unit_testing.hpp"
+#include "havok_xml.hpp"
 
 int test_rootcontainer(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   TEST_CHECK(hkNode);
 
-  auto rlCont = dynamic_cast<const hkRootLevelContainer *>(hkNode);
+  auto rlCont = checked_deref_cast<const hkRootLevelContainer>(hkNode);
 
   TEST_CHECK(rlCont);
 
@@ -60,7 +60,7 @@ int test_rootcontainer(pugi::xml_node nde, IhkVirtualClass *hkNode) {
 int test_animationcontainer(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   TEST_CHECK(hkNode);
 
-  auto aniCont = dynamic_cast<const hkaAnimationContainer *>(hkNode);
+  auto aniCont = checked_deref_cast<const hkaAnimationContainer>(hkNode);
 
   TEST_CHECK(aniCont);
 
@@ -70,14 +70,29 @@ int test_animationcontainer(pugi::xml_node nde, IhkVirtualClass *hkNode) {
 
     if (paramName == "skeletons") {
       TEST_EQUAL(aniCont->GetNumSkeletons(), numElements);
+      if (numElements) {
+        TEST_CHECK(aniCont->GetSkeleton(0));
+      }
     } else if (paramName == "animations") {
       TEST_EQUAL(aniCont->GetNumAnimations(), numElements);
+      if (numElements) {
+        TEST_CHECK(aniCont->GetAnimation(0));
+      }
     } else if (paramName == "bindings") {
       TEST_EQUAL(aniCont->GetNumBindings(), numElements);
+      if (numElements) {
+        TEST_CHECK(aniCont->GetBinding(0));
+      }
     } else if (paramName == "attachments") {
       TEST_EQUAL(aniCont->GetNumAttachments(), numElements);
+      if (numElements) {
+        TEST_CHECK(aniCont->GetAttachment(0));
+      }
     } else if (paramName == "skins") {
       TEST_EQUAL(aniCont->GetNumSkins(), numElements);
+      if (numElements) {
+        TEST_CHECK(aniCont->GetSkin(0));
+      }
     }
   }
 
@@ -113,7 +128,7 @@ int GetInt(float hkNum, es::string_view &sw) {
 int test_animationbinding(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   TEST_CHECK(hkNode);
 
-  auto aniBind = dynamic_cast<const hkaAnimationBinding *>(hkNode);
+  auto aniBind = checked_deref_cast<const hkaAnimationBinding>(hkNode);
 
   TEST_CHECK(aniBind);
 
@@ -146,7 +161,7 @@ int test_animationbinding(pugi::xml_node nde, IhkVirtualClass *hkNode) {
 
 int test_animation(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   TEST_CHECK(hkNode);
-  auto anim = dynamic_cast<const hkaAnimation *>(hkNode);
+  auto anim = checked_deref_cast<const hkaAnimation>(hkNode);
   TEST_CHECK(anim);
 
   auto xmAnimType = nde.find_child_by_attribute("name", "type");
@@ -182,7 +197,7 @@ int test_animation(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   TEST_NOT_CHECK(xmAnnots.empty());
 
   const auto cVersion =
-      dynamic_cast<const hkVirtualClass *>(hkNode)->rule.version;
+      checked_deref_cast<const hkVirtualClass>(hkNode)->rule.version;
 
   es::string_view xmBoneLinks = xmAnnots.text().as_string();
 

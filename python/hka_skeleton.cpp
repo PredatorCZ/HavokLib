@@ -145,8 +145,8 @@ PyTypeObject *hkaSkeletonPy::GetType() { return &hkaSkeletonPyType; }
 PyObject *hkaSkeletonPy::Alloc(const IhkVirtualClass *cls) {
   auto cted = reinterpret_cast<hkaSkeletonPy *>(
       PyType_GenericAlloc(&hkaSkeletonPyType, 0));
-  cted->hkClass = dynamic_cast<const hkaSkeleton *>(cls);
-  cted->base.item = {dynamic_cast<const uni::Skeleton *>(cls), false};
+  cted->hkClass = checked_deref_cast<const hkaSkeleton>(cls);
+  cted->base.item = {static_cast<const uni::Skeleton *>(cted->hkClass), false};
 
   return reinterpret_cast<PyObject *>(cted);
 }

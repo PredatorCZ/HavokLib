@@ -26,7 +26,7 @@ MAKE_ENUM(ENUMSCOPE(BlendHint
                     : uint8, BlendHint),
           EMEMBER(NORMAL), EMEMBER(ADDITIVE_DEPRECATED), EMEMBER(ADDITIVE))
 
-struct hkaAnimationBinding : IhkVirtualClass {
+struct hkaAnimationBinding : virtual IhkVirtualClass {
   DECLARE_HKCLASS(hkaAnimationBinding)
 
   virtual es::string_view GetSkeletonName() const = 0;

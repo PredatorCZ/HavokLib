@@ -33,6 +33,8 @@ struct hkaSplineCompressedAnimationInternalInterface
   virtual float GetBlockInverseDuration() const = 0;
   virtual float GetFrameDuration() const = 0;
 
+  operator hkaSplineCompressedAnimationInternalInterface const *() const override { return this; }
+
   // void ToXML(XMLHandle hdl) const;
   static hkVirtualClass *Create(CRule rule);
 };

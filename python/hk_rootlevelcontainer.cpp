@@ -167,7 +167,7 @@ PyTypeObject *hkRootLevelContainerPy::GetType() {
 PyObject *hkRootLevelContainerPy::Alloc(const IhkVirtualClass *cls) {
   auto cted = reinterpret_cast<hkRootLevelContainerPy *>(
       PyType_GenericAlloc(&hkRootLevelContainerPyType, 0));
-  cted->hkClass = dynamic_cast<const hkRootLevelContainer *>(cls);
+  cted->hkClass = checked_deref_cast<const hkRootLevelContainer>(cls);
 
   return reinterpret_cast<PyObject *>(cted);
 }

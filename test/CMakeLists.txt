@@ -9,11 +9,10 @@ build_target(
   test.cpp
   LINKS
   havok-objects
+  precore-objects
   pugixml-objects
   NO_PROJECT_H
   NO_VERINFO)
-
-set_precore_sources(test_main uni)
 
 add_test(
   NAME test_main

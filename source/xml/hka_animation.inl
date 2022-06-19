@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2020 Lukas Cone
+    Copyright(C) 2016-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -67,8 +67,9 @@ void hkaAnimationInternalInterface::ToXML(XMLHandle hdl) const {
       XMLHandle annotHandle = hdl;
       annotHandle.node = &annotNode;
 
-      dynamic_cast<const hkaAnnotationTrackInternalInterface *>(a.get())->ToXML(
-          annotHandle);
+      static_cast<const hkaAnnotationTrackInternalInterface *>(
+          checked_deref_cast<const hkaAnnotationTrack>(a.get()))
+          ->ToXML(annotHandle);
     }
 
   } else {
@@ -96,8 +97,9 @@ void hkaAnimationInternalInterface::ToXML(XMLHandle hdl) const {
       XMLHandle annotHandle = hdl;
       annotHandle.node = &annotNode;
 
-      dynamic_cast<const hkaAnnotationTrackInternalInterface *>(a.get())->ToXML(
-          annotHandle);
+      static_cast<const hkaAnnotationTrackInternalInterface *>(
+          checked_deref_cast<const hkaAnnotationTrack>(a.get()))
+          ->ToXML(annotHandle);
     }
 
     if (buffer.size()) {

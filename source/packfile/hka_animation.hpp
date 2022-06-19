@@ -114,7 +114,7 @@ struct hkaAnimationMidInterface : virtual ParentInterface {
     return Anim().NumOfFloatTracks();
   }
   const hkaAnimatedReferenceFrame *GetExtractedMotion() const override {
-    return dynamic_cast<const hkaAnimatedReferenceFrame *>(
+    return safe_deref_cast<const hkaAnimatedReferenceFrame>(
         this->header->GetClass(Anim().ExtractedMotion().data));
   }
   size_t GetNumAnnotations() const override { return Anim().NumAnnotations(); }

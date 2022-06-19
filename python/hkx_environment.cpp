@@ -58,7 +58,7 @@ void hkxEnvironmentPy::InitType(PyObject *module) {
 PyObject *hkxEnvironmentPy::Alloc(const IhkVirtualClass *cls) {
   auto cted = reinterpret_cast<hkxEnvironmentPy *>(
       PyType_GenericAlloc(&hkxEnvironmentPyType, 0));
-  cted->hkClass = dynamic_cast<const hkxEnvironment *>(cls);
+  cted->hkClass = checked_deref_cast<const hkxEnvironment>(cls);
 
   return reinterpret_cast<PyObject *>(cted);
 }

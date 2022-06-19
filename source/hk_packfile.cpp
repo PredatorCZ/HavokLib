@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2020 Lukas Cone
+    Copyright(C) 2016-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -53,7 +53,7 @@ const IhkVirtualClass *IhkPackFile::GetClass(const void *ptr) {
   VirtualClasses &classes = GetAllClasses();
 
   for (auto &c : classes) {
-    hkVirtualClass *cls = dynamic_cast<hkVirtualClass *>(c.get());
+    auto cls = checked_deref_cast<const hkVirtualClass>(c.get());
 
     if (cls->GetPointer() == ptr)
       return c.get();
@@ -67,7 +67,7 @@ IhkPackFile::VirtualClassesRef IhkPackFile::GetClasses(JenHash hash) {
   VirtualClassesRef buffa;
 
   for (auto &c : classes) {
-    hkVirtualClass *cls = dynamic_cast<hkVirtualClass *>(c.get());
+    auto cls = checked_deref_cast<const hkVirtualClass>(c.get());
 
     if (cls->HasHash(hash)) {
       buffa.push_back(c.get());
@@ -128,8 +128,8 @@ void IhkPackFile::ToPackFile(const std::string &fileName, hkToolset toolset,
   hkHead.Save(wr, GetAllClasses());
 }
 
-hkRootLevelContainer *IhkPackFile::GetRootLevelContainer() {
-  return dynamic_cast<hkRootLevelContainer *>(
+const hkRootLevelContainer *IhkPackFile::GetRootLevelContainer() {
+  return safe_deref_cast<const hkRootLevelContainer>(
       GetClasses(hkRootLevelContainer::GetHash())[0]);
 }
 

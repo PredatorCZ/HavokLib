@@ -85,16 +85,12 @@ struct hkxEnvironmentMidInterface : hkxEnvironmentInternalInterface {
     return {item.Name(), item.Value()};
   }
 
-  void Reflect(IhkVirtualClass *other) override {
+  void Reflect(const IhkVirtualClass *other) override {
     interface.data = static_cast<char *>(malloc(interface.layout->totalSize));
     saver = std::make_unique<hkxEnvironmentSaver>();
-    saver->in = dynamic_cast<hkxEnvironmentInternalInterface *>(other);
+    saver->in = static_cast<const hkxEnvironmentInternalInterface *>(
+        checked_deref_cast<const hkxEnvironment>(other));
     saver->out = &interface;
-
-    if (!saver->in) {
-      throw std::runtime_error("Incorrect interface class!");
-    }
-
     interface.NumVariables(saver->in->Size());
   }
 

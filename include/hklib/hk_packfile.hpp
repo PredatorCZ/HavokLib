@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2020 Lukas Cone
+    Copyright(C) 2016-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ struct HK_EXTERN IhkPackFile {
   virtual ~IhkPackFile() = default;
 
   VirtualClassesRef GetClasses(JenHash hash);
-  hkRootLevelContainer *GetRootLevelContainer();
+  const hkRootLevelContainer *GetRootLevelContainer();
   const IhkVirtualClass *GetClass(const void *ptr);
 
   static Ptr Create(const std::string &fileName);

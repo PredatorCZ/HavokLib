@@ -1,5 +1,5 @@
 /*  Havok Format Unit Tests for hkaSkeleton
-    Copyright(C) 2020 Lukas Cone
+    Copyright(C) 2020-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 int test_environment(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   TEST_CHECK(hkNode);
 
-  auto env = dynamic_cast<const hkxEnvironment *>(hkNode);
+  auto env = safe_deref_cast<const hkxEnvironment>(hkNode);
 
   TEST_CHECK(env);
 
@@ -57,7 +57,7 @@ int test_environment(pugi::xml_node nde, IhkVirtualClass *hkNode) {
 int test_skeleton(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   TEST_CHECK(hkNode);
 
-  auto skel = dynamic_cast<const hkaSkeleton *>(hkNode);
+  auto skel = safe_deref_cast<const hkaSkeleton>(hkNode);
 
   TEST_CHECK(skel);
 
@@ -87,7 +87,7 @@ int test_skeleton(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   TEST_NOT_CHECK(xmBones.empty());
 
   const auto cVersion =
-      dynamic_cast<const hkVirtualClass *>(hkNode)->rule.version;
+      checked_deref_cast<const hkVirtualClass>(hkNode)->rule.version;
 
   if (cVersion < HK2010_1) {
     es::string_view xmBoneLinks = xmBones.text().as_string();

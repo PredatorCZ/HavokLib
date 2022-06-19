@@ -42,7 +42,8 @@ struct hkaAnimationContainerSaver {
       locals.emplace_back(sBegin + out->m(mm::skeletons), wr.Tell());
 
       for (auto s : in->Skeletons()) {
-        locals.emplace_back(wr.Tell(), dynamic_cast<const hkVirtualClass *>(s));
+        locals.emplace_back(wr.Tell(),
+                            safe_deref_cast<const hkVirtualClass>(s));
         wr.Skip(lay.ptrSize);
       }
     }
@@ -52,7 +53,8 @@ struct hkaAnimationContainerSaver {
       locals.emplace_back(sBegin + out->m(mm::animations), wr.Tell());
 
       for (auto s : in->Animations()) {
-        locals.emplace_back(wr.Tell(), dynamic_cast<const hkVirtualClass *>(s));
+        locals.emplace_back(wr.Tell(),
+                            safe_deref_cast<const hkVirtualClass>(s));
         wr.Skip(lay.ptrSize);
       }
     }
@@ -62,7 +64,8 @@ struct hkaAnimationContainerSaver {
       locals.emplace_back(sBegin + out->m(mm::bindings), wr.Tell());
 
       for (auto s : in->Bindings()) {
-        locals.emplace_back(wr.Tell(), dynamic_cast<const hkVirtualClass *>(s));
+        locals.emplace_back(wr.Tell(),
+                            safe_deref_cast<const hkVirtualClass>(s));
         wr.Skip(lay.ptrSize);
       }
     }
@@ -72,7 +75,8 @@ struct hkaAnimationContainerSaver {
       locals.emplace_back(sBegin + out->m(mm::attachments), wr.Tell());
 
       for (auto s : in->Attachments()) {
-        locals.emplace_back(wr.Tell(), dynamic_cast<const hkVirtualClass *>(s));
+        locals.emplace_back(wr.Tell(),
+                            safe_deref_cast<const hkVirtualClass>(s));
         wr.Skip(lay.ptrSize);
       }
     }
@@ -82,7 +86,8 @@ struct hkaAnimationContainerSaver {
       locals.emplace_back(sBegin + out->m(mm::skins), wr.Tell());
 
       for (auto s : in->MeshBinds()) {
-        locals.emplace_back(wr.Tell(), dynamic_cast<const hkVirtualClass *>(s));
+        locals.emplace_back(wr.Tell(),
+                            safe_deref_cast<const hkVirtualClass>(s));
         wr.Skip(lay.ptrSize);
       }
     }
@@ -109,45 +114,42 @@ struct hkaAnimationContainerMidInterface
   size_t GetNumSkeletons() const override { return interface.NumSkeletons(); };
   const hkaSkeleton *GetSkeleton(size_t id) const override {
     auto item = interface.Skeletons().Next(id);
-    return dynamic_cast<const hkaSkeleton *>(header->GetClass(item.data));
+    return safe_deref_cast<const hkaSkeleton>(header->GetClass(*item));
   };
   size_t GetNumAnimations() const override {
     return interface.NumAnimations();
   };
   const hkaAnimation *GetAnimation(size_t id) const override {
     auto item = interface.Animations().Next(id);
-    return dynamic_cast<const hkaAnimation *>(header->GetClass(item.data));
+    return safe_deref_cast<const hkaAnimation>(header->GetClass(*item));
   };
   size_t GetNumBindings() const override { return interface.NumBindings(); };
   const hkaAnimationBinding *GetBinding(size_t id) const override {
     auto item = interface.Bindings().Next(id);
-    return dynamic_cast<const hkaAnimationBinding *>(
-        header->GetClass(item.data));
+    return safe_deref_cast<const hkaAnimationBinding>(
+        header->GetClass(*item));
   };
   size_t GetNumAttachments() const override {
     return interface.NumAttachments();
   };
   const hkaBoneAttachment *GetAttachment(size_t id) const override {
     auto item = interface.Attachments().Next(id);
-    return dynamic_cast<const hkaBoneAttachment *>(header->GetClass(item.data));
+    return safe_deref_cast<const hkaBoneAttachment>(
+        header->GetClass(*item));
   };
   size_t GetNumSkins() const override { return interface.NumSkins(); };
   const hkaMeshBinding *GetSkin(size_t id) const override {
     auto item = interface.Skins().Next(id);
-    return dynamic_cast<const hkaMeshBinding *>(header->GetClass(item.data));
+    return safe_deref_cast<const hkaMeshBinding>(header->GetClass(*item));
   };
   void SwapEndian() override { clgen::EndianSwap(interface); }
 
-  void Reflect(IhkVirtualClass *other) override {
+  void Reflect(const IhkVirtualClass *other) override {
     interface.data = static_cast<char *>(malloc(interface.layout->totalSize));
     saver = std::make_unique<hkaAnimationContainerSaver>();
-    saver->in = dynamic_cast<hkaAnimationContainerInternalInterface *>(other);
+    saver->in = static_cast<const hkaAnimationContainerInternalInterface *>(
+        checked_deref_cast<const hkaAnimationContainer>(other));
     saver->out = &interface;
-
-    if (!saver->in) {
-      throw std::runtime_error("Incorrect interface class!");
-    }
-
     interface.NumSkeletons(saver->in->GetNumSkeletons());
     interface.NumAnimations(saver->in->GetNumAnimations());
     interface.NumBindings(saver->in->GetNumBindings());

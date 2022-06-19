@@ -51,7 +51,8 @@ if(Python2_FOUND)
 endif()
 
 add_subdirectory(source)
-add_subdirectory(classgen)
+
+# add_subdirectory(classgen)
 
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
   enable_testing()

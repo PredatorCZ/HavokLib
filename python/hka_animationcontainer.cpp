@@ -149,7 +149,7 @@ void hkaAnimationContainerPy::InitType(PyObject *module) {
 PyObject *hkaAnimationContainerPy::Alloc(const IhkVirtualClass *cls) {
   auto cted = reinterpret_cast<hkaAnimationContainerPy *>(
       PyType_GenericAlloc(&hkaAnimationContainerPyType, 0));
-  cted->hkClass = dynamic_cast<const hkaAnimationContainer *>(cls);
+  cted->hkClass = checked_deref_cast<const hkaAnimationContainer>(cls);
 
   return reinterpret_cast<PyObject *>(cted);
 }

@@ -46,7 +46,7 @@ template <> struct hash<CRule> {
 };
 } // namespace std
 
-struct hkVirtualClass : IhkVirtualClass {
+struct hkVirtualClass : virtual IhkVirtualClass {
   JenHash hash[4]{};
   CRule rule;
   es::string_view className;
@@ -84,8 +84,10 @@ struct hkVirtualClass : IhkVirtualClass {
   virtual void Process(){};
   virtual void SetDataPointer(void *Ptr) = 0;
   virtual void ToXML(XMLHandle hdl) const {}
-  virtual void Reflect(IhkVirtualClass *input) {}
+  virtual void Reflect(const IhkVirtualClass *input) {}
   virtual void Save(BinWritterRef wr, hkFixups &fixups) const;
+
+  operator hkVirtualClass const *() const override { return this; }
 
   static hkVirtualClass *Create(JenHash hash, CRule rule);
 };
