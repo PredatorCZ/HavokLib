@@ -1,14 +1,14 @@
 # HavokLib
 
-[![Build Status](https://travis-ci.org/PredatorCZ/HavokLib.svg?branch=master)](https://travis-ci.org/PredatorCZ/HavokLib)
+[![build](https://github.com/PredatorCZ/HavokLib/actions/workflows/cmake.yml/badge.svg)](https://github.com/PredatorCZ/HavokLib/actions/workflows/cmake.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Coverage Status](https://coveralls.io/repos/github/PredatorCZ/HavokLib/badge.svg?branch=master)](https://coveralls.io/github/PredatorCZ/HavokLib?branch=master)
 
 HavokLib is an independent Havok packfile serialize and XML store library for C++.\
 In addition, it can output packfile formats into XML/Bin under any available version. This library can possibly upgrade/downgrade between versions.\
 Library can also store classic data for XML direct export.\
-Library uses wrapper for a python 2.7 module.\
-Library is compilable under VS 2017+, GCC 5+, Clang 3.5+.
+Library uses wrapper for a python 3 module.\
+Library is compilable under Clang 10, Windowns Clang 13.0.1 and G++10.
 
 ![Library Diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.github.com/predatorcz/havoklib/master/doc/diag.puml)
 
@@ -68,5 +68,4 @@ This library is available under GPL v3 license. (See LICENSE.md)
 
 This library uses following libraries:
 
-* PugiXml, Copyright (c) 2006-2019 Arseny Kapoulkine
-* PreCore, Copyright (c) 2016-2020 Lukas Cone
+* PreCore, Copyright (c) 2016-2022 Lukas Cone
