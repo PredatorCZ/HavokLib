@@ -19,10 +19,10 @@ add_test(
   COMMAND test_main
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/resources)
 
-if(${Python2_FOUND})
+if(Python3_FOUND)
   add_test(
     NAME havokpy_test
-    COMMAND ${Python2_EXECUTABLE} havok.py
+    COMMAND ${Python3_EXECUTABLE} havok.py
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 

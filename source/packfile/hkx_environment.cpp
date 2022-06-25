@@ -39,7 +39,7 @@ struct hkxEnvironmentSaver {
           clgen::GetLayout(clgen::hkxEnvironmentVariable::LAYOUTS, out->lookup);
       using vm = clgen::hkxEnvironmentVariable::Members;
 
-      for (auto &v : *in) {
+      for ([[maybe_unused]] auto &v : *in) {
         const size_t varBegin = wr.Tell();
         wr.Skip(varType->totalSize);
 
@@ -105,7 +105,7 @@ struct hkxEnvironmentMidInterface : hkxEnvironmentInternalInterface {
   }
 };
 
-hkVirtualClass *hkxEnvironmentInternalInterface::Create(CRule rule) {
+IhkVirtualClass *hkxEnvironmentInternalInterface::Create(CRule rule) {
   return new hkxEnvironmentMidInterface{
       clgen::LayoutLookup{rule.version, rule.x64, rule.reusePadding}, nullptr};
 }

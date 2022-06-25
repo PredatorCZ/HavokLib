@@ -38,7 +38,7 @@ struct hkRootLevelContainerSaver {
           clgen::GetLayout(clgen::hkNamedVariant::LAYOUTS, out->lookup);
       using vm = clgen::hkNamedVariant::Members;
 
-      for (auto &v : *in) {
+      for ([[maybe_unused]] auto &v : *in) {
         const size_t varBegin = wr.Tell();
         wr.Skip(varType->totalSize);
 
@@ -111,7 +111,7 @@ struct hkRootLevelContainerMidInterface
   }
 };
 
-hkVirtualClass *hkRootLevelContainerInternalInterface::Create(CRule rule) {
+IhkVirtualClass *hkRootLevelContainerInternalInterface::Create(CRule rule) {
   return new hkRootLevelContainerMidInterface{
       clgen::LayoutLookup{rule.version, rule.x64, rule.reusePadding}, nullptr};
 }

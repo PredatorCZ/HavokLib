@@ -4,10 +4,11 @@
 #include "hklib/hk_packfile.hpp"
 #include "pugixml.hpp"
 #include <sstream>
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 
 using hkToolsetPy = ReflectedEnumPy<hkToolset>;
 
-static PyGetSet IHavokPyGetSets[] = {
+static PyGetSetDef IHavokPyGetSets[] = {
     {"version", (getter)IHavokPy::GetVersion, nullptr,
      "Get version of loaded resource."},
     {NULL} /* Sentinel */
@@ -21,50 +22,24 @@ static PyMethodDef IHavokPyMethods[] = {
     {NULL} /* Sentinel */
 };
 
-static PyTypeObject IHavokPyType = {
-    PyVarObject_HEAD_INIT(NULL, 0)  /* init macro */
-    "hkPackfile",                   /* tp_name */
-    sizeof(IHavokPy),               /* tp_basicsize */
-    0,                              /* tp_itemsize */
-    (destructor)IHavokPy::Dealloc,  /* tp_dealloc */
-    0,                              /* tp_print */
-    0,                              /* tp_getattr */
-    0,                              /* tp_setattr */
-    0,                              /* tp_compare */
-    0,                              /* tp_repr */
-    0,                              /* tp_as_number */
-    0,                              /* tp_as_sequence */
-    0,                              /* tp_as_mapping */
-    0,                              /* tp_hash */
-    0,                              /* tp_call */
-    0,                              /* tp_str */
-    0,                              /* tp_getattro */
-    0,                              /* tp_setattro */
-    0,                              /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,             /* tp_flags */
-    "Havok resource",               /* tp_doc */
-    0,                              /* tp_traverse */
-    0,                              /* tp_clear */
-    0,                              /* tp_richcompare */
-    0,                              /* tp_weaklistoffset */
-    0,                              /* tp_iter */
-    0,                              /* tp_iternext */
-    IHavokPyMethods,                /* tp_methods */
-    0,                              /* tp_members */
-    (PyGetSetDef *)IHavokPyGetSets, /* tp_getset */
-    0,                              /* tp_base */
-    0,                              /* tp_dict */
-    0,                              /* tp_descr_get */
-    0,                              /* tp_descr_set */
-    0,                              /* tp_dictoffset */
-    0,                              /* tp_init */
-    0,                              /* tp_alloc */
-    IHavokPy::New,                  /* tp_new */
-};
+PyTypeObject *IHavokPy::GetType() {
+  static PyTypeObject IHavokPyType{
+    .tp_name = "hkPackfile",
+    .tp_basicsize = sizeof(IHavokPy),
+    .tp_dealloc = (destructor)IHavokPy::Dealloc,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_doc = "Havok resource",
+    .tp_methods = IHavokPyMethods,
+    .tp_getset = (PyGetSetDef *)IHavokPyGetSets,
+    .tp_new = IHavokPy::New,
+  };
+  return &IHavokPyType;
+}
 
-PyTypeObject *IHavokPy::GetType() { return &IHavokPyType; }
-
-void IHavokPy::Dealloc(IHavokPy *self) { auto t0 = std::move(self->file); }
+void IHavokPy::Dealloc(IHavokPy *self) {
+  auto t0 = std::move(self->file);
+  Py_TYPE(self)->tp_free(self);
+}
 
 PyObject *IHavokPy::New(PyTypeObject *type, PyObject *args, PyObject *) {
   IHavokPy *self = reinterpret_cast<IHavokPy *>(type->tp_alloc(type, 0));
@@ -83,8 +58,8 @@ PyObject *IHavokPy::New(PyTypeObject *type, PyObject *args, PyObject *) {
   return reinterpret_cast<PyObject *>(self);
 }
 
-PyObject *IHavokPy::GetVersion(IHavokPy *self) {
-  return PyInt_FromLong(self->file->GetToolset());
+PyObject *IHavokPy::GetVersion(IHavokPy *self, void *) {
+  return PyLong_FromLong(self->file->GetToolset());
 }
 
 PyObject *IHavokPy::GetClasses(IHavokPy *self, PyObject *args) {
@@ -122,7 +97,7 @@ PyObject *IHavokPy::ToXML(IHavokPy *self, PyObject *args) {
   if (fileNameRaw) {
     es::string_view fileName = fileNameRaw;
     self->file->ToXML(fileName, toolsetVersion);
-    return Py_None;
+    Py_RETURN_NONE;
   } else {
     pugi::xml_document doc;
     self->file->ToXML(doc, toolsetVersion);
@@ -130,11 +105,10 @@ PyObject *IHavokPy::ToXML(IHavokPy *self, PyObject *args) {
     doc.save(ss);
     std::string str = ss.str();
 
-    return PyString_FromString(str.data());
+    return PyUnicode_FromStringAndSize(str.data(), str.size());
   }
 }
 
 void IHavokPy::InitType(PyObject *module) {
-  PyAddType<IHavokPy>(module);
-  PyAddType<hkToolsetPy>(module);
+  PyAddTypes<IHavokPy, hkToolsetPy>(module);
 }

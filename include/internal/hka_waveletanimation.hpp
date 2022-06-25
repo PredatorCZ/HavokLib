@@ -22,7 +22,8 @@ struct hkaWaveletCompressedAnimationInternalInterface
     : virtual hkaAnimationLerpSampler {
 
   operator hkaWaveletCompressedAnimationInternalInterface const *() const override { return this; }
+  operator hkVirtualClass const *() const override { return this; }
 
   // void ToXML(XMLHandle hdl) const;
-  static hkVirtualClass *Create(CRule rule);
+  static IhkVirtualClass *Create(CRule rule);
 };

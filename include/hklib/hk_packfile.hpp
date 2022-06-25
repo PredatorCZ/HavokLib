@@ -17,6 +17,7 @@
 #pragma once
 #include "hk_base.hpp"
 #include "hk_settings.hpp"
+#include <vector>
 
 struct hkRootLevelContainer;
 

@@ -39,11 +39,11 @@ IhkPackFile::Ptr IhkPackFile::Create(const std::string &fileName) {
   if (testerStruct.ID1 == hkMagic1 && testerStruct.ID2 == hkMagic2) {
     auto hdr = std::make_unique<hkxHeader>();
     hdr->Load(rd);
-    return std::move(hdr);
+    return hdr;
   } else if (testerStruct.ID2 == hkHederTAG) {
     auto hdr = std::make_unique<hkxNewHeader>();
     hdr->Load(rd);
-    return std::move(hdr);
+    return hdr;
   }
 
   throw es::InvalidHeaderError(testerStruct.ID1);
@@ -53,9 +53,7 @@ const IhkVirtualClass *IhkPackFile::GetClass(const void *ptr) {
   VirtualClasses &classes = GetAllClasses();
 
   for (auto &c : classes) {
-    auto cls = checked_deref_cast<const hkVirtualClass>(c.get());
-
-    if (cls->GetPointer() == ptr)
+    if (c->GetPointer() == ptr)
       return c.get();
   }
 
@@ -124,7 +122,7 @@ void IhkPackFile::ToPackFile(const std::string &fileName, hkToolset toolset,
   hkHead.layout = layout;
   hkHead.version = prop.version;
   hkHead.toolset = toolset;
-  strncpy(hkHead.contentsVersion, prop.name, strlen(prop.name) + 1);
+  memcpy(hkHead.contentsVersion, prop.name, sizeof(hkHead.contentsVersion));
   hkHead.Save(wr, GetAllClasses());
 }
 
@@ -133,4 +131,4 @@ const hkRootLevelContainer *IhkPackFile::GetRootLevelContainer() {
       GetClasses(hkRootLevelContainer::GetHash())[0]);
 }
 
-void hkVirtualClass::Save(BinWritterRef wr, hkFixups &fixups) const {}
+void hkVirtualClass::Save(BinWritterRef , hkFixups &) const {}

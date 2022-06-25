@@ -8,51 +8,36 @@ project(HavokLib VERSION 1)
 
 # ~~~
 # Valid targets:
-#  - havok-static: static library target (BUILD_STATIC_LIBS == ON OR BUILD_STATIC_OBJECTS == ON)
-#  - havok-objects: static objects target (BUILD_STATIC_OBJECTS == ON)
-#  - havok-shared: PIC objects target (BUILD_SHARED_OBJECTS == ON OR BUILD_SHARED_LIBS == ON)
-#  - havok: shared library target (BUILD_SHARED_LIBS == ON), havok-shared target will have exported symbols
-#
-# Definitions:
-#  - HK_EXPORT: use to export dynamic symbols from HavokLib target (BUILD_SHARED_LIBS == ON)
-#  - HK_IMPORT: use to import dynamic symbols from shared library (API only)
+#  - havok-static: static library target (HK_STATIC_LIB == ON, force enables havok-objects target)
+#  - havok-objects: static objects target (enabled by default, set NO_OBJECTS to disable all)
+#  - havok: shared library target (BUILD_SHARED_LIBS == ON)
 # ~~~
 
-option(PYTHON_MODULE "Build a module for Python 2.7 (enables BUILD_SHARED_OBJECTS)." OFF)
+option(PYTHON_MODULE
+       "Build a module for Python 3 (enables OBJECTS_PID)." OFF)
 option(ODR_TEST "Enable ODR testing." OFF)
-option(BUILD_STATIC_OBJECTS "Builds havok-objects target." ON)
-option(BUILD_SHARED_OBJECTS "Builds havok-shared target." OFF)
-option(BUILD_STATIC_LIBS "Builds havok-static target." OFF)
-option(BUILD_SHARED_LIBS "Builds havok target." OFF)
-option(PUGI_AS_SHARED "pugixml target will be shared library instead of being embedded." OFF)
+
+option(OBJECTS_PID "Imply PID for all objects." ${PYTHON_MODULE})
+option(HK_STATIC_LIB "Builds havok-static target." OFF)
 
 set(CMAKE_CXX_STANDARD 20)
+add_compile_options(-Wall -Wextra)
+find_package(Python3 COMPONENTS Development Interpreter)
 
-set(PUGI_STATIC_OBJECTS ON CACHE BOOL "")
+if(Python3_FOUND)
+  set(OBJECTS_PID ON)
+elseif(PYTHON_MODULE)
+  message(FATAL_ERROR "Python3 not found.")
+endif()
 
 add_subdirectory(3rd_party/PreCore)
-
 include(targetex)
-
-if(${PYTHON_MODULE})
-  if(NOT ${RELEASEVER})
-    message(FATAL_ERROR "Cannot build python module in debug mode!")
-  endif()
-
-  find_package(Python2 REQUIRED COMPONENTS Development Interpreter)
-elseif(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR}
-       AND ${RELEASEVER})
-  find_package(Python2 COMPONENTS Development Interpreter)
-endif()
-
-if(Python2_FOUND)
-  set(BUILD_SHARED_OBJECTS ON)
-  add_subdirectory(python)
-endif()
-
+# add_subdirectory(classgen)
 add_subdirectory(source)
 
-# add_subdirectory(classgen)
+if(Python3_FOUND AND RELEASEVER)
+  add_subdirectory(python)
+endif()
 
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
   enable_testing()

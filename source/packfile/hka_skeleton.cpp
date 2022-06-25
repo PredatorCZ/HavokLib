@@ -70,7 +70,7 @@ struct hkaSkeletonSaver {
 
         auto fndFinal = std::find_if(
             fixups.finals.begin(), fixups.finals.end(), [&](const hkFixup &f) {
-              return f.destClass == dynamic_cast<const hkVirtualClass *>(in);
+              return f.destClass == in;
             });
 
         if (es::IsEnd(fixups.finals, fndFinal)) {
@@ -113,7 +113,7 @@ public:
   size_t id;
 
   uni::TransformType TMType() const override {
-    return uni::TransformType::TMTYPE_MATRIX;
+    return uni::TransformType::TMTYPE_RTS;
   }
   void GetTM(uni::RTSValue &out) const override {
     out = tm ? *tm : uni::RTSValue{};
@@ -286,7 +286,7 @@ struct hkaSkeletonMidInterface : hkaSkeletonInternalInterface {
   }
 };
 
-hkVirtualClass *hkaSkeletonInternalInterface::Create(CRule rule) {
+IhkVirtualClass *hkaSkeletonInternalInterface::Create(CRule rule) {
   return new hkaSkeletonMidInterface{
       clgen::LayoutLookup{rule.version, rule.x64, rule.reusePadding}, nullptr};
 }

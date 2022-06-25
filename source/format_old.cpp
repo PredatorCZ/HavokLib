@@ -221,7 +221,7 @@ void hkxSectionHeader::Load(BinReaderRef rd) {
   rd.SetRelativeOrigin(absoluteDataStart);
 
   const int32 virtualEOF =
-      (exportsOffset == -1 ? importsOffset : exportsOffset);
+      (exportsOffset == -1U ? importsOffset : exportsOffset);
   const int32 circaNumLocalFixps =
       (globalFixupsOffset - localFixupsOffset) / sizeof(hkxLocalFixup);
   const int32 circaNumGlobalFixps =
@@ -306,7 +306,8 @@ void hkxSectionHeader::Finalize() {
       const JenHash chash(clName);
       CRule rule(header->toolset, header->layout.reusePaddingOptimization,
                  header->layout.bytesInPointer > 4);
-      hkVirtualClass *cls = hkVirtualClass::Create(chash, rule);
+      IhkVirtualClass *clsn = hkVirtualClass::Create(chash, rule);
+      auto cls = const_cast<hkVirtualClass *>(safe_deref_cast<const hkVirtualClass>(clsn));
 
       if (cls) {
         cls->SetDataPointer(sectionBuffer + vf.dataoffset);
@@ -315,7 +316,7 @@ void hkxSectionHeader::Finalize() {
         cls->header = header;
         if (!header->layout.littleEndian)
           cls->SwapEndian();
-        virtualClasses.emplace_back(cls);
+        virtualClasses.emplace_back(clsn);
         cls->Process();
       }
     }
@@ -362,7 +363,7 @@ void hkxHeader::Save(BinWritterRef wr, const VirtualClasses &classes) const {
 
   hkxSectionHeader classSection;
   es::string_view classSectionTag = "__classnames__";
-  strncpy(classSection.sectionTag, classSectionTag.data(),
+  memcpy(classSection.sectionTag, classSectionTag.data(),
           classSectionTag.size() + 1);
 
   wr.Push();
@@ -374,7 +375,7 @@ void hkxHeader::Save(BinWritterRef wr, const VirtualClasses &classes) const {
 
   hkxSectionHeader mainSection;
   es::string_view sectionTag = "__data__";
-  strncpy(mainSection.sectionTag, sectionTag.data(), sectionTag.size() + 1);
+  memcpy(mainSection.sectionTag, sectionTag.data(), sectionTag.size() + 1);
 
   wr.Write<hkxSectionHeaderData>(mainSection);
 
@@ -412,11 +413,13 @@ void hkxHeader::Save(BinWritterRef wr, const VirtualClasses &classes) const {
       continue;
     }
 
+    auto cls = const_cast<hkVirtualClass *>(checked_deref_cast<const hkVirtualClass>(nClass));
+
     clsRemap[c.get()] = nClass;
-    nClass->Reflect(c.get());
+    cls->Reflect(c.get());
 
     if (wr.SwappedEndian()) {
-      nClass->SwapEndian();
+      cls->SwapEndian();
     }
 
     refClasses.emplace_back(nClass);

@@ -334,7 +334,7 @@ void TransformSplineBlock::Assign(char *buffer, size_t numTracks,
         }
 
         ApplyPadding(buffer);
-        return std::move(sTrack);
+        return sTrack;
       }
 
       auto sTrack = std::make_unique<SplineStaticTrack<Vector>>();
@@ -353,7 +353,7 @@ void TransformSplineBlock::Assign(char *buffer, size_t numTracks,
       MakeSubTrack(stype::Y, 1);
       MakeSubTrack(stype::Z, 2);
 
-      return std::move(sTrack);
+      return sTrack;
     };
 
     tracks[cTrack].pos =
@@ -361,8 +361,7 @@ void TransformSplineBlock::Assign(char *buffer, size_t numTracks,
 
     if (m.GetSubTrackType(ttRotation) == STT_DYNAMIC) {
       auto rTrack = new SplineDynamicTrackQuat();
-      tracks[cTrack].rotation =
-          std::move(TransformTrack::TrackType<Vector4A16>(rTrack));
+      tracks[cTrack].rotation = TransformTrack::TrackType<Vector4A16>(rTrack);
       uint16 numItems = *reinterpret_cast<const uint16 *>(buffer++);
       buffer++;
       rTrack->degree = *reinterpret_cast<const uint8 *>(buffer++);

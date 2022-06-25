@@ -90,7 +90,7 @@ struct hkaAnimationBindingMidInterface : hkaAnimationBindingInternalInterface {
   }
 };
 
-hkVirtualClass *hkaAnimationBindingInternalInterface::Create(CRule rule) {
+IhkVirtualClass *hkaAnimationBindingInternalInterface::Create(CRule rule) {
   return new hkaAnimationBindingMidInterface{
       clgen::LayoutLookup{rule.version, rule.x64, rule.reusePadding}, nullptr};
 }

@@ -25,7 +25,7 @@ struct hkaAnnotationFrame {
   es::string_view text;
 };
 
-struct hkaAnnotationTrack : uni::Vector<hkaAnnotationFrame>, virtual IhkVirtualClass {
+struct hkaAnnotationTrack : uni::Vector<hkaAnnotationFrame>, IhkVirtualClass {
   DECLARE_HKCLASS(hkaAnnotationTrack)
 
   virtual es::string_view GetName() const = 0;

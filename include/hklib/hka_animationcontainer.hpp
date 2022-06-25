@@ -25,7 +25,7 @@ struct hkaAnimationBinding;
 struct hkaBoneAttachment;
 struct hkaMeshBinding;
 
-struct hkaAnimationContainer : virtual IhkVirtualClass {
+struct hkaAnimationContainer : IhkVirtualClass {
   DECLARE_HKCLASS(hkaAnimationContainer)
 
   virtual size_t GetNumSkeletons() const = 0;

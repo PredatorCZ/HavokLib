@@ -72,7 +72,7 @@ struct hkaWaveletCompressedAnimationMidInterface
   };
 };
 
-hkVirtualClass *hkaWaveletCompressedAnimationInternalInterface::Create(CRule rule) {
+IhkVirtualClass *hkaWaveletCompressedAnimationInternalInterface::Create(CRule rule) {
   return new hkaWaveletCompressedAnimationMidInterface{
        clgen::LayoutLookup{rule.version, rule.x64, rule.reusePadding}, nullptr};
 

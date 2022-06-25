@@ -88,7 +88,7 @@ struct hkaDeltaCompressedAnimationMidInterface
   }
 };
 
-hkVirtualClass *
+IhkVirtualClass *
 hkaDeltaCompressedAnimationInternalInterface::Create(CRule rule) {
   return new hkaDeltaCompressedAnimationMidInterface{
       clgen::LayoutLookup{rule.version, rule.x64, rule.reusePadding}, nullptr};

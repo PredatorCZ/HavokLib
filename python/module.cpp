@@ -1,7 +1,5 @@
 
-#include "datas/macroLoop.hpp"
 #include "datas/master_printer.hpp"
-#include "project.h"
 
 #include "hk_core.hpp"
 #include "hk_packfile.hpp"
@@ -14,27 +12,37 @@
 
 #include <unordered_map>
 
-extern "C" ES_EXPORT_FN(void) inithavokpy() {
-  printer.AddPrinterFunction(
-      reinterpret_cast<MasterPrinterThread::print_func>(printf));
-  PyObject *m = Py_InitModule3(
-      "havokpy", nullptr,
-      "Module for working with Havok formats. Version " havokpy_VERSION);
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+
+static PyModuleDef module{
+  .m_name = "havokpy",
+  .m_doc = "Module for working with Havok formats. Version " havokpy_VERSION,
+  .m_size = -1,
+};
+
+extern "C" PyObject ES_EXPORT *PyInit_havokpy() {
+  es::print::AddPrinterFunction(es::Print);
+  PyObject *m = PyModule_Create(&module);
 
   if (!m)
-    return;
+    Py_RETURN_NONE;
 
   IHavokPy::InitType(m);
   hkRootLevelContainerPy::InitType(m);
   hkxEnvironmentPy::InitType(m);
   hkaSkeletonPy::InitType(m);
   hkaAnimationContainerPy::InitType(m);
+  return m;
 }
 
-#define _REG_PYCLASS(item)                                                     \
-  {item::value_type::GetHash(),                                                \
-   [](const IhkVirtualClass *cls) { return item::Alloc(cls); }},
+template <class C> auto GenPair() {
+  return std::make_pair(
+      C::value_type::GetHash(),
+      [](const IhkVirtualClass *cls) { return C::Alloc(cls); });
+}
 
-extern const HKPYRegistry hkClasses = {
-    StaticFor(_REG_PYCLASS, hkRootLevelContainerPy, hkxEnvironmentPy,
-              hkaSkeletonPy, hkaAnimationContainerPy)};
+template <class... C> auto GenPairs() { return HKPYRegistry{GenPair<C>()...}; }
+
+const HKPYRegistry hkClasses =
+    GenPairs<hkxEnvironmentPy, hkaSkeletonPy, hkaAnimationContainerPy,
+             hkRootLevelContainerPy>();

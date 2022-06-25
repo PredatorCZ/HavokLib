@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2020 Lukas Cone
+    Copyright(C) 2016-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -254,14 +254,15 @@ template <> struct Read<CompileFourCC("PTCH")> {
       es::string_view clName = root->weldedClassNames[clsID].className;
       const JenHash chash(clName);
       CRule rule(root->toolset, false, 8); // No way to detect so far
-      hkVirtualClass *cls = hkVirtualClass::Create(chash, rule);
+      IhkVirtualClass *clsn = hkVirtualClass::Create(chash, rule);
+      auto cls = const_cast<hkVirtualClass *>(safe_deref_cast<const hkVirtualClass>(clsn));
 
       if (cls) {
         cls->SetDataPointer(&root->dataBuffer[0] + f.tag);
         cls->className = clName;
         cls->AddHash(clName);
         cls->header = root;
-        root->virtualClasses.emplace_back(cls);
+        root->virtualClasses.emplace_back(clsn);
         cls->Process();
       }
     }

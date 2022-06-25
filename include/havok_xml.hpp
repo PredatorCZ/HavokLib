@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2020 Lukas Cone
+    Copyright(C) 2016-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -18,12 +18,12 @@
 #pragma once
 #include "hklib/hk_packfile.hpp"
 #include "internal/hk_rootlevelcontainer.hpp"
-#include "internal/hkx_environment.hpp"
-#include "internal/hka_animationcontainer.hpp"
-#include "internal/hka_skeleton.hpp"
-#include "internal/hka_interleavedanimation.hpp"
-#include "internal/hka_annotationtrack.hpp"
 #include "internal/hka_animationbinding.hpp"
+#include "internal/hka_animationcontainer.hpp"
+#include "internal/hka_annotationtrack.hpp"
+#include "internal/hka_interleavedanimation.hpp"
+#include "internal/hka_skeleton.hpp"
+#include "internal/hkx_environment.hpp"
 #include "uni/list_vector.hpp"
 
 #define DECLARE_XMLCLASS(classname, parent)                                    \
@@ -31,7 +31,7 @@
   void SwapEndian() override {}                                                \
   const void *GetPointer() const override { return this; };                    \
   void Process() override {}                                                   \
-  void SetDataPointer(void *Ptr) override {}                                   \
+  void SetDataPointer(void *) override {}                                      \
                                                                                \
 public:                                                                        \
   classname() {                                                                \
@@ -48,7 +48,7 @@ public:
   VirtualClasses &GetAllClasses() override { return classes; }
   template <class C> C *NewClass() {
     C *cls = new C();
-    classes.emplace_back(dynamic_cast<hkVirtualClass *>(cls));
+    classes.emplace_back(cls);
     return cls;
   }
 };
@@ -58,8 +58,9 @@ class xmlRootLevelContainer : public hkRootLevelContainerInternalInterface {
 
   size_t Size() const override { return variants.size(); }
   const hkNamedVariant At(size_t id) const override { return variants.at(id); }
-  void AddVariant(hkVirtualClass *input) {
-    variants.push_back({input->className, input->className, input});
+  void AddVariant(IhkVirtualClass *input) {
+    auto className = checked_deref_cast<const hkVirtualClass>(input)->className;
+    variants.push_back({className, className, input});
   }
 
 private:
@@ -104,7 +105,9 @@ struct xmlBone : uni::Bone {
   xmlBone *parent = nullptr;
   hkQTransform transform;
 
-  uni::TransformType TMType() const override { return uni::TransformType::TMTYPE_RTS; }
+  uni::TransformType TMType() const override {
+    return uni::TransformType::TMTYPE_RTS;
+  }
   void GetTM(uni::RTSValue &out) const override { out = transform; }
   const Bone *Parent() const override { return parent; }
   size_t Index() const override { return ID; }
@@ -212,7 +215,7 @@ class xmlInterleavedAnimation
   void SwapEndian() override {}
   const void *GetPointer() const override { return this; };
   void Process() override {}
-  void SetDataPointer(void *Ptr) override {}
+  void SetDataPointer(void *) override {}
 
 public:
   using transform_container = std::vector<hkQTransform>;

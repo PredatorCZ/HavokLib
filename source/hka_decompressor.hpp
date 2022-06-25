@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2020 Lukas Cone
+    Copyright(C) 2016-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -89,7 +89,7 @@ template <class C> struct DynamicTrack : ITrack<C> {
 
 template <class C> struct StaticTrack : ITrack<C> {
   C track;
-  C &GetFrame(int32 frame) { return track; }
+  C &GetFrame(int32) { return track; }
   StaticTrack(C input) : track(input) {}
   StaticTrack() : track() {}
 };

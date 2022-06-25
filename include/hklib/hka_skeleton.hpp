@@ -36,7 +36,7 @@ struct hkaPartition {
       : name(iName), startBoneIndex(stboneid), numBones(iNumBones) {}
 };
 
-struct hkaSkeleton : virtual IhkVirtualClass, uni::Skeleton {
+struct hkaSkeleton : IhkVirtualClass, uni::Skeleton {
   DECLARE_HKCLASS(hkaSkeleton)
   virtual size_t GetNumFloatSlots() const = 0;
   virtual es::string_view GetFloatSlot(size_t id) const = 0;

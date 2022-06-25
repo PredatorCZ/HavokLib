@@ -34,10 +34,10 @@ struct hkNamedVariant {
   }
 
 private:
-  friend class hkRootLevelContainerInternalInterface;
+  friend struct hkRootLevelContainerInternalInterface;
   void ToXML(XMLHandle hdl) const;
 };
 
-struct hkRootLevelContainer : uni::Vector<hkNamedVariant>, virtual IhkVirtualClass {
+struct hkRootLevelContainer : uni::Vector<hkNamedVariant>, IhkVirtualClass {
   DECLARE_HKCLASS(hkRootLevelContainer)
 };

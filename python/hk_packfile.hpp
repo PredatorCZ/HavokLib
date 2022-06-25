@@ -15,7 +15,7 @@ struct IHavokPy {
   static void InitType(PyObject *module);
   static PyTypeObject *GetType();
 
-  static PyObject *GetVersion(IHavokPy *self);
+  static PyObject *GetVersion(IHavokPy *self, void * = nullptr);
   static PyObject *GetClasses(IHavokPy *self, PyObject *args);
   static PyObject *ToXML(IHavokPy *self, PyObject *args);
 };

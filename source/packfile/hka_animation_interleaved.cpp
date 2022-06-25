@@ -79,7 +79,7 @@ struct hkaInterleavedAnimationMidInterface
   float GetFloat(size_t id) const override { return interface.Floats()[id]; }
 };
 
-hkVirtualClass *hkaInterleavedAnimationInternalInterface::Create(CRule rule) {
+IhkVirtualClass *hkaInterleavedAnimationInternalInterface::Create(CRule rule) {
   return new hkaInterleavedAnimationMidInterface{
       clgen::LayoutLookup{rule.version, rule.x64, rule.reusePadding}, nullptr};
 }

@@ -62,7 +62,8 @@ struct hkaAnimationInternalInterface : hkaAnimation, hkVirtualClass {
   virtual operator hkaInterleavedAnimationInternalInterface const *() const { return nullptr; }
   virtual operator hkaSplineCompressedAnimationInternalInterface const *() const { return nullptr; }
   virtual operator hkaWaveletCompressedAnimationInternalInterface const *() const { return nullptr; }
-  operator hkaAnimation const *() const { return this; }
+  operator hkaAnimation const *() const override { return this; }
+  operator hkVirtualClass const *() const override { return this; }
 
   virtual void GetValue(uni::RTSValue &output, float time,
                         size_t trackID) const = 0;

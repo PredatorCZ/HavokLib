@@ -42,7 +42,7 @@ static void PointerToString(const void *ptr, std::string &str) {
 template <class C> static void ExportReflectedClass(C &input, XMLnode &parent) {
   ReflectorWrap<const C> refl(input);
 
-  for (int t = 0; t < refl.GetNumReflectedValues(); t++) {
+  for (size_t t = 0; t < refl.GetNumReflectedValues(); t++) {
     Reflector::KVPair pair = refl.GetReflectedPair(t);
     XMLnode nameNode = parent.append_child(_hkParam);
     nameNode.append_attribute(_hkName).set_value(pair.name.c_str());
@@ -134,7 +134,7 @@ void IhkPackFile::ToXML(pugi::xml_node nde, hkToolset toolsetVersion) {
     pugi::xml_attribute addrAttr = classNode.append_attribute(_hkName);
 
     std::string _buffer;
-    PointerToString(cls->GetPointer(), _buffer);
+    PointerToString(c->GetPointer(), _buffer);
 
     addrAttr.set_value(_buffer.c_str());
     classNode.append_attribute(_hkClass).set_value(

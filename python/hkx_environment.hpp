@@ -16,4 +16,5 @@ struct hkxEnvironmentPy {
   PyObject *SubscriptRaw(size_t index);
   static PyObject *Iter(hkxEnvironmentPy *self);
   static PyObject *IterNext(hkxEnvironmentPy *self);
+  static PyTypeObject *GetType();
 };

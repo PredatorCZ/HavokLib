@@ -21,6 +21,7 @@
 
 struct hkaAnnotationTrackInternalInterface : hkaAnnotationTrack,
                                              hkVirtualClass {
-  operator hkaAnnotationTrack const *() const { return this; }
+  operator hkaAnnotationTrack const *() const override { return this; }
+  operator hkVirtualClass const *() const override { return this; }
   void ToXML(XMLHandle hdl) const override;
 };

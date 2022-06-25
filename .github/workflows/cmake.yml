@@ -7,22 +7,19 @@ env:
 
 jobs:
   build-linux:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       matrix:
         include:
-          - CC: gcc-5
-            CXX: g++-5
-            #use-gcov: true #currently broken af
-          - CC: gcc-9
-            CXX: g++-9
-          - CC: clang-3.5
-            CXX: clang++-3.5
-            install: true
+          - name: GCC 10 & GCOV
+            CC: gcc-10
+            CXX: g++-10
             use-odr: true
-          - CC: clang-9
-            CXX: clang++-9
+            use-gcov: true
+          - name: Clang 10 & ODR
+            CC: clang-10
+            CXX: clang++-10
 
     env:
       CC: ${{matrix.CC}}
@@ -39,16 +36,12 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install compiler
-        if: ${{matrix.install == true}}
-        run: sudo apt install ${{matrix.CC}}
-
       - name: Configure stuff
         run: |
           sudo apt install zstd
           mkdir ${{github.workspace}}/build
           cd ${{github.workspace}}/build
-          cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DUSE_GCOV=$USE_GCOV -DODR_TEST=$ODR_TEST ..
+          cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DUSE_GCOV=$USE_GCOV -DODR_TEST=$ODR_TEST -DCMAKE_INSTALL_PREFIX=${{github.workspace}} ..
 
       - name: Build
         working-directory: ${{github.workspace}}/build
@@ -61,12 +54,16 @@ jobs:
       - name: Upload coverage report
         working-directory: ${{github.workspace}}
         if: ${{matrix.use-gcov == true}}
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.CoverallsToken }}
         run: |
-          pip install --user idna==2.10 cryptography==2.9.2 cpp-coveralls
-          export PATH="$HOME/.local/bin:$PATH"
-          "service_name: github-ci\n" > .coveralls.yml 
-          export TRAVIS_JOB_ID="#${GITHUB_RUN_ID}"
-          coveralls --verbose -E ".*/build/.*.c((pp)|(c)|(xx))?$" -e test -e 3rd_party --gcov-options '\-lp'
+          sudo apt install python3-setuptools python3-idna python3-requests python3-urllib3
+          git clone https://github.com/PredatorCZ/cpp-coveralls.git
+          pushd cpp-coveralls
+          sudo python3 setup.py install
+          popd
+          export COVERALLS_SERVICE_NAME="gitlab-ci"
+          coveralls -E ".*/build/.*.[ch]((pp)|(c)|(xx))?$" -e test -e 3rd_party --gcov-options '\-lp'
 
   build-widle:
     runs-on: windows-2019
@@ -77,13 +74,17 @@ jobs:
 
       - name: Configure stuff
         run: |
+          choco install ninja
           mkdir ${{github.workspace}}/build
           cd ${{github.workspace}}/build
-          cmake -DCMAKE_BUILD_TYPE=Release -A x64 ..
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${{github.workspace}} ..
+        env:
+          CC: clang
+          CXX: clang++
       - name: Build
         working-directory: ${{github.workspace}}/build
-        run: cmake --build . -j 6 --config Release
+        run: cmake --build . -j 6
 
       - name: Test
         working-directory: ${{github.workspace}}/build
-        run: ctest --output-on-failure -C Release
+        run: ctest --output-on-failure

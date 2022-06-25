@@ -40,7 +40,7 @@ int test_xml_base() {
 
   TEST_EQUAL(hkVar.className, env->GetClassName(HKUNKVER));
   TEST_EQUAL(hkVar.name, hkVar.className);
-  TEST_EQUAL(hkVar.pointer, dynamic_cast<hkVirtualClass *>(env));
+  TEST_EQUAL(hkVar.pointer, env);
 
   auto skel = xmHk.NewClass<xmlSkeleton>();
 

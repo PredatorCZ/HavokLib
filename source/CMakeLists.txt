@@ -1,14 +1,6 @@
 file(GLOB_RECURSE CORE_SOURCE_FILES "*.cpp")
 
-if(BUILD_STATIC_LIBS)
-  set(BUILD_STATIC_OBJECTS ON)
-endif()
-
-if(BUILD_SHARED_LIBS)
-  set(BUILD_SHARED_OBJECTS ON)
-endif()
-
-if(BUILD_STATIC_OBJECTS OR (MSVC AND BUILD_SHARED_OBJECTS))
+if((NOT NO_OBJECTS) OR HK_STATIC_LIB)
   build_target(
     NAME
     havok-objects
@@ -21,42 +13,17 @@ if(BUILD_STATIC_OBJECTS OR (MSVC AND BUILD_SHARED_OBJECTS))
     NO_VERINFO
     NO_PROJECT_H)
 
+  set_target_properties(havok-objects PROPERTIES POSITION_INDEPENDENT_CODE
+                                                 ${OBJECTS_PID})
+  target_compile_options(havok-objects PRIVATE -fvisibility=hidden)
+
   target_include_directories(
     havok-objects
     PUBLIC ../include
     PRIVATE .)
 endif()
 
-if(BUILD_SHARED_OBJECTS)
-  build_target(
-    NAME
-    havok-shared
-    TYPE
-    OBJECT
-    SOURCES
-    ${CORE_SOURCE_FILES}
-    LINKS
-if(PUGI_SHARED_LIBS)
-    pugixml
-else()
-    pugixml-shared
-endif()
-    PROPERTIES
-    POSITION_INDEPENDENT_CODE
-    ON
-    NO_VERINFO
-    NO_PROJECT_H)
-
-  target_include_directories(
-    havok-shared
-    PUBLIC ../include
-    PRIVATE .)
-
-  set_precore_sources(havok-shared master_printer matrix44 reflector
-                      reflector_xml)
-endif()
-
-if(BUILD_STATIC_LIBS)
+if(HK_STATIC_LIB)
   build_target(
     NAME
     havok-static
@@ -66,25 +33,34 @@ if(BUILD_STATIC_LIBS)
     TYPE
     STATIC
     LINKS
-    pugixml
     havok-objects
     NO_VERINFO
     NO_PROJECT_H)
 endif()
 
 if(BUILD_SHARED_LIBS)
-  target_compile_definitions(havok-shared PRIVATE HK_EXPORT)
-
   build_target(
     NAME
     havok
     TYPE
     SHARED
+    SOURCES
+    ${CORE_SOURCE_FILES}
     LINKS
-    havok-shared
+    precore
     START_YEAR
     2017
     AUTHOR
     "Lukas Cone"
     NO_PROJECT_H)
+
+  target_include_directories(
+    havok
+    PUBLIC ../include
+    PRIVATE .)
+
+  target_compile_definitions(
+    havok
+    PRIVATE HK_EXPORT REF_EXPORT
+    INTERFACE HK_IMPORT)
 endif()

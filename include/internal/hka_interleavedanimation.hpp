@@ -26,6 +26,7 @@ struct hkaInterleavedAnimationInternalInterface
   virtual float GetFloat(size_t id) const = 0;
   // TODO floats
   operator hkaInterleavedAnimationInternalInterface const *() const override { return this; }
+  operator hkVirtualClass const *() const override { return this; }
   void ToXML(XMLHandle hdl) const override;
-  static hkVirtualClass *Create(CRule rule);
+  static IhkVirtualClass *Create(CRule rule);
 };

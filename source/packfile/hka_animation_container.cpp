@@ -42,8 +42,7 @@ struct hkaAnimationContainerSaver {
       locals.emplace_back(sBegin + out->m(mm::skeletons), wr.Tell());
 
       for (auto s : in->Skeletons()) {
-        locals.emplace_back(wr.Tell(),
-                            safe_deref_cast<const hkVirtualClass>(s));
+        locals.emplace_back(wr.Tell(), s);
         wr.Skip(lay.ptrSize);
       }
     }
@@ -53,8 +52,7 @@ struct hkaAnimationContainerSaver {
       locals.emplace_back(sBegin + out->m(mm::animations), wr.Tell());
 
       for (auto s : in->Animations()) {
-        locals.emplace_back(wr.Tell(),
-                            safe_deref_cast<const hkVirtualClass>(s));
+        locals.emplace_back(wr.Tell(), s);
         wr.Skip(lay.ptrSize);
       }
     }
@@ -64,8 +62,7 @@ struct hkaAnimationContainerSaver {
       locals.emplace_back(sBegin + out->m(mm::bindings), wr.Tell());
 
       for (auto s : in->Bindings()) {
-        locals.emplace_back(wr.Tell(),
-                            safe_deref_cast<const hkVirtualClass>(s));
+        locals.emplace_back(wr.Tell(), s);
         wr.Skip(lay.ptrSize);
       }
     }
@@ -75,8 +72,7 @@ struct hkaAnimationContainerSaver {
       locals.emplace_back(sBegin + out->m(mm::attachments), wr.Tell());
 
       for (auto s : in->Attachments()) {
-        locals.emplace_back(wr.Tell(),
-                            safe_deref_cast<const hkVirtualClass>(s));
+        locals.emplace_back(wr.Tell(), s);
         wr.Skip(lay.ptrSize);
       }
     }
@@ -86,8 +82,7 @@ struct hkaAnimationContainerSaver {
       locals.emplace_back(sBegin + out->m(mm::skins), wr.Tell());
 
       for (auto s : in->MeshBinds()) {
-        locals.emplace_back(wr.Tell(),
-                            safe_deref_cast<const hkVirtualClass>(s));
+        locals.emplace_back(wr.Tell(), s);
         wr.Skip(lay.ptrSize);
       }
     }
@@ -126,16 +121,14 @@ struct hkaAnimationContainerMidInterface
   size_t GetNumBindings() const override { return interface.NumBindings(); };
   const hkaAnimationBinding *GetBinding(size_t id) const override {
     auto item = interface.Bindings().Next(id);
-    return safe_deref_cast<const hkaAnimationBinding>(
-        header->GetClass(*item));
+    return safe_deref_cast<const hkaAnimationBinding>(header->GetClass(*item));
   };
   size_t GetNumAttachments() const override {
     return interface.NumAttachments();
   };
   const hkaBoneAttachment *GetAttachment(size_t id) const override {
     auto item = interface.Attachments().Next(id);
-    return safe_deref_cast<const hkaBoneAttachment>(
-        header->GetClass(*item));
+    return safe_deref_cast<const hkaBoneAttachment>(header->GetClass(*item));
   };
   size_t GetNumSkins() const override { return interface.NumSkins(); };
   const hkaMeshBinding *GetSkin(size_t id) const override {
@@ -168,7 +161,7 @@ struct hkaAnimationContainerMidInterface
   }
 };
 
-hkVirtualClass *hkaAnimationContainerInternalInterface::Create(CRule rule) {
+IhkVirtualClass *hkaAnimationContainerInternalInterface::Create(CRule rule) {
   return new hkaAnimationContainerMidInterface{
       clgen::LayoutLookup{rule.version, rule.x64, rule.reusePadding}, nullptr};
 }

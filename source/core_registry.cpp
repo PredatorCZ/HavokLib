@@ -34,7 +34,7 @@
 #define hkCreatorAlias(cname, aliasName)                                       \
   { JenHash(#aliasName), cname##InternalInterface::Create }
 
-static const std::map<JenHash, hkVirtualClass *(*)(CRule)> hkConstrRegistry{
+static const std::map<JenHash, IhkVirtualClass *(*)(CRule)> hkConstrRegistry{
     hkCreatorAlias(hkaInterleavedAnimation, hkaInterleavedSkeletalAnimation),
     hkCreatorAlias(hkaInterleavedAnimation,
                    hkaInterleavedUncompressedAnimation),
@@ -49,20 +49,17 @@ static const std::map<JenHash, hkVirtualClass *(*)(CRule)> hkConstrRegistry{
               hkaAnimationContainer, hkaDefaultAnimatedReferenceFrame,
               hkaAnimationBinding, hkaLosslessCompressedAnimation)};
 
-hkVirtualClass *hkVirtualClass::Create(JenHash hash, CRule rule) {
+IhkVirtualClass *hkVirtualClass::Create(JenHash hash, CRule rule) {
   auto found = hkConstrRegistry.find(hash);
 
   if (es::IsEnd(hkConstrRegistry, found)) {
     return nullptr;
   }
+  auto rclass = found->second(rule);
 
-  auto madeClass = found->second(rule);
+  const_cast<hkVirtualClass *>(checked_deref_cast<const hkVirtualClass>(rclass))->rule = rule;
 
-  if (madeClass) {
-    madeClass->rule = rule;
-  }
-
-  return madeClass;
+  return rclass;
 }
 
 REFLECT(CLASS(hkaPartition), MEMBER(name), MEMBER(startBoneIndex),

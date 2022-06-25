@@ -22,6 +22,7 @@
 struct hkaAnimationContainerInternalInterface : hkaAnimationContainer,
                                                 hkVirtualClass {
   operator hkaAnimationContainer const *() const override { return this; }
+  operator hkVirtualClass const *() const override { return this; }
   void ToXML(XMLHandle hdl) const override;
-  static hkVirtualClass *Create(CRule rule);
+  static IhkVirtualClass *Create(CRule rule);
 };

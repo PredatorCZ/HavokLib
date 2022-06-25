@@ -196,9 +196,6 @@ int test_animation(pugi::xml_node nde, IhkVirtualClass *hkNode) {
 
   TEST_NOT_CHECK(xmAnnots.empty());
 
-  const auto cVersion =
-      checked_deref_cast<const hkVirtualClass>(hkNode)->rule.version;
-
   es::string_view xmBoneLinks = xmAnnots.text().as_string();
 
   xmBoneLinks = es::SkipStartWhitespace(xmBoneLinks, true);

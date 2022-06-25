@@ -66,19 +66,19 @@ struct IhkVirtualClass {
   virtual operator hkaBoneAttachment const *() const { return nullptr; }
   virtual operator hkaMeshBinding const *() const { return nullptr; }
   virtual operator hkaAnnotationTrack const *() const { return nullptr; }
-  virtual ~IhkVirtualClass() {}
+  virtual ~IhkVirtualClass() = default;
 };
 
 template <class C, class D> C *safe_deref_cast(D *val) {
   if (!val)
     return nullptr;
-  return static_cast<C*>(*val);
+  return static_cast<C *>(*val);
 }
 
 template <class C, class D> C *checked_deref_cast(D *val) {
   if (!val)
     throw std::bad_cast{};
-  return static_cast<C*>(*val);
+  return static_cast<C *>(*val);
 }
 
 using hkQTransform = uni::RTSValue;

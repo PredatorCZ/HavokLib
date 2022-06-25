@@ -133,7 +133,7 @@ struct hkaLosslessCompressedAnimationMidInterface
   }
 };
 
-hkVirtualClass *
+IhkVirtualClass *
 hkaLosslessCompressedAnimationInternalInterface::Create(CRule rule) {
   return new hkaLosslessCompressedAnimationMidInterface{
       clgen::LayoutLookup{rule.version, rule.x64, rule.reusePadding}, nullptr};

@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2020 Lukas Cone
+    Copyright(C) 2016-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -18,18 +18,17 @@
 #pragma once
 #include <vector>
 
-class IhkVirtualClass;
+struct IhkVirtualClass;
 
 struct hkFixup {
-  const IhkVirtualClass *destClass;
-  size_t strOffset;
-  size_t destination;
+  const IhkVirtualClass *destClass{nullptr};
+  size_t strOffset{0};
+  size_t destination{0};
 
-  hkFixup(size_t offset, size_t dest)
-      : strOffset(offset), destination(dest), destClass() {}
+  hkFixup(size_t offset, size_t dest) : strOffset(offset), destination(dest) {}
   hkFixup(size_t offset, const IhkVirtualClass *dest)
-      : strOffset(offset), destClass(dest), destination() {}
-  hkFixup(size_t offset) : strOffset(offset), destClass(), destination() {}
+      : destClass(dest), strOffset(offset) {}
+  hkFixup(size_t offset) : strOffset(offset) {}
 };
 
 struct hkFixups {

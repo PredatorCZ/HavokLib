@@ -1,7 +1,9 @@
 import sys
-sys.path.append('../lib')
+import os.path as pt
+this_dir = pt.dirname(pt.abspath(__file__))
+sys.path.append(this_dir + '/../build/python')
 
-import havokpy 
+import havokpy
 from xml.etree.ElementInclude import default_loader as load_xml
 import re
 
@@ -52,11 +54,11 @@ assert(xmToolset.HK2015 == 19)
 assert(xmToolset.HK2016 == 20)
 assert(xmToolset.HK2017 == 21)
 
-xmRoot = load_xml('resources/allosaur2012.xml', 'xml')
+xmRoot = load_xml(this_dir + '/resources/allosaur2012.xml', 'xml')
 assert(xmRoot != None)
 xmData = xmRoot[0]
 
-hinst = havokpy.hkPackfile("resources/2012_2/allosaur[4001].hkx")
+hinst = havokpy.hkPackfile(this_dir + "/resources/2012_2/allosaur[4001].hkx")
 assert(hinst.version == xmToolset.HK2012_2)
 
 def find_element_by_name(xmlNode, name):
@@ -84,8 +86,9 @@ for ob in xmData:
         xmVars = ob[0]
 
         for vl in fndClasses[0]:
-            assert(find_element_by_name(xmVars[curXML], 'name').text == vl.keys()[0])
-            assert(find_element_by_name(xmVars[curXML], 'value').text == vl.values()[0])
+            k, v = next(iter(vl.items()))
+            assert(find_element_by_name(xmVars[curXML], 'name').text == k)
+            assert(find_element_by_name(xmVars[curXML], 'value').text == v)
             curXML += 1
     elif xmClass == 'hkaSkeleton':
         assert(len(fndClasses) == 1)
@@ -97,7 +100,7 @@ for ob in xmData:
         assert(int(xmPrentIds.attrib['numelements']) == len(hkBones))
         xmParentIDs = xmPrentIds.text.split()
         xmTMs = find_element_by_name(ob, 'referencePose')
-        xmTMs = re.split('[()\n\t ]*', xmTMs.text)[1:]
+        xmTMs = re.split('[\(\)\n\t\s]+', xmTMs.text)[1:]
         xmBoneNames = find_element_by_name(ob, 'bones')
         curID = 0
         curTMID = 0
@@ -152,7 +155,6 @@ assert(nv1.object == None)
 
 skpart0 = havokpy.hkaPartition('part0', 0, 1)
 assert(skpart0.name == 'part0')
-print(skpart0.start_bone_index)
 assert(skpart0.start_bone_index == 0)
 assert(skpart0.num_bones == 1)
 

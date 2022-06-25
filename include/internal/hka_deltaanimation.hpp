@@ -32,7 +32,8 @@ struct hkaDeltaCompressedAnimationInternalInterface
   virtual size_t GetScalesOffset() const = 0;
   virtual size_t GetNumPreserved() const = 0;
   operator hkaDeltaCompressedAnimationInternalInterface const *() const override { return this; }
+  operator hkVirtualClass const *() const override { return this; }
   // void ToXML(XMLHandle hdl) const;
-  static hkVirtualClass *Create(CRule rule);
+  static IhkVirtualClass *Create(CRule rule);
 };
 

@@ -27,6 +27,7 @@ struct hkaAnimatedReferenceFrameInternalInterface : hkaAnimatedReferenceFrame,
   virtual size_t GetNumFrames() const = 0;
   virtual const Vector4A16 &GetRefFrame(size_t id) const = 0;
   operator hkaAnimatedReferenceFrame const *() const override { return this; }
+  operator hkVirtualClass const *() const override { return this; }
 
   TrackType_e TrackType() const override {
     return uni::MotionTrack::PositionRotationScale;

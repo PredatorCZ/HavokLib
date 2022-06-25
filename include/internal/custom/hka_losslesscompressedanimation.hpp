@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2020 Lukas Cone
+    Copyright(C) 2020-2022 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -20,5 +20,6 @@
 
 struct hkaLosslessCompressedAnimationInternalInterface
     : virtual hkaAnimationLerpSampler {
-  static hkVirtualClass *Create(CRule rule);
+  operator hkVirtualClass const *() const override { return this; }
+  static IhkVirtualClass *Create(CRule rule);
 };
