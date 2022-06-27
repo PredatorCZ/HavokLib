@@ -26,9 +26,7 @@
 #include "hklib/hk_rootlevelcontainer.hpp"
 #include "internal/hk_internal_api.hpp"
 
-IhkPackFile::Ptr IhkPackFile::Create(const std::string &fileName) {
-  BinReader rd(fileName);
-
+IhkPackFile::Ptr IhkPackFile::Create(BinReaderRef rd) {
   struct {
     uint32 ID1, ID2;
   } testerStruct;
@@ -47,6 +45,12 @@ IhkPackFile::Ptr IhkPackFile::Create(const std::string &fileName) {
   }
 
   throw es::InvalidHeaderError(testerStruct.ID1);
+}
+
+IhkPackFile::Ptr IhkPackFile::Create(const std::string &fileName) {
+  BinReader rd(fileName);
+
+  return Create(rd);
 }
 
 const IhkVirtualClass *IhkPackFile::GetClass(const void *ptr) {

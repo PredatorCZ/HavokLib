@@ -13,8 +13,8 @@ project(HavokLib VERSION 1)
 #  - havok: shared library target (BUILD_SHARED_LIBS == ON)
 # ~~~
 
-option(PYTHON_MODULE
-       "Build a module for Python 3 (enables OBJECTS_PID)." OFF)
+option(PYTHON_MODULE "Build a module for Python 3 (enables OBJECTS_PID)." OFF)
+option(TOOLSET "Build toolset." ON)
 option(ODR_TEST "Enable ODR testing." OFF)
 
 option(OBJECTS_PID "Imply PID for all objects." ${PYTHON_MODULE})
@@ -24,16 +24,25 @@ set(CMAKE_CXX_STANDARD 20)
 add_compile_options(-Wall -Wextra)
 find_package(Python3 COMPONENTS Development Interpreter)
 
+if(TOOLSET)
+  set(BUILD_SHARED_LIBS ON)
+endif()
+
 if(Python3_FOUND)
   set(OBJECTS_PID ON)
 elseif(PYTHON_MODULE)
   message(FATAL_ERROR "Python3 not found.")
 endif()
 
-add_subdirectory(3rd_party/PreCore)
+set(TPD_PATH ${CMAKE_CURRENT_SOURCE_DIR}/3rd_party)
+add_subdirectory(${TPD_PATH}/PreCore)
 include(targetex)
 # add_subdirectory(classgen)
 add_subdirectory(source)
+
+if(TOOLSET)
+  add_subdirectory(toolset)
+endif()
 
 if(Python3_FOUND AND RELEASEVER)
   add_subdirectory(python)

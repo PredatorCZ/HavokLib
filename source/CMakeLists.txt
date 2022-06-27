@@ -63,4 +63,9 @@ if(BUILD_SHARED_LIBS)
     havok
     PRIVATE HK_EXPORT REF_EXPORT
     INTERFACE HK_IMPORT)
+
+  install(
+      TARGETS havok
+      LIBRARY NAMELINK_SKIP DESTINATION $<IF:$<BOOL:${MINGW}>,bin,lib>
+      RUNTIME DESTINATION bin)
 endif()

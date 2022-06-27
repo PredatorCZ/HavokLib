@@ -8,3 +8,4 @@ build/
 test/resources*
 lib/
 __pycache__/
+bin/

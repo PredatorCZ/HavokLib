@@ -17,6 +17,7 @@
 #pragma once
 #include "hk_base.hpp"
 #include "hk_settings.hpp"
+#include "datas/bincore_fwd.hpp"
 #include <vector>
 
 struct hkRootLevelContainer;
@@ -36,6 +37,7 @@ struct HK_EXTERN IhkPackFile {
   const IhkVirtualClass *GetClass(const void *ptr);
 
   static Ptr Create(const std::string &fileName);
+  static Ptr Create(BinReaderRef rd);
 
   void ToXML(const std::string &fileName, hkToolset toolset);
   void ToXML(pugi::xml_node node, hkToolset toolset);
