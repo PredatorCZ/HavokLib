@@ -13,7 +13,7 @@ function(create_arc arcPath tocData)
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   else()
     execute_process(COMMAND ${CMAKE_COMMAND} -E tar c ${arcPath} --zstd
-                            --files-from=${arcToc})
+                            --files-from=${arcToc} WORKING_DIRECTORY ${PARENT_DIRECTORY})
   endif()
 
   file(REMOVE ${arcToc})
@@ -34,11 +34,12 @@ endfunction()
 function(make_arc dirPath)
   file(GLOB_RECURSE RESOURCE_XML_FILES "${cDir}/*.xml")
   file(GLOB_RECURSE RESOURCE_HKX_FILES "${cDir}/*.hkx")
+  file(GLOB_RECURSE RESOURCE_GLB_FILES "${cDir}/*.hk.glb")
 
   set(MAX_TMSTAMP 0)
   set(RESOURCESTOC "")
 
-  foreach(E ${RESOURCE_XML_FILES} ${RESOURCE_HKX_FILES})
+  foreach(E ${RESOURCE_XML_FILES} ${RESOURCE_HKX_FILES} ${RESOURCE_GLB_FILES})
     file(TIMESTAMP ${E} SS "%s" UTC)
     string(APPEND RESOURCESTOC "${E}\n")
 
