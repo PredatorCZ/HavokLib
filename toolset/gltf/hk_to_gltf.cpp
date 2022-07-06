@@ -78,11 +78,38 @@ struct SkeletonSettings {
   void ReflectorTag();
 };
 
+constexpr float INCH = 0.0254f;
+constexpr float FEET = 0.3048f;
+constexpr float MILE = 1609.344f;
+
+MAKE_ENUM(ENUMSCOPE(class Unit
+                    : uint8, Unit),
+          EMEMBER(MM), EMEMBER(CM), EMEMBER(DM), EMEMBER(METER), EMEMBER(KM),
+          EMEMBER(INCH), EMEMBER(FEET), EMEMBER(MILE), EMEMBER(CUSTOM))
+
+MAKE_ENUM(ENUMSCOPE(class Axis
+                    : uint8, Axis),
+          EMEMBERNAME(Xn, "X-"), EMEMBERNAME(Yn, "Y-"), EMEMBERNAME(Zn, "Z-"),
+          EMEMBERNAME(Xp, "X+"), EMEMBERNAME(Yp, "Y+"), EMEMBERNAME(Zp, "Z+"))
+
+struct Scene {
+  float customScale = 1.f;
+  Unit units = Unit::METER;
+  Axis upAxis = Axis::Yp;
+  Axis forwardAxis = Axis::Zp;
+  bool rightHanded = true;
+  void ReflectorTag();
+};
+
 struct Havok2GLTF : ReflectorBase<Havok2GLTF> {
   std::string extensionsPatterns;
   AnimationSettings animation;
   SkeletonSettings skeleton;
+  Scene scene;
+
   std::set<std::string_view> generateControlBones;
+  float sceneScale = 0.f;
+  es::Matrix44 corMat;
 } settings;
 
 REFLECT(
@@ -105,15 +132,23 @@ REFLECT(CLASS(SkeletonSettings),
                             "applied scale tracks."}),
         MEMBER(visualize, "V",
                ReflDesc{"Create visualization mesh for skeletons. (Enforces "
-                        "armature object for Blender)"}),
+                        "armature object for Blender)"}), )
 
-)
+REFLECT(CLASS(Scene), MEMBER(units, "u", ReflDesc{"Input scene units."}),
+        MEMBERNAME(customScale, "custom-scale", "C",
+                   ReflDesc{"Set unit scale in case of CUSTOM units."}),
+        MEMBERNAME(upAxis, "up-axis", "U", ReflDesc{"Input scene up axis."}),
+        MEMBERNAME(forwardAxis, "forward-axis", "F",
+                   ReflDesc{"Input scene forward axis."}),
+        MEMBERNAME(rightHanded, "right-handed", "R",
+                   ReflDesc{
+                       "Input scene uses right handed coordiante system. (Finicky with root motion rotations)"}), )
 
 REFLECT(CLASS(Havok2GLTF),
         MEMBERNAME(extensionsPatterns, "extension-patterns", "p",
                    ReflDesc{"Specify extension patterns for file detecting "
                             "separated by comma."}),
-        MEMBER(animation), MEMBER(skeleton), )
+        MEMBER(animation), MEMBER(skeleton), MEMBER(scene))
 
 static AppInfo_s appInfo{
     AppInfo_s::CONTEXT_VERSION,
@@ -128,6 +163,70 @@ static AppInfo_s appInfo{
 AppInfo_s *AppInitModule() { return &appInfo; }
 
 bool AppInitContext(const std::string &) {
+  if (uint8(settings.scene.upAxis) % 3 ==
+      uint8(settings.scene.forwardAxis) % 3) {
+    throw std::runtime_error("Scene UP axis cannot be same as FORWARD axis!");
+  }
+
+  switch (settings.scene.units) {
+  case Unit::MM:
+    settings.sceneScale = 0.001f;
+    break;
+  case Unit::CM:
+    settings.sceneScale = 0.01f;
+    break;
+  case Unit::DM:
+    settings.sceneScale = 0.1f;
+    break;
+  case Unit::METER:
+    settings.sceneScale = 1.f;
+    break;
+  case Unit::KM:
+    settings.sceneScale = 1000.f;
+    break;
+  case Unit::INCH:
+    settings.sceneScale = INCH;
+    break;
+  case Unit::FEET:
+    settings.sceneScale = FEET;
+    break;
+  case Unit::MILE:
+    settings.sceneScale = MILE;
+    break;
+  case Unit::CUSTOM:
+    settings.sceneScale = settings.scene.customScale;
+    break;
+
+  default:
+    throw std::logic_error("Unhandled unit type");
+  }
+
+  auto SetAxis = [](Axis axis) -> Vector4A16 {
+    switch (axis) {
+    case Axis::Xp:
+      return {1, 0, 0, 0};
+    case Axis::Xn:
+      return {-1, 0, 0, 0};
+    case Axis::Yp:
+      return {0, 1, 0, 0};
+    case Axis::Yn:
+      return {0, -1, 0, 0};
+    case Axis::Zp:
+      return {0, 0, 1, 0};
+    case Axis::Zn:
+      return {0, 0, -1, 0};
+    }
+    throw std::logic_error("Unhandled axis type");
+  };
+
+  settings.corMat.r3() = SetAxis(settings.scene.forwardAxis);
+  settings.corMat.r2() = SetAxis(settings.scene.upAxis);
+  settings.corMat.r1() = settings.corMat.r2().Cross(settings.corMat.r3());
+
+  if (!settings.scene.rightHanded) {
+    settings.corMat.r1() *= -1;
+  }
+
   size_t filterIndex = 2;
   if (!settings.extensionsPatterns.empty()) {
     es::string_view sv(settings.extensionsPatterns);
@@ -180,6 +279,10 @@ bool AppInitContext(const std::string &) {
   }
 
   return true;
+}
+
+static const glm::quat &AsQuat(const Vector4A16 &in) {
+  return reinterpret_cast<const glm::quat &>(in);
 }
 
 static struct {
@@ -271,6 +374,7 @@ struct GLTFHK : GLTF {
       gltf::Node bone;
       uni::RTSValue value;
       b->GetTM(value);
+      value.translation *= settings.sceneScale;
       memcpy(bone.translation.data(), &value.translation,
              sizeof(bone.translation));
       memcpy(bone.rotation.data(), &value.rotation, sizeof(bone.rotation));
@@ -332,11 +436,23 @@ struct GLTFHK : GLTF {
       for (auto i : rootIndices) {
         rootNode.children.push_back(i);
       }
-      scenes.back().nodes.push_back(nodes.size());
+      rootNodeIndex = nodes.size();
+      auto rotation = settings.corMat.ToQuat();
+      memcpy(rootNode.rotation.data(), &rotation, sizeof(rotation));
       nodes.emplace_back(std::move(rootNode));
     } else if (nodes.size() != startIndex) {
-      scenes.back().nodes.push_back(*rootIndices.begin());
+      rootNodeIndex = *rootIndices.begin();
+      auto &node = nodes.at(rootNodeIndex);
+      glm::quat rotation{node.rotation[3], node.rotation[0], node.rotation[1],
+                         node.rotation[2]};
+      auto ccRotation = AsQuat(settings.corMat.ToQuat()) * rotation;
+      node.rotation[0] = ccRotation.x;
+      node.rotation[1] = ccRotation.y;
+      node.rotation[2] = ccRotation.z;
+      node.rotation[3] = ccRotation.w;
     }
+
+    scenes.back().nodes.push_back(rootNodeIndex);
 
     if (!controlBones.empty()) {
       for (auto [index, scale] : controlBones) {
@@ -554,15 +670,14 @@ struct GLTFHK : GLTF {
     glanim.channels.reserve(anim->GetNumOfTransformTracks() * 3);
     const size_t upperLimit =
         gltfutils::FindTimeEndIndex(times, anim->Duration());
-    int32 parentNodeId = scenes.back().nodes.back();
     uni::Element<const uni::MotionTrack> rootTrack;
     auto rootMotion = anim->GetExtractedMotion();
 
     auto Sample = [&glanim, this](gltfutils::StripResult &r,
-                                  size_t componentIndex) {
+                                  size_t componentIndex, bool isRootNode) {
       gltf::Animation::Sampler sampler;
       sampler.input = AddKeyframes(r);
-      sampler.output = AddData(r, componentIndex);
+      sampler.output = AddData(r, componentIndex, isRootNode);
 
       glanim.samplers.emplace_back(sampler);
     };
@@ -583,13 +698,14 @@ struct GLTFHK : GLTF {
     };
 
     std::map<size_t, gltfutils::StripResult> independentScalers;
+    bool useScaleMotion = false;
 
     for (auto tracks = anim->Tracks(); auto t : *tracks) {
       size_t componentIndex = 0;
       int32 nodeId = binding
                          ? binding->GetTransformTrackToBoneIndex(t->BoneIndex())
                          : t->BoneIndex();
-      if (rootMotion && nodeId == parentNodeId) {
+      if (rootMotion && nodeId == rootNodeIndex) {
         rootTrack = std::move(t);
         continue;
       }
@@ -599,6 +715,9 @@ struct GLTFHK : GLTF {
            auto &r : stripResults) {
         if (componentIndex == uni::MotionTrack::Scale) {
           if (settings.animation.scaleType == ScaleType::NONE) {
+            if (!useScaleMotion && r.timeIndices.size() > 1) {
+              useScaleMotion = true;
+            }
             continue;
           }
         }
@@ -622,10 +741,17 @@ struct GLTFHK : GLTF {
         chan.target.node = nodeId;
         chan.target.path = Path(componentIndex);
         chan.sampler = glanim.samplers.size();
-        Sample(r, componentIndex);
+        Sample(r, componentIndex, nodeId == rootNodeIndex);
         glanim.channels.emplace_back(std::move(chan));
         componentIndex++;
       }
+    }
+
+    if (settings.animation.scaleType == ScaleType::NONE && useScaleMotion) {
+      printwarning("Scale type set to NONE, but tool detected scale motions.");
+    } else if (settings.animation.scaleType != ScaleType::NONE &&
+               !useScaleMotion) {
+      printwarning("Scale type set, but tool did not detected scale motions.");
     }
 
     if (rootMotion) {
@@ -638,14 +764,13 @@ struct GLTFHK : GLTF {
           times, upperLimit,
           rootTrack ? &mixer
                     : static_cast<const uni::MotionTrack *>(rootMotion));
-      int32 nodeId = scenes.back().nodes.back();
 
       for (auto &r : stripResults) {
         gltf::Animation::Channel chan;
-        chan.target.node = nodeId;
+        chan.target.node = rootNodeIndex;
         chan.target.path = Path(componentIndex);
         chan.sampler = glanim.samplers.size();
-        Sample(r, componentIndex);
+        Sample(r, componentIndex, true);
         glanim.channels.emplace_back(std::move(chan));
         componentIndex++;
       }
@@ -662,15 +787,15 @@ struct GLTFHK : GLTF {
       }
 
       if (singleFrame) {
-        SingleFrameIndependentScaleWalker(
-            independentScalers, scenes.back().nodes.back(), {1, 1, 1, 0});
+        SingleFrameIndependentScaleWalker(independentScalers, rootNodeIndex,
+                                          {1, 1, 1, 0});
       } else {
         ResampledScale rootValues;
         for (size_t i = 0; i < upperLimit; i++) {
           rootValues.values.emplace(times[i], Vector4A16{1, 1, 1, 0});
         }
-        IndependentScaleResampleWalker(independentScalers,
-                                       scenes.back().nodes.back(), rootValues);
+        IndependentScaleResampleWalker(independentScalers, rootNodeIndex,
+                                       rootValues);
       }
 
       for (auto &[nodeId_, r] : independentScalers) {
@@ -689,7 +814,7 @@ struct GLTFHK : GLTF {
         chan.target.node = nodeId;
         chan.target.path = "scale";
         chan.sampler = glanim.samplers.size();
-        Sample(r, uni::MotionTrack::Scale);
+        Sample(r, uni::MotionTrack::Scale, false);
         glanim.channels.emplace_back(std::move(chan));
       }
     }
@@ -885,7 +1010,7 @@ struct GLTFHK : GLTF {
                         node.rotation[2]};
 
       for (auto &v : r.values) {
-        glm::quat rVal{v.w, v.x, v.y, v.z};
+        glm::quat rVal = AsQuat(v);
         if (hint == BlendHint::ADDITIVE_DEPRECATED) {
           rVal = rVal * nodeVal;
         } else {
@@ -897,7 +1022,8 @@ struct GLTFHK : GLTF {
     }
   }
 
-  uint32 AddData(gltfutils::StripResult &r, uint32 componentIndex) {
+  uint32 AddData(gltfutils::StripResult &r, uint32 componentIndex,
+                 bool isRootNode) {
     auto GetStream_ = [&] {
       if (animDataStream == -1) {
         auto &stream = NewStream("anim-data");
@@ -918,15 +1044,42 @@ struct GLTFHK : GLTF {
         dataAccess.type = gltf::Accessor::Type::Vec4;
         dataAccess.normalized = true;
 
-        for (auto v : r.values) {
-          wr.Write(Vector4A16(v * 32767).Convert<int16>());
+        if (isRootNode) {
+          for (auto v : r.values) {
+            auto rot = settings.corMat * es::Matrix44(v);
+            wr.Write(Vector4A16(rot.ToQuat() * 32767).Convert<int16>());
+          }
+        } else {
+          for (auto v : r.values) {
+            wr.Write(Vector4A16(v * 32767).Convert<int16>());
+          }
         }
       } else {
         dataAccess.componentType = gltf::Accessor::ComponentType::Float;
         dataAccess.type = gltf::Accessor::Type::Vec3;
 
-        for (auto v : r.values) {
-          wr.Write<Vector>(v);
+        if (isRootNode) {
+          if (componentIndex == uni::MotionTrack::Position) {
+            for (auto v : r.values) {
+              Vector4A16 val = (v * settings.sceneScale) * settings.corMat;
+              wr.Write<Vector>(val);
+            }
+          } else {
+            for (auto v : r.values) {
+              wr.Write<Vector>(v * settings.corMat);
+            }
+          }
+        } else {
+          if (componentIndex == uni::MotionTrack::Position) {
+            for (auto v : r.values) {
+              Vector4A16 val = v * settings.sceneScale;
+              wr.Write<Vector>(val);
+            }
+          } else {
+            for (auto v : r.values) {
+              wr.Write<Vector>(v);
+            }
+          }
         }
       }
 
@@ -970,6 +1123,7 @@ struct GLTFHK : GLTF {
   std::vector<float> times;
   int32 keyframeStream{-1};
   int32 animDataStream{-1};
+  int32 rootNodeIndex;
 };
 
 void AppProcessFile(std::istream &stream, AppContext *ctx) {
