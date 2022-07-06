@@ -10,7 +10,11 @@ Library can also store classic data for XML direct export.\
 Library uses wrapper for a python 3 module.\
 Library is compilable under Clang 10, Windowns Clang 13.0.1 and G++10.
 
-![Library Diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.github.com/predatorcz/havoklib/master/doc/diag.puml)
+## Toolset
+
+Toolset can be found in [Toolset folder](https://github.com/PredatorCZ/HavokLib/tree/master/toolset)
+
+[Toolset releases](https://github.com/PredatorCZ/HavokLib/releases)
 
 ## Supported formats/toolset versions
 
@@ -61,6 +65,8 @@ Binary exporting is an experimental feature for now.
 * hkxEnvironment (read-only)
 * hkNamedVariant
 * hkaPartition
+
+![Library Diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.github.com/predatorcz/havoklib/master/doc/diag.puml)
 
 ## License
 

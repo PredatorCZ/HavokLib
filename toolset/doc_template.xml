@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<toolset_name>HavokToolset</toolset_name>
+<toolset_description>Havok Toolset is a collection of conversion tools under HavokLib.
+
+This toolset runs on Spike foundation.
+
+Head to this **[Wiki](https://github.com/PredatorCZ/PreCore/wiki/Spike)** for more information on how to effectively use it.</toolset_description>
+<hk_to_gltf>Converts Havok data into GLTF.
+
+Supports animation and skeleton data.</hk_to_gltf>

@@ -12,12 +12,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: GCC 10 & GCOV
+          - name: GCC 10 & GCOV & ODR
             CC: gcc-10
             CXX: g++-10
             use-odr: true
             use-gcov: true
-          - name: Clang 10 & ODR
+          - name: Clang 10 & Artifacts
             CC: clang-10
             CXX: clang++-10
 
@@ -41,15 +41,32 @@ jobs:
           sudo apt install zstd
           mkdir ${{github.workspace}}/build
           cd ${{github.workspace}}/build
-          cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DUSE_GCOV=$USE_GCOV -DODR_TEST=$ODR_TEST -DCMAKE_INSTALL_PREFIX=${{github.workspace}} ..
+          cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DUSE_GCOV=$USE_GCOV -DODR_TEST=$ODR_TEST -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/tmp ..
 
       - name: Build
         working-directory: ${{github.workspace}}/build
         run: cmake --build . -j 6
 
+      - name: Install
+        if: ${{matrix.use-gcov == false}}
+        working-directory: ${{github.workspace}}/build
+        run: |
+          cmake --build . --target install
+          cd ../tmp
+          install -D ../LICENSE share/doc/havok-toolset/LICENSE.md
+          install -D ../toolset/README.md share/doc/havok-toolset/README.md
+
       - name: Test
         working-directory: ${{github.workspace}}/build
         run: ctest --output-on-failure
+
+      - name: Upload Artifacts
+        if: ${{matrix.use-gcov == false}}
+        uses: actions/upload-artifact@v2
+        with:
+          name: HavokToolset-linux-amd64
+          path: ${{github.workspace}}/tmp
+          retention-days: 5
 
       - name: Upload coverage report
         working-directory: ${{github.workspace}}
@@ -88,3 +105,16 @@ jobs:
       - name: Test
         working-directory: ${{github.workspace}}/build
         run: ctest --output-on-failure
+
+      - name: Install
+        run: |
+          cmake --build build --target install
+          copy LICENSE bin/LICENSE.md
+          copy toolset/README.md bin/README.md
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: HavokToolset-win64
+          path: ${{github.workspace}}/bin
+          retention-days: 5

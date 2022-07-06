@@ -1,0 +1,30 @@
+name: release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download artifacts
+      uses: dawidd6/action-download-artifact@v2
+      with:
+        workflow: cmake.yml
+        branch: ${{ github.event.release.target_commitish }}
+        workflow_conclusion: success
+
+    - name: Repack them
+      run: |
+        for file in *; do
+          if [ -d $file ]; then
+              pushd $file
+              7z a ../$file.7z .
+              popd
+          fi
+        done
+    - name: Release them
+      uses: softprops/action-gh-release@v1
+      with:
+        files: '*.7z'
