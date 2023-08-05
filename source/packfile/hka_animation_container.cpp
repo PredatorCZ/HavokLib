@@ -109,31 +109,31 @@ struct hkaAnimationContainerMidInterface
   size_t GetNumSkeletons() const override { return interface.NumSkeletons(); };
   const hkaSkeleton *GetSkeleton(size_t id) const override {
     auto item = interface.Skeletons().Next(id);
-    return safe_deref_cast<const hkaSkeleton>(header->GetClass(*item));
+    return safe_deref_cast<const hkaSkeleton>(header->GetClass(**item));
   };
   size_t GetNumAnimations() const override {
     return interface.NumAnimations();
   };
   const hkaAnimation *GetAnimation(size_t id) const override {
     auto item = interface.Animations().Next(id);
-    return safe_deref_cast<const hkaAnimation>(header->GetClass(*item));
+    return safe_deref_cast<const hkaAnimation>(header->GetClass(**item));
   };
   size_t GetNumBindings() const override { return interface.NumBindings(); };
   const hkaAnimationBinding *GetBinding(size_t id) const override {
     auto item = interface.Bindings().Next(id);
-    return safe_deref_cast<const hkaAnimationBinding>(header->GetClass(*item));
+    return safe_deref_cast<const hkaAnimationBinding>(header->GetClass(**item));
   };
   size_t GetNumAttachments() const override {
     return interface.NumAttachments();
   };
   const hkaBoneAttachment *GetAttachment(size_t id) const override {
     auto item = interface.Attachments().Next(id);
-    return safe_deref_cast<const hkaBoneAttachment>(header->GetClass(*item));
+    return safe_deref_cast<const hkaBoneAttachment>(header->GetClass(**item));
   };
   size_t GetNumSkins() const override { return interface.NumSkins(); };
   const hkaMeshBinding *GetSkin(size_t id) const override {
     auto item = interface.Skins().Next(id);
-    return safe_deref_cast<const hkaMeshBinding>(header->GetClass(*item));
+    return safe_deref_cast<const hkaMeshBinding>(header->GetClass(**item));
   };
   void SwapEndian() override { clgen::EndianSwap(interface); }
 

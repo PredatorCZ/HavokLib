@@ -33,7 +33,7 @@
 #include "datas/binreader.hpp"
 #include "datas/binwritter.hpp"
 
-void hkxHeader::Load(BinReaderRef rd) {
+void hkxHeader::Load(BinReaderRef_e rd) {
   rd.Read<hkxHeaderData>(*this);
 
   if (magic1 != hkMagic1) {
@@ -217,7 +217,7 @@ void hkxHeaderData::SwapEndian() {
   FByteswapper(predicateArraySizePlusPadding);
 }
 
-void hkxSectionHeader::Load(BinReaderRef rd) {
+void hkxSectionHeader::Load(BinReaderRef_e rd) {
   rd.SetRelativeOrigin(absoluteDataStart);
 
   const int32 virtualEOF =
@@ -243,7 +243,7 @@ void hkxSectionHeader::Load(BinReaderRef rd) {
   rd.ResetRelativeOrigin();
 }
 
-void hkxSectionHeader::LoadBuffer(BinReaderRef rd) {
+void hkxSectionHeader::LoadBuffer(BinReaderRef_e rd) {
 
   if (!bufferSize)
     return;
@@ -301,7 +301,7 @@ void hkxSectionHeader::Finalize() {
 
   for (auto &vf : virtualFixups) {
     if (vf.dataoffset != -1) {
-      es::string_view clName =
+      std::string_view clName =
           header->sections[vf.sectionid].buffer.data() + vf.classnameoffset;
       const JenHash chash(clName);
       CRule rule(header->toolset, header->layout.reusePaddingOptimization,
@@ -362,7 +362,7 @@ void hkxHeader::Save(BinWritterRef wr, const VirtualClasses &classes) const {
   wr.Write<hkxHeaderData>(*this);
 
   hkxSectionHeader classSection;
-  es::string_view classSectionTag = "__classnames__";
+  std::string_view classSectionTag = "__classnames__";
   memcpy(classSection.sectionTag, classSectionTag.data(),
           classSectionTag.size() + 1);
 
@@ -374,7 +374,7 @@ void hkxHeader::Save(BinWritterRef wr, const VirtualClasses &classes) const {
   }
 
   hkxSectionHeader mainSection;
-  es::string_view sectionTag = "__data__";
+  std::string_view sectionTag = "__data__";
   memcpy(mainSection.sectionTag, sectionTag.data(), sectionTag.size() + 1);
 
   wr.Write<hkxSectionHeaderData>(mainSection);
@@ -390,7 +390,7 @@ void hkxHeader::Save(BinWritterRef wr, const VirtualClasses &classes) const {
   hkFixups fixups;
   std::unordered_map<const IhkVirtualClass *, IhkVirtualClass *> clsRemap;
 
-  static const es::string_view reqClassNames[] = {
+  static const std::string_view reqClassNames[] = {
       "hkClass", "hkClassMember", "hkClassEnum", "hkClassEnumItem"};
 
   for (auto &c : reqClassNames) {

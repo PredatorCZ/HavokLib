@@ -103,8 +103,8 @@ struct hkxSectionHeader : hkxSectionHeaderData {
   std::vector<hkxVirtualFixup> virtualFixups;
   IhkPackFile::VirtualClasses virtualClasses;
   hkxHeader *header;
-  void Load(BinReaderRef rd);
-  void LoadBuffer(BinReaderRef rd);
+  void Load(BinReaderRef_e rd);
+  void LoadBuffer(BinReaderRef_e rd);
   void LinkBuffer();
   void LinkBuffer86();
   void Finalize();
@@ -135,7 +135,7 @@ struct hkxHeader : hkxHeaderData, IhkPackFile {
 
   hkxHeader() : toolset(HKUNKVER) {}
 
-  void Load(BinReaderRef rd);
+  void Load(BinReaderRef_e rd);
   void Save(BinWritterRef wr, const VirtualClasses &classes) const;
   hkxSectionHeader *GetDataSection() { return &sections[contentsSectionIndex]; }
   VirtualClasses &GetAllClasses() override {

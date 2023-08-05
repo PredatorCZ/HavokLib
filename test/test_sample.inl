@@ -22,7 +22,7 @@
 #include <random>
 
 int test_sample() {
-  static const es::string_view names[]{
+  static const std::string_view names[]{
       "allosaur_run_D12_8_3",
       "allosaur_run_S32_V16_B255_D1",
       "allosaur_run_S40_V16_B25_D3",
@@ -30,7 +30,7 @@ int test_sample() {
   };
 
   std::unique_ptr<IhkPackFile> interFile(
-      IhkPackFile::Create(es::string_view("550/allosaur_run[4101].hkx")));
+      IhkPackFile::Create("550/allosaur_run[4101].hkx"));
   auto interAnim = checked_deref_cast<const hkaAnimation>(
       interFile->GetClasses("hkaAnimation")[0]);
   auto interTracks = interAnim->Tracks();

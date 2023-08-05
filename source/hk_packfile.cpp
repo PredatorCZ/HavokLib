@@ -26,9 +26,10 @@
 #include "hklib/hk_rootlevelcontainer.hpp"
 #include "internal/hk_internal_api.hpp"
 
-IhkPackFile::Ptr IhkPackFile::Create(BinReaderRef rd) {
+IhkPackFile::Ptr IhkPackFile::Create(BinReaderRef_e rd) {
   struct {
     uint32 ID1, ID2;
+    void NoSwap();
   } testerStruct;
 
   rd.Read(testerStruct);

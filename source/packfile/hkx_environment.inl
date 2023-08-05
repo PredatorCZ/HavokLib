@@ -12,7 +12,15 @@ static const std::set<ClassData<_count_>> LAYOUTS {
 };
 struct Interface {
   Interface(char *data_, LayoutLookup layout_): data{data_}, layout{GetLayout(LAYOUTS, {layout_, {LookupFlag::Ptr}})}, lookup{layout_} {}
+  Interface(const Interface&) = default;
+  Interface(Interface&&) = default;
+  Interface &operator=(const Interface&) = default;
+  Interface &operator=(Interface&&) = default;
   uint16 LayoutVersion() const { return lookup.version; }
+  Pointer<char> NamePtr() {
+    int16 off = m(name); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
   char *Name() {
     int16 off = m(name); if (off == -1) return nullptr;
     if (layout->ptrSize == 8) return *reinterpret_cast<char**>(data + off);
@@ -22,6 +30,10 @@ struct Interface {
     int16 off = m(name); if (off == -1) return nullptr;
     if (layout->ptrSize == 8) return *reinterpret_cast<char**>(data + off);
     return *reinterpret_cast<es::PointerX86<char>*>(data + off);
+  }
+  Pointer<char> ValuePtr() {
+    int16 off = m(value); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
   }
   char *Value() {
     int16 off = m(value); if (off == -1) return nullptr;
@@ -58,7 +70,15 @@ static const std::set<ClassData<_count_>> LAYOUTS {
 };
 struct Interface {
   Interface(char *data_, LayoutLookup layout_): data{data_}, layout{GetLayout(LAYOUTS, {layout_, {LookupFlag::Ptr}})}, lookup{layout_} {}
+  Interface(const Interface&) = default;
+  Interface(Interface&&) = default;
+  Interface &operator=(const Interface&) = default;
+  Interface &operator=(Interface&&) = default;
   uint16 LayoutVersion() const { return lookup.version; }
+  Pointer<hkxEnvironmentVariable::Interface> VariablesPtr() {
+    int16 off = m(variables); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
   Iterator<hkxEnvironmentVariable::Interface> Variables() {
     int16 off = m(variables); if (off == -1) return {nullptr, lookup};
     if (layout->ptrSize == 8) return {*reinterpret_cast<char**>(data + off), lookup};

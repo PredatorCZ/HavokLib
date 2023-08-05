@@ -38,6 +38,10 @@ static const std::set<ClassData<_count_>> LAYOUTS {
 };
 struct Interface {
   Interface(char *data_, LayoutLookup layout_): data{data_}, layout{GetLayout(LAYOUTS, {layout_, {LookupFlag::Padding ,LookupFlag::Ptr}})}, lookup{layout_} {}
+  Interface(const Interface&) = default;
+  Interface(Interface&&) = default;
+  Interface &operator=(const Interface&) = default;
+  Interface &operator=(Interface&&) = default;
   uint16 LayoutVersion() const { return lookup.version; }
   hkaAnimation::Interface BasehkaAnimation() const {
     int16 off = m(basehkaAnimation); if (off == -1) return {nullptr, lookup};
@@ -54,6 +58,10 @@ struct Interface {
   uint32 MaskDOFsSize() const { return m(maskDOFsSize) == -1 ? uint32{} : *reinterpret_cast<uint32*>(data + m(maskDOFsSize)); }
   uint32 TotalBlockSize() const { return m(totalBlockSize) == -1 ? uint32{} : *reinterpret_cast<uint32*>(data + m(totalBlockSize)); }
   uint32 LastBlockSize() const { return m(lastBlockSize) == -1 ? uint32{} : *reinterpret_cast<uint32*>(data + m(lastBlockSize)); }
+  Pointer<char> DataBufferPtr() {
+    int16 off = m(dataBuffer); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
   char *DataBuffer() {
     int16 off = m(dataBuffer); if (off == -1) return nullptr;
     if (layout->ptrSize == 8) return *reinterpret_cast<char**>(data + off);

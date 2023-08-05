@@ -30,7 +30,7 @@ int test_delta(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   TEST_EQUAL(delta->GetAnimationType(), HK_DELTA_COMPRESSED_ANIMATION);
 
   for (auto b : nde) {
-    es::string_view paramName = b.attribute("name").as_string();
+    std::string_view paramName = b.attribute("name").as_string();
 
     if (paramName == "numberOfPoses") {
       TEST_EQUAL(b.text().as_int(), delta->GetNumOfPoses());
@@ -38,7 +38,7 @@ int test_delta(pugi::xml_node nde, IhkVirtualClass *hkNode) {
       TEST_EQUAL(b.text().as_int(), delta->GetBlockSize());
     } else if (paramName == "qFormat") {
       for (auto q : b.first_child()) {
-        es::string_view qParamName = q.attribute("name").as_string();
+        std::string_view qParamName = q.attribute("name").as_string();
 
         if (qParamName == "bitWidthIdx") {
           TEST_EQUAL(q.text().as_int(), delta->GetBitWidthOffset());
@@ -64,7 +64,7 @@ int test_delta(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   auto xmData = nde.find_child_by_attribute("name", "dataBuffer");
   TEST_NOT_CHECK(xmData.empty());
   const size_t dataSize = xmData.attribute("numelements").as_int();
-  es::string_view xmDataData = xmData.text().as_string();
+  std::string_view xmDataData = xmData.text().as_string();
   xmDataData = es::SkipStartWhitespace(xmDataData, true);
   const auto dtData = reinterpret_cast<const uint8 *>(delta->GetData());
 
@@ -100,7 +100,7 @@ int test_delta() {
       auto rootNode = doc.first_child().first_child();
 
       for (auto &c : rootNode) {
-        es::string_view childName = c.attribute("class").as_string();
+        std::string_view childName = c.attribute("class").as_string();
 
         if (childName == "hkRootLevelContainer") {
           auto allClasses = curHk->GetClasses(childName);

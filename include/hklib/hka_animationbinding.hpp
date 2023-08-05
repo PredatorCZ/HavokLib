@@ -29,7 +29,7 @@ MAKE_ENUM(ENUMSCOPE(BlendHint
 struct hkaAnimationBinding : IhkVirtualClass {
   DECLARE_HKCLASS(hkaAnimationBinding)
 
-  virtual es::string_view GetSkeletonName() const = 0;
+  virtual std::string_view GetSkeletonName() const = 0;
   virtual const hkaAnimation *GetAnimation() const = 0;
   virtual BlendHint GetBlendHint() const = 0;
   virtual size_t GetNumTransformTrackToBoneIndices() const = 0;

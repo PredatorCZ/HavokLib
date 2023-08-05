@@ -30,7 +30,7 @@ int test_spline(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   TEST_EQUAL(spline->GetAnimationType(), HK_SPLINE_COMPRESSED_ANIMATION);
 
   for (auto b : nde) {
-    es::string_view paramName = b.attribute("name").as_string();
+    std::string_view paramName = b.attribute("name").as_string();
 
     if (paramName == "numFrames") {
       TEST_EQUAL(b.text().as_int(), spline->GetNumFrames());
@@ -50,7 +50,7 @@ int test_spline(pugi::xml_node nde, IhkVirtualClass *hkNode) {
     } else if (paramName == "blockOffsets") {
       auto boffs = spline->GetBlockOffsets();
       TEST_EQUAL(b.attribute("numelements").as_int(), boffs.size());
-      es::string_view xmDataData = b.text().as_string();
+      std::string_view xmDataData = b.text().as_string();
       xmDataData = es::SkipStartWhitespace(xmDataData, true);
 
       for (auto b : boffs) {
@@ -59,7 +59,7 @@ int test_spline(pugi::xml_node nde, IhkVirtualClass *hkNode) {
     } else if (paramName == "floatBlockOffsets") {
       auto boffs = spline->GetFloatBlockOffsets();
       TEST_EQUAL(b.attribute("numelements").as_int(), boffs.size());
-      es::string_view xmDataData = b.text().as_string();
+      std::string_view xmDataData = b.text().as_string();
       xmDataData = es::SkipStartWhitespace(xmDataData, true);
 
       for (auto b : boffs) {
@@ -68,7 +68,7 @@ int test_spline(pugi::xml_node nde, IhkVirtualClass *hkNode) {
     } else if (paramName == "transformOffsets") {
       auto boffs = spline->GetTransformOffsets();
       TEST_EQUAL(b.attribute("numelements").as_int(), boffs.size());
-      es::string_view xmDataData = b.text().as_string();
+      std::string_view xmDataData = b.text().as_string();
       xmDataData = es::SkipStartWhitespace(xmDataData, true);
 
       for (auto b : boffs) {
@@ -77,7 +77,7 @@ int test_spline(pugi::xml_node nde, IhkVirtualClass *hkNode) {
     } else if (paramName == "floatOffsets") {
       auto boffs = spline->GetFloatOffsets();
       TEST_EQUAL(b.attribute("numelements").as_int(), boffs.size());
-      es::string_view xmDataData = b.text().as_string();
+      std::string_view xmDataData = b.text().as_string();
       xmDataData = es::SkipStartWhitespace(xmDataData, true);
 
       for (auto b : boffs) {
@@ -89,7 +89,7 @@ int test_spline(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   auto xmData = nde.find_child_by_attribute("name", "data");
   TEST_NOT_CHECK(xmData.empty());
   const size_t dataSize = xmData.attribute("numelements").as_int();
-  es::string_view xmDataData = xmData.text().as_string();
+  std::string_view xmDataData = xmData.text().as_string();
   xmDataData = es::SkipStartWhitespace(xmDataData, true);
   const auto dtData = reinterpret_cast<const uint8 *>(spline->GetData());
 
@@ -120,7 +120,7 @@ int test_spline(const std::string &name) {
       auto rootNode = doc.first_child().first_child();
 
       for (auto &c : rootNode) {
-        es::string_view childName = c.attribute("class").as_string();
+        std::string_view childName = c.attribute("class").as_string();
 
         if (childName == "hkRootLevelContainer") {
           auto allClasses = curHk->GetClasses(childName);

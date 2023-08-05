@@ -122,7 +122,7 @@ struct xmlRefFloat {
   float value;
 
   xmlRefFloat() = default;
-  xmlRefFloat(es::string_view _name, float _value)
+  xmlRefFloat(std::string_view _name, float _value)
       : name(_name), value(_value) {}
 };
 
@@ -139,7 +139,7 @@ class xmlSkeleton : public hkaSkeletonInternalInterface, uni::List<uni::Bone> {
     return partitions.at(id);
   }
   size_t GetNumBones() const override { return bones.size(); }
-  es::string_view GetBoneName(size_t id) const override {
+  std::string_view GetBoneName(size_t id) const override {
     return bones.at(id)->name;
   }
   const hkQTransform *GetBoneTM(size_t id) const override {
@@ -155,7 +155,7 @@ class xmlSkeleton : public hkaSkeletonInternalInterface, uni::List<uni::Bone> {
     return floats.at(id).value;
   }
   size_t GetNumFloatSlots() const override { return GetNumReferenceFloats(); }
-  es::string_view GetFloatSlot(size_t id) const override {
+  std::string_view GetFloatSlot(size_t id) const override {
     return floats.at(id).name;
   }
 
@@ -183,14 +183,14 @@ class xmlAnnotationTrack : public hkaAnnotationTrackInternalInterface {
 
   size_t Size() const override { return 0; }
   const hkaAnnotationFrame At(size_t) const override { return {}; }
-  es::string_view GetName() const override { return name; }
+  std::string_view GetName() const override { return name; }
   std::string name;
 };
 
 template <class _parent> class xmlAnimation : public virtual _parent {
   DECLARE_XMLCLASS(xmlAnimation, hkaAnimation);
 
-  es::string_view GetAnimationTypeName() const override {
+  std::string_view GetAnimationTypeName() const override {
     return GetReflectedEnum<hkaAnimationType>()->names[animType];
   }
   hkaAnimationType GetAnimationType() const override { return animType; }
@@ -230,7 +230,7 @@ public:
   size_t GetNumOfTransformTracks() const override { return transforms.size(); }
   size_t GetNumOfFloatTracks() const override { return floats.size(); }
 
-  es::string_view GetClassName(hkToolset toolset) const override {
+  std::string_view GetClassName(hkToolset toolset) const override {
     if (toolset > HK550)
       return "hkaInterleavedUncompressedAnimation";
     else
@@ -275,7 +275,7 @@ class xmlAnimationBinding : public hkaAnimationBindingInternalInterface {
   std::vector<int16> partitionIndices;
   BlendHint blendHint = NORMAL;
 
-  es::string_view GetSkeletonName() const override { return skeletonName; }
+  std::string_view GetSkeletonName() const override { return skeletonName; }
   const hkaAnimation *GetAnimation() const override { return animation; }
   BlendHint GetBlendHint() const override { return blendHint; }
   size_t GetNumTransformTrackToBoneIndices() const override {

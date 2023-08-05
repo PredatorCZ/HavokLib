@@ -59,7 +59,7 @@ struct hkaAnimationBindingMidInterface : hkaAnimationBindingInternalInterface {
     }
   }
 
-  es::string_view GetSkeletonName() const override {
+  std::string_view GetSkeletonName() const override {
     return interface.SkeletonName();
   }
 

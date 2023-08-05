@@ -25,7 +25,15 @@ static const std::set<ClassData<_count_>> LAYOUTS {
 };
 struct Interface {
   Interface(char *data_, LayoutLookup layout_): data{data_}, layout{GetLayout(LAYOUTS, {layout_, {LookupFlag::Ptr}})}, lookup{layout_} {}
+  Interface(const Interface&) = default;
+  Interface(Interface&&) = default;
+  Interface &operator=(const Interface&) = default;
+  Interface &operator=(Interface&&) = default;
   uint16 LayoutVersion() const { return lookup.version; }
+  Pointer<Pointer<char>> SkeletonsPtr() {
+    int16 off = m(skeletons); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
   Iterator<Pointer<char>> Skeletons() {
     int16 off = m(skeletons); if (off == -1) return {nullptr, lookup};
     if (layout->ptrSize == 8) return {*reinterpret_cast<char**>(data + off), lookup};
@@ -37,6 +45,10 @@ struct Interface {
     return {*reinterpret_cast<es::PointerX86<char>*>(data + off), lookup};
   }
   uint32 NumSkeletons() const { return m(numSkeletons) == -1 ? uint32{} : *reinterpret_cast<uint32*>(data + m(numSkeletons)); }
+  Pointer<Pointer<char>> AnimationsPtr() {
+    int16 off = m(animations); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
   Iterator<Pointer<char>> Animations() {
     int16 off = m(animations); if (off == -1) return {nullptr, lookup};
     if (layout->ptrSize == 8) return {*reinterpret_cast<char**>(data + off), lookup};
@@ -48,6 +60,10 @@ struct Interface {
     return {*reinterpret_cast<es::PointerX86<char>*>(data + off), lookup};
   }
   uint32 NumAnimations() const { return m(numAnimations) == -1 ? uint32{} : *reinterpret_cast<uint32*>(data + m(numAnimations)); }
+  Pointer<Pointer<char>> BindingsPtr() {
+    int16 off = m(bindings); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
   Iterator<Pointer<char>> Bindings() {
     int16 off = m(bindings); if (off == -1) return {nullptr, lookup};
     if (layout->ptrSize == 8) return {*reinterpret_cast<char**>(data + off), lookup};
@@ -59,6 +75,10 @@ struct Interface {
     return {*reinterpret_cast<es::PointerX86<char>*>(data + off), lookup};
   }
   uint32 NumBindings() const { return m(numBindings) == -1 ? uint32{} : *reinterpret_cast<uint32*>(data + m(numBindings)); }
+  Pointer<Pointer<char>> AttachmentsPtr() {
+    int16 off = m(attachments); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
   Iterator<Pointer<char>> Attachments() {
     int16 off = m(attachments); if (off == -1) return {nullptr, lookup};
     if (layout->ptrSize == 8) return {*reinterpret_cast<char**>(data + off), lookup};
@@ -70,6 +90,10 @@ struct Interface {
     return {*reinterpret_cast<es::PointerX86<char>*>(data + off), lookup};
   }
   uint32 NumAttachments() const { return m(numAttachments) == -1 ? uint32{} : *reinterpret_cast<uint32*>(data + m(numAttachments)); }
+  Pointer<Pointer<char>> SkinsPtr() {
+    int16 off = m(skins); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
   Iterator<Pointer<char>> Skins() {
     int16 off = m(skins); if (off == -1) return {nullptr, lookup};
     if (layout->ptrSize == 8) return {*reinterpret_cast<char**>(data + off), lookup};

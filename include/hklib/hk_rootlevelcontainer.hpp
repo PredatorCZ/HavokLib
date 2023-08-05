@@ -20,14 +20,14 @@
 #include "uni/list.hpp"
 
 struct hkNamedVariant {
-  es::string_view name;
-  es::string_view className;
+  std::string_view name;
+  std::string_view className;
   const IhkVirtualClass *pointer;
 
   template <class C> operator const C *() const {
     return safe_deref_cast<const C>(pointer);
   }
-  operator es::string_view() const { return name; }
+  operator std::string_view() const { return name; }
   operator JenHash() const { return JenHash(className); }
   bool operator==(const JenHash iHash) const {
     return iHash == JenHash(className);

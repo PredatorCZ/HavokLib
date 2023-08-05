@@ -40,6 +40,10 @@ static const std::set<ClassData<_count_>> LAYOUTS {
 };
 struct Interface {
   Interface(char *data_, LayoutLookup layout_): data{data_}, layout{GetLayout(LAYOUTS, {layout_, {LookupFlag::Padding ,LookupFlag::Ptr}})}, lookup{layout_} {}
+  Interface(const Interface&) = default;
+  Interface(Interface&&) = default;
+  Interface &operator=(const Interface&) = default;
+  Interface &operator=(Interface&&) = default;
   uint16 LayoutVersion() const { return lookup.version; }
   hkaAnimation::Interface BasehkaAnimation() const {
     int16 off = m(basehkaAnimation); if (off == -1) return {nullptr, lookup};
@@ -52,6 +56,10 @@ struct Interface {
   float BlockDuration() const { return m(blockDuration) == -1 ? float{} : *reinterpret_cast<float*>(data + m(blockDuration)); }
   float BlockInverseDuration() const { return m(blockInverseDuration) == -1 ? float{} : *reinterpret_cast<float*>(data + m(blockInverseDuration)); }
   float FrameDuration() const { return m(frameDuration) == -1 ? float{} : *reinterpret_cast<float*>(data + m(frameDuration)); }
+  Pointer<uint32> BlockOffsetsPtr() {
+    int16 off = m(blockOffsets); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
   uint32 *BlockOffsets() {
     int16 off = m(blockOffsets); if (off == -1) return nullptr;
     if (layout->ptrSize == 8) return *reinterpret_cast<uint32**>(data + off);
@@ -63,6 +71,10 @@ struct Interface {
     return *reinterpret_cast<es::PointerX86<uint32>*>(data + off);
   }
   uint32 NumBlockOffsets() const { return m(numBlockOffsets) == -1 ? uint32{} : *reinterpret_cast<uint32*>(data + m(numBlockOffsets)); }
+  Pointer<uint32> FloatBlockOffsetsPtr() {
+    int16 off = m(floatBlockOffsets); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
   uint32 *FloatBlockOffsets() {
     int16 off = m(floatBlockOffsets); if (off == -1) return nullptr;
     if (layout->ptrSize == 8) return *reinterpret_cast<uint32**>(data + off);
@@ -74,6 +86,10 @@ struct Interface {
     return *reinterpret_cast<es::PointerX86<uint32>*>(data + off);
   }
   uint32 NumFloatBlockOffsets() const { return m(numFloatBlockOffsets) == -1 ? uint32{} : *reinterpret_cast<uint32*>(data + m(numFloatBlockOffsets)); }
+  Pointer<uint32> TransformBlockOffsetsPtr() {
+    int16 off = m(transformBlockOffsets); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
   uint32 *TransformBlockOffsets() {
     int16 off = m(transformBlockOffsets); if (off == -1) return nullptr;
     if (layout->ptrSize == 8) return *reinterpret_cast<uint32**>(data + off);
@@ -85,6 +101,10 @@ struct Interface {
     return *reinterpret_cast<es::PointerX86<uint32>*>(data + off);
   }
   uint32 NumTransformBlockOffsets() const { return m(numTransformBlockOffsets) == -1 ? uint32{} : *reinterpret_cast<uint32*>(data + m(numTransformBlockOffsets)); }
+  Pointer<uint32> FloatOffsetsPtr() {
+    int16 off = m(floatOffsets); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
   uint32 *FloatOffsets() {
     int16 off = m(floatOffsets); if (off == -1) return nullptr;
     if (layout->ptrSize == 8) return *reinterpret_cast<uint32**>(data + off);
@@ -96,6 +116,10 @@ struct Interface {
     return *reinterpret_cast<es::PointerX86<uint32>*>(data + off);
   }
   uint32 NumFloatOffsets() const { return m(numFloatOffsets) == -1 ? uint32{} : *reinterpret_cast<uint32*>(data + m(numFloatOffsets)); }
+  Pointer<char> DataBufferPtr() {
+    int16 off = m(dataBuffer); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
   char *DataBuffer() {
     int16 off = m(dataBuffer); if (off == -1) return nullptr;
     if (layout->ptrSize == 8) return *reinterpret_cast<char**>(data + off);

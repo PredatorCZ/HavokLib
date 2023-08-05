@@ -49,7 +49,7 @@ template <> struct hash<CRule> {
 struct hkVirtualClass {
   JenHash hash[4]{};
   CRule rule;
-  es::string_view className;
+  std::string_view className;
   IhkPackFile *header;
 
   void AddHash(JenHash hsh) {
@@ -77,7 +77,7 @@ struct hkVirtualClass {
     return false;
   }
 
-  virtual es::string_view GetClassName(hkToolset) const {
+  virtual std::string_view GetClassName(hkToolset) const {
     return className;
   }
   virtual void SwapEndian() = 0;

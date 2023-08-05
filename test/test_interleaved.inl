@@ -32,7 +32,7 @@ int test_interleaved(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   TEST_NOT_CHECK(xmTMs.empty());
   const size_t numTransforms = inter->GetNumTransforms();
   TEST_EQUAL(numTransforms, xmTMs.attribute("numelements").as_int());
-  es::string_view xmTMData = xmTMs.text().as_string();
+  std::string_view xmTMData = xmTMs.text().as_string();
 
   for (size_t t = 0; t < numTransforms; t++) {
     auto kVal = inter->GetTransform(t);
@@ -80,7 +80,7 @@ int test_interleaved() {
       auto rootNode = doc.first_child().first_child();
 
       for (auto &c : rootNode) {
-        es::string_view childName = c.attribute("class").as_string();
+        std::string_view childName = c.attribute("class").as_string();
 
         if (childName == "hkRootLevelContainer") {
           auto allClasses = curHk->GetClasses(childName);

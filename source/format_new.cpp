@@ -29,58 +29,58 @@ template <class C> void PtrGuard(const C *val) {
   }
 }
 
-template <uint32 tag> struct Read {
-  static auto e(BinReaderRef, hkChunk *, hkxNewHeader *){};
+using ReadFunc = void (*)(BinReaderRef, hkChunk *, hkxNewHeader *);
+
+template <uint32 tag>
+ReadFunc Read = [](BinReaderRef, hkChunk *, hkxNewHeader *) {};
+
+template <>
+ReadFunc Read<1> = [](BinReaderRef rd, hkChunk *holder, hkxNewHeader *) {
+  PtrGuard(holder);
+
+  rd.Skip(holder->Size());
 };
 
-template <> struct Read<1> {
-  static auto e(BinReaderRef rd, hkChunk *holder, hkxNewHeader *) {
-    PtrGuard(holder);
+template <>
+ReadFunc Read<CompileFourCC("SDKV")> =
+    [](BinReaderRef rd, hkChunk *, hkxNewHeader *root) {
+      PtrGuard(root);
+      char buff[8];
 
-    rd.Skip(holder->Size());
-  };
-};
+      rd.Read(buff);
+      buff[4] = 0;
 
-template <> struct Read<CompileFourCC("SDKV")> {
-  static auto e(BinReaderRef rd, hkChunk *, hkxNewHeader *root) {
-    PtrGuard(root);
-    char buff[8];
+      uint32 version = atoi(buff);
 
-    rd.Read(buff);
-    buff[4] = 0;
+      auto convert = [&] {
+        switch (version) {
+        case 2015:
+          return HK2015;
+        case 2016:
+          return HK2016;
+        case 2017:
+          return HK2017;
+        default:
+          return HKUNKVER;
+        }
+      };
 
-    uint32 version = atoi(buff);
+      root->toolset = convert();
 
-    auto convert = [&] {
-      switch (version) {
-      case 2015:
-        return HK2015;
-      case 2016:
-        return HK2016;
-      case 2017:
-        return HK2017;
-      default:
-        return HKUNKVER;
+      if (root->toolset == HKUNKVER) {
+        throw es::InvalidVersionError(version);
       }
     };
 
-    root->toolset = convert();
+template <>
+ReadFunc Read<CompileFourCC("DATA")> =
+    [](BinReaderRef rd, hkChunk *holder, hkxNewHeader *root) {
+      PtrGuard(holder);
+      PtrGuard(root);
 
-    if (root->toolset == HKUNKVER) {
-      throw es::InvalidVersionError(version);
-    }
-  };
-};
-
-template <> struct Read<CompileFourCC("DATA")> {
-  static auto e(BinReaderRef rd, hkChunk *holder, hkxNewHeader *root) {
-    PtrGuard(holder);
-    PtrGuard(root);
-
-    const uint32 dataSize = holder->Size();
-    rd.ReadContainer(root->dataBuffer, dataSize);
-  };
-};
+      const uint32 dataSize = holder->Size();
+      rd.ReadContainer(root->dataBuffer, dataSize);
+    };
 
 void ReadTypeNames(BinReaderRef rd, hkChunk *holder, hkxNewHeader *root,
                    std::string &outBuffer, hkxNewHeader::StrVec &outVec) {
@@ -90,7 +90,7 @@ void ReadTypeNames(BinReaderRef rd, hkChunk *holder, hkxNewHeader *root,
   const uint32 bufferSize = holder->Size();
   rd.ReadContainer(outBuffer, bufferSize);
   char *buffer = &outBuffer[0];
-  es::string_view lastName = buffer;
+  std::string_view lastName = buffer;
 
   for (uint32 t = 0; t < bufferSize; t++) {
     if (!buffer[t]) {
@@ -104,16 +104,16 @@ void ReadTypeNames(BinReaderRef rd, hkChunk *holder, hkxNewHeader *root,
   }
 }
 
-template <> struct Read<CompileFourCC("TSTR")> {
-  static auto e(BinReaderRef rd, hkChunk *holder, hkxNewHeader *root) {
-    ReadTypeNames(rd, holder, root, root->classNamesBuffer, root->classNames);
-  };
-};
+template <>
+ReadFunc Read<CompileFourCC("TSTR")> =
+    [](BinReaderRef rd, hkChunk *holder, hkxNewHeader *root) {
+      ReadTypeNames(rd, holder, root, root->classNamesBuffer, root->classNames);
+    };
 
-template <> struct Read<CompileFourCC("FSTR")> {
-  static auto e(BinReaderRef rd, hkChunk *holder, hkxNewHeader *root) {
-    ReadTypeNames(rd, holder, root, root->memberNamesBuffer, root->memberNames);
-  };
+template <>
+ReadFunc Read<CompileFourCC("FSTR")> = [](BinReaderRef rd, hkChunk *holder,
+                                          hkxNewHeader *root) {
+  ReadTypeNames(rd, holder, root, root->memberNamesBuffer, root->memberNames);
 };
 
 int32 ReadCompressedInt(BinReaderRef rd) {
@@ -141,145 +141,146 @@ int32 ReadCompressedInt(BinReaderRef rd) {
   return resultInt;
 }
 
-template <> struct Read<CompileFourCC("TNAM")> {
-  static auto e(BinReaderRef rd, hkChunk *holder, hkxNewHeader *root) {
-    PtrGuard(holder);
-    PtrGuard(root);
+template <>
+ReadFunc Read<CompileFourCC("TNAM")> = [](BinReaderRef rd, hkChunk *holder,
+                                          hkxNewHeader *root) {
+  PtrGuard(holder);
+  PtrGuard(root);
 
-    const size_t savepos = rd.Tell();
-    const uint32 numClasses = ReadCompressedInt(rd) - 1;
+  const size_t savepos = rd.Tell();
+  const uint32 numClasses = ReadCompressedInt(rd) - 1;
 
-    root->weldedClassNames.resize(numClasses);
+  root->weldedClassNames.resize(numClasses);
 
-    for (auto &c : root->weldedClassNames) {
-      const uint32 classNameIndex = ReadCompressedInt(rd);
-      c.className = root->classNames[classNameIndex];
+  for (auto &c : root->weldedClassNames) {
+    const uint32 classNameIndex = ReadCompressedInt(rd);
+    c.className = root->classNames[classNameIndex];
 
-      uint8 numTemplateArgs;
-      rd.Read(numTemplateArgs);
-      c.templateArguments.resize(numTemplateArgs);
+    uint8 numTemplateArgs;
+    rd.Read(numTemplateArgs);
+    c.templateArguments.resize(numTemplateArgs);
 
-      for (auto &t : c.templateArguments) {
-        uint32 argNameIndex = ReadCompressedInt(rd);
-        t.argName = root->classNames[argNameIndex];
+    for (auto &t : c.templateArguments) {
+      uint32 argNameIndex = ReadCompressedInt(rd);
+      t.argName = root->classNames[argNameIndex];
 
-        argNameIndex = ReadCompressedInt(rd);
-        t.argType = &root->weldedClassNames[argNameIndex - 1];
+      argNameIndex = ReadCompressedInt(rd);
+      t.argType = &root->weldedClassNames[argNameIndex - 1];
+    }
+  }
+
+  const int32 diff = static_cast<int32>(holder->Size()) -
+                     static_cast<int32>(rd.Tell() - savepos);
+
+  if (diff < 0) {
+    printwarning("[Havok] TNAM chunk read too much data, possible incorrect "
+                 "class map, proceeding to next chunk.");
+  }
+
+  rd.Skip(diff);
+};
+
+template <> ReadFunc Read<CompileFourCC("TNA1")> = Read<CompileFourCC("TNAM")>;
+
+template <>
+ReadFunc Read<CompileFourCC("ITEM")> =
+    [](BinReaderRef rd, hkChunk *holder, hkxNewHeader *root) {
+      PtrGuard(holder);
+      PtrGuard(root);
+
+      const uint32 numFixups = holder->Size() / sizeof(classEntryFixup);
+
+      rd.ReadContainer(root->classEntries, numFixups);
+    };
+
+template <>
+ReadFunc Read<CompileFourCC("PTCH")> =
+    [](BinReaderRef rd, hkChunk *holder, hkxNewHeader *root) {
+      PtrGuard(holder);
+      PtrGuard(root);
+
+      if (!root->weldedClassNames.size()) {
+        throw std::runtime_error("File is missing type infos.");
       }
-    }
 
-    const int32 diff = static_cast<int32>(holder->Size()) -
-                       static_cast<int32>(rd.Tell() - savepos);
+      const size_t endPos = rd.Tell() + holder->Size();
 
-    if (diff < 0) {
-      printwarning("[Havok] TNAM chunk read too much data, possible incorrect "
-                   "class map, proceeding to next chunk.");
-    }
+      while (rd.Tell() < endPos) {
+        uint32 classNameIndex;
+        rd.Read(classNameIndex);
 
-    rd.Skip(diff);
-  };
-};
+        std::string_view toclassname =
+            root->weldedClassNames[classNameIndex - 1].className;
 
-template <> struct Read<CompileFourCC("TNA1")> : Read<CompileFourCC("TNAM")> {};
+        bool isHKArray = toclassname == "hkArray";
+        bool isHKRelArray = toclassname == "hkRelArray";
 
-template <> struct Read<CompileFourCC("ITEM")> {
-  static auto e(BinReaderRef rd, hkChunk *holder, hkxNewHeader *root) {
-    PtrGuard(holder);
-    PtrGuard(root);
+        uint32 numPointers;
+        rd.Read(numPointers);
 
-    const uint32 numFixups = holder->Size() / sizeof(classEntryFixup);
+        for (uint32 t = 0; t < numPointers; t++) {
+          uint32 cPointer;
+          rd.Read(cPointer);
 
-    rd.ReadContainer(root->classEntries, numFixups);
-  };
-};
+          if (isHKRelArray) {
+            uint32 *retarget =
+                reinterpret_cast<uint32 *>(&root->dataBuffer[0] + cPointer);
+            const classEntryFixup &xfix = root->classEntries[*retarget];
 
-template <> struct Read<CompileFourCC("PTCH")> {
-  static auto e(BinReaderRef rd, hkChunk *holder, hkxNewHeader *root) {
-    PtrGuard(holder);
-    PtrGuard(root);
+            uint16 *relRetarget = reinterpret_cast<uint16 *>(retarget);
+            *relRetarget = xfix.tag - cPointer;
+            *(relRetarget + 1) = xfix.count;
+          } else {
+            uint64 *retarget =
+                reinterpret_cast<uint64 *>(&root->dataBuffer[0] + cPointer);
+            const classEntryFixup &xfix = root->classEntries[*retarget];
 
-    if (!root->weldedClassNames.size()) {
-      throw std::runtime_error("File is missing type infos.");
-    }
+            *retarget =
+                reinterpret_cast<uint64>(xfix.tag + root->dataBuffer.data());
 
-    const size_t endPos = rd.Tell() + holder->Size();
-
-    while (rd.Tell() < endPos) {
-      uint32 classNameIndex;
-      rd.Read(classNameIndex);
-
-      es::string_view toclassname =
-          root->weldedClassNames[classNameIndex - 1].className;
-
-      bool isHKArray = toclassname == "hkArray";
-      bool isHKRelArray = toclassname == "hkRelArray";
-
-      uint32 numPointers;
-      rd.Read(numPointers);
-
-      for (uint32 t = 0; t < numPointers; t++) {
-        uint32 cPointer;
-        rd.Read(cPointer);
-
-        if (isHKRelArray) {
-          uint32 *retarget =
-              reinterpret_cast<uint32 *>(&root->dataBuffer[0] + cPointer);
-          const classEntryFixup &xfix = root->classEntries[*retarget];
-
-          uint16 *relRetarget = reinterpret_cast<uint16 *>(retarget);
-          *relRetarget = xfix.tag - cPointer;
-          *(relRetarget + 1) = xfix.count;
-        } else {
-          uint64 *retarget =
-              reinterpret_cast<uint64 *>(&root->dataBuffer[0] + cPointer);
-          const classEntryFixup &xfix = root->classEntries[*retarget];
-
-          *retarget =
-              reinterpret_cast<uint64>(xfix.tag + root->dataBuffer.data());
-
-          if (isHKArray) {
-            *(retarget + 1) = xfix.count;
+            if (isHKArray) {
+              *(retarget + 1) = xfix.count;
+            }
           }
         }
       }
-    }
 
-    for (auto &f : root->classEntries) {
-      const int32 clsID = f.Size() - 1;
+      for (auto &f : root->classEntries) {
+        const int32 clsID = f.Size() - 1;
 
-      if (clsID < 0) {
-        continue;
+        if (clsID < 0) {
+          continue;
+        }
+
+        std::string_view clName = root->weldedClassNames[clsID].className;
+        const JenHash chash(clName);
+        CRule rule(root->toolset, false, 8); // No way to detect so far
+        IhkVirtualClass *clsn = hkVirtualClass::Create(chash, rule);
+        auto cls = const_cast<hkVirtualClass *>(
+            safe_deref_cast<const hkVirtualClass>(clsn));
+
+        if (cls) {
+          cls->SetDataPointer(&root->dataBuffer[0] + f.tag);
+          cls->className = clName;
+          cls->AddHash(clName);
+          cls->header = root;
+          root->virtualClasses.emplace_back(clsn);
+          cls->Process();
+        }
       }
 
-      es::string_view clName = root->weldedClassNames[clsID].className;
-      const JenHash chash(clName);
-      CRule rule(root->toolset, false, 8); // No way to detect so far
-      IhkVirtualClass *clsn = hkVirtualClass::Create(chash, rule);
-      auto cls = const_cast<hkVirtualClass *>(safe_deref_cast<const hkVirtualClass>(clsn));
-
-      if (cls) {
-        cls->SetDataPointer(&root->dataBuffer[0] + f.tag);
-        cls->className = clName;
-        cls->AddHash(clName);
-        cls->header = root;
-        root->virtualClasses.emplace_back(clsn);
-        cls->Process();
-      }
-    }
-
-    es::Dispose(root->classEntries);
-  };
-};
+      es::Dispose(root->classEntries);
+    };
 
 template <uint32 fourcc> constexpr auto make() {
-  return std::make_pair(fourcc, Read<fourcc>::e);
+  return std::make_pair(fourcc, Read<fourcc>);
 }
 
 template <uint32 fourcc> constexpr auto makeSkip() {
-  return std::make_pair(fourcc, Read<1>::e);
+  return std::make_pair(fourcc, Read<1>);
 }
 
-static const std::map<uint32, decltype(&Read<0>::e)> hkChunkRegistry = {
+static const std::map<uint32, ReadFunc> hkChunkRegistry = {
     makeSkip<CompileFourCC("TAG0")>(), //
     makeSkip<CompileFourCC("TPTR")>(), //
     makeSkip<CompileFourCC("TPAD")>(), //

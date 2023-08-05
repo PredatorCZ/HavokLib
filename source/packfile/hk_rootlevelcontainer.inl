@@ -15,7 +15,15 @@ static const std::set<ClassData<_count_>> LAYOUTS {
 };
 struct Interface {
   Interface(char *data_, LayoutLookup layout_): data{data_}, layout{GetLayout(LAYOUTS, {layout_, {LookupFlag::Ptr}})}, lookup{layout_} {}
+  Interface(const Interface&) = default;
+  Interface(Interface&&) = default;
+  Interface &operator=(const Interface&) = default;
+  Interface &operator=(Interface&&) = default;
   uint16 LayoutVersion() const { return lookup.version; }
+  Pointer<char> NamePtr() {
+    int16 off = m(name); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
   char *Name() {
     int16 off = m(name); if (off == -1) return nullptr;
     if (layout->ptrSize == 8) return *reinterpret_cast<char**>(data + off);
@@ -25,6 +33,10 @@ struct Interface {
     int16 off = m(name); if (off == -1) return nullptr;
     if (layout->ptrSize == 8) return *reinterpret_cast<char**>(data + off);
     return *reinterpret_cast<es::PointerX86<char>*>(data + off);
+  }
+  Pointer<char> ClassNamePtr() {
+    int16 off = m(className); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
   }
   char *ClassName() {
     int16 off = m(className); if (off == -1) return nullptr;
@@ -37,6 +49,10 @@ struct Interface {
     return *reinterpret_cast<es::PointerX86<char>*>(data + off);
   }
   hkVariant::Interface Variant() const { return {m(variant) == -1 ? nullptr : data + m(variant), lookup}; }
+  Pointer<char> VariantPtr() {
+    int16 off = m(variant); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
   char *VariantHK700() {
     int16 off = m(variant); if (off == -1) return nullptr;
     if (layout->ptrSize == 8) return *reinterpret_cast<char**>(data + off);
@@ -69,7 +85,15 @@ static const std::set<ClassData<_count_>> LAYOUTS {
 };
 struct Interface {
   Interface(char *data_, LayoutLookup layout_): data{data_}, layout{GetLayout(LAYOUTS, {layout_, {LookupFlag::Ptr}})}, lookup{layout_} {}
+  Interface(const Interface&) = default;
+  Interface(Interface&&) = default;
+  Interface &operator=(const Interface&) = default;
+  Interface &operator=(Interface&&) = default;
   uint16 LayoutVersion() const { return lookup.version; }
+  Pointer<hkNamedVariant::Interface> VariantsPtr() {
+    int16 off = m(variants); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
   Iterator<hkNamedVariant::Interface> Variants() {
     int16 off = m(variants); if (off == -1) return {nullptr, lookup};
     if (layout->ptrSize == 8) return {*reinterpret_cast<char**>(data + off), lookup};

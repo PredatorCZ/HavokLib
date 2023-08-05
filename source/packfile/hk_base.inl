@@ -12,7 +12,15 @@ static const std::set<ClassData<_count_>> LAYOUTS {
 };
 struct Interface {
   Interface(char *data_, LayoutLookup layout_): data{data_}, layout{GetLayout(LAYOUTS, {layout_, {LookupFlag::Ptr}})}, lookup{layout_} {}
+  Interface(const Interface&) = default;
+  Interface(Interface&&) = default;
+  Interface &operator=(const Interface&) = default;
+  Interface &operator=(Interface&&) = default;
   uint16 LayoutVersion() const { return lookup.version; }
+  Pointer<char> ObjectPtr() {
+    int16 off = m(object); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
   char *Object() {
     int16 off = m(object); if (off == -1) return nullptr;
     if (layout->ptrSize == 8) return *reinterpret_cast<char**>(data + off);
@@ -22,6 +30,10 @@ struct Interface {
     int16 off = m(object); if (off == -1) return nullptr;
     if (layout->ptrSize == 8) return *reinterpret_cast<char**>(data + off);
     return *reinterpret_cast<es::PointerX86<char>*>(data + off);
+  }
+  Pointer<char> ClassDescPtr() {
+    int16 off = m(classDesc); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
   }
   char *ClassDesc() {
     int16 off = m(classDesc); if (off == -1) return nullptr;
@@ -57,7 +69,15 @@ static const std::set<ClassData<_count_>> LAYOUTS {
 };
 struct Interface {
   Interface(char *data_, LayoutLookup layout_): data{data_}, layout{GetLayout(LAYOUTS, {layout_, {LookupFlag::Ptr}})}, lookup{layout_} {}
+  Interface(const Interface&) = default;
+  Interface(Interface&&) = default;
+  Interface &operator=(const Interface&) = default;
+  Interface &operator=(Interface&&) = default;
   uint16 LayoutVersion() const { return lookup.version; }
+  Pointer<int32> VtablePtr() {
+    int16 off = m(vtable); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
   int32 *Vtable() {
     int16 off = m(vtable); if (off == -1) return nullptr;
     if (layout->ptrSize == 8) return *reinterpret_cast<int32**>(data + off);
@@ -70,6 +90,10 @@ struct Interface {
   }
   int16 MemSizeAndFlags() const { return m(memSizeAndFlags) == -1 ? int16{} : *reinterpret_cast<int16*>(data + m(memSizeAndFlags)); }
   int16 ReferenceCount() const { return m(referenceCount) == -1 ? int16{} : *reinterpret_cast<int16*>(data + m(referenceCount)); }
+  Pointer<int32> UnkPtr() {
+    int16 off = m(unk); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
   int32 *Unk() {
     int16 off = m(unk); if (off == -1) return nullptr;
     if (layout->ptrSize == 8) return *reinterpret_cast<int32**>(data + off);

@@ -30,7 +30,15 @@ static const std::set<ClassData<_count_>> LAYOUTS {
 };
 struct Interface {
   Interface(char *data_, LayoutLookup layout_): data{data_}, layout{GetLayout(LAYOUTS, {layout_, {LookupFlag::Ptr}})}, lookup{layout_} {}
+  Interface(const Interface&) = default;
+  Interface(Interface&&) = default;
+  Interface &operator=(const Interface&) = default;
+  Interface &operator=(Interface&&) = default;
   uint16 LayoutVersion() const { return lookup.version; }
+  Pointer<hkaAnimation> AnimationPtr() {
+    int16 off = m(animation); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
   hkaAnimation *Animation() {
     int16 off = m(animation); if (off == -1) return nullptr;
     if (layout->ptrSize == 8) return *reinterpret_cast<hkaAnimation**>(data + off);
@@ -40,6 +48,10 @@ struct Interface {
     int16 off = m(animation); if (off == -1) return nullptr;
     if (layout->ptrSize == 8) return *reinterpret_cast<hkaAnimation**>(data + off);
     return *reinterpret_cast<es::PointerX86<hkaAnimation>*>(data + off);
+  }
+  Pointer<int16> TransformTrackToBoneIndicesPtr() {
+    int16 off = m(transformTrackToBoneIndices); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
   }
   int16 *TransformTrackToBoneIndices() {
     int16 off = m(transformTrackToBoneIndices); if (off == -1) return nullptr;
@@ -53,6 +65,10 @@ struct Interface {
   }
   uint32 NumTransformTrackToBoneIndices() const { return m(numTransformTrackToBoneIndices) == -1 ? uint32{} : *reinterpret_cast<uint32*>(data + m(numTransformTrackToBoneIndices)); }
   ::BlendHint BlendHint() const { return m(blendHint) == -1 ? ::BlendHint{} : *reinterpret_cast<::BlendHint*>(data + m(blendHint)); }
+  Pointer<int16> FloatTrackToFloatSlotIndicesPtr() {
+    int16 off = m(floatTrackToFloatSlotIndices); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
   int16 *FloatTrackToFloatSlotIndices() {
     int16 off = m(floatTrackToFloatSlotIndices); if (off == -1) return nullptr;
     if (layout->ptrSize == 8) return *reinterpret_cast<int16**>(data + off);
@@ -64,6 +80,10 @@ struct Interface {
     return *reinterpret_cast<es::PointerX86<int16>*>(data + off);
   }
   uint32 NumFloatTrackToFloatSlotIndices() const { return m(numFloatTrackToFloatSlotIndices) == -1 ? uint32{} : *reinterpret_cast<uint32*>(data + m(numFloatTrackToFloatSlotIndices)); }
+  Pointer<char> SkeletonNamePtr() {
+    int16 off = m(skeletonName); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
   char *SkeletonName() {
     int16 off = m(skeletonName); if (off == -1) return nullptr;
     if (layout->ptrSize == 8) return *reinterpret_cast<char**>(data + off);
@@ -76,6 +96,10 @@ struct Interface {
   }
   hkReferenceObject::Interface BasehkReferenceObject() const {
     int16 off = m(basehkReferenceObject); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
+  Pointer<int16> PartitionIndicesPtr() {
+    int16 off = m(partitionIndices); if (off == -1) return {nullptr, lookup};
     return {data + off, lookup};
   }
   int16 *PartitionIndices() {

@@ -68,10 +68,9 @@ struct hkaSkeletonSaver {
           wr.Skip(lay.ptrSize);
         }
 
-        auto fndFinal = std::find_if(
-            fixups.finals.begin(), fixups.finals.end(), [&](const hkFixup &f) {
-              return f.destClass == in;
-            });
+        auto fndFinal =
+            std::find_if(fixups.finals.begin(), fixups.finals.end(),
+                         [&](const hkFixup &f) { return f.destClass == in; });
 
         if (es::IsEnd(fixups.finals, fndFinal)) {
           throw std::runtime_error("hkaBone final was not found");
@@ -107,9 +106,9 @@ struct hkaSkeletonSaver {
 
 class hkFullBone : public uni::Bone {
 public:
-  es::string_view name;
-  const hkQTransform *tm;
-  hkFullBone *parent;
+  std::string_view name;
+  const hkQTransform *tm = nullptr;
+  hkFullBone *parent = nullptr;
   size_t id;
 
   uni::TransformType TMType() const override {
@@ -120,7 +119,7 @@ public:
   }
   const Bone *Parent() const override { return parent; }
   size_t Index() const override { return id; }
-  std::string Name() const override { return name; }
+  std::string Name() const override { return std::string{name}; }
   operator uni::Element<const uni::Bone>() const {
     return {static_cast<const uni::Bone *>(this), false};
   }
@@ -145,6 +144,13 @@ struct hkaSkeletonMidInterface : hkaSkeletonInternalInterface {
   size_t GetNumBones() const override { return interface.NumBones(); }
 
   void Process() override {
+    const size_t numParentIndices = interface.NumParentIndices();
+    const size_t numTransforms = interface.NumTransforms();
+
+    if (!numParentIndices || !numTransforms) {
+      return;
+    }
+
     size_t numBones = GetNumBones();
     bones.storage.resize(numBones);
 
@@ -159,7 +165,7 @@ struct hkaSkeletonMidInterface : hkaSkeletonInternalInterface {
 
       for (size_t b = 0; b < numBones; b++, bonesIter.Next()) {
         hkFullBone &bone = bones.storage.at(b);
-        bone.name = (*bonesIter).Name();
+        bone.name = (**bonesIter).Name();
       }
     }
 
@@ -172,7 +178,7 @@ struct hkaSkeletonMidInterface : hkaSkeletonInternalInterface {
     }
   }
 
-  es::string_view GetBoneName(size_t id) const override {
+  std::string_view GetBoneName(size_t id) const override {
     return bones.storage.at(id).name;
   }
   const hkQTransform *GetBoneTM(size_t id) const override {
@@ -194,8 +200,8 @@ struct hkaSkeletonMidInterface : hkaSkeletonInternalInterface {
   size_t GetNumFloatSlots() const override {
     return interface.NumFloatSlots();
   };
-  es::string_view GetFloatSlot(size_t id) const override {
-    return *interface.FloatSlots().Next(id);
+  std::string_view GetFloatSlot(size_t id) const override {
+    return **interface.FloatSlots().Next(id);
   };
   size_t GetNumLocalFrames() const override {
     return interface.NumLocalFrames();

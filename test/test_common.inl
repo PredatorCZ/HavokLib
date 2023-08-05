@@ -33,13 +33,13 @@ int test_rootcontainer(pugi::xml_node nde, IhkVirtualClass *hkNode) {
 
   for (auto &v : *rlCont) {
     for (auto &b : *xmVariant) {
-      es::string_view paramName = b.attribute("name").as_string();
+      std::string_view paramName = b.attribute("name").as_string();
 
       if (paramName == "className") {
         auto xmText = b.text().as_string();
         TEST_EQUAL(v.className, xmText);
       } else if (paramName == "name") {
-        es::string_view xmlText = b.text().as_string();
+        std::string_view xmlText = b.text().as_string();
 
         if (xmlText == "hkaAnimationContainer") {
           if (v.name != "Merged Animation Container") {
@@ -65,7 +65,7 @@ int test_animationcontainer(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   TEST_CHECK(aniCont);
 
   for (auto &c : nde) {
-    es::string_view paramName = c.attribute("name").as_string();
+    std::string_view paramName = c.attribute("name").as_string();
     size_t numElements = c.attribute("numelements").as_uint();
 
     if (paramName == "skeletons") {
@@ -99,7 +99,7 @@ int test_animationcontainer(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   return 0;
 }
 
-int GetNumber(float hkNum, es::string_view &sw) {
+int GetNumber(float hkNum, std::string_view &sw) {
   char *strEnd = nullptr;
   auto xmNum = std::strtof(sw.begin(), &strEnd);
 
@@ -107,12 +107,12 @@ int GetNumber(float hkNum, es::string_view &sw) {
 
   TEST_EQUAL(hkNum, xmNum);
 
-  sw = es::SkipStartWhitespace<es::string_view>({strEnd, sw.end()}, true);
+  sw = es::SkipStartWhitespace<std::string_view>({strEnd, sw.end()}, true);
 
   return 0;
 };
 
-int GetInt(float hkNum, es::string_view &sw) {
+int GetInt(float hkNum, std::string_view &sw) {
   char *strEnd = nullptr;
   auto xmNum = std::strtol(sw.begin(), &strEnd, 10);
 
@@ -120,7 +120,7 @@ int GetInt(float hkNum, es::string_view &sw) {
 
   TEST_EQUAL(hkNum, xmNum);
 
-  sw = es::SkipStartWhitespace<es::string_view>({strEnd, sw.end()}, true);
+  sw = es::SkipStartWhitespace<std::string_view>({strEnd, sw.end()}, true);
 
   return 0;
 };
@@ -133,7 +133,7 @@ int test_animationbinding(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   TEST_CHECK(aniBind);
 
   for (auto &c : nde) {
-    es::string_view paramName = c.attribute("name").as_string();
+    std::string_view paramName = c.attribute("name").as_string();
 
     if (paramName == "floatTrackToFloatSlotIndices") {
       size_t numElements = c.attribute("numelements").as_uint();
@@ -141,14 +141,14 @@ int test_animationbinding(pugi::xml_node nde, IhkVirtualClass *hkNode) {
     } else if (paramName == "transformTrackToBoneIndices") {
       size_t numElements = c.attribute("numelements").as_uint();
       TEST_EQUAL(aniBind->GetNumTransformTrackToBoneIndices(), numElements);
-      es::string_view xmUpData = c.text().as_string();
+      std::string_view xmUpData = c.text().as_string();
 
       for (size_t t = 0; t < numElements; t++) {
         TEST_NOT_CHECK(
             GetInt(aniBind->GetTransformTrackToBoneIndex(t), xmUpData));
       }
     } else if (paramName == "blendHint") {
-      es::string_view xmUpData = c.text().as_string();
+      std::string_view xmUpData = c.text().as_string();
       BlendHint xmHint =
           xmUpData == "ADDITIVE" ? BlendHint::ADDITIVE : BlendHint::NORMAL;
 
@@ -166,7 +166,7 @@ int test_animation(pugi::xml_node nde, IhkVirtualClass *hkNode) {
 
   auto xmAnimType = nde.find_child_by_attribute("name", "type");
   TEST_NOT_CHECK(xmAnimType.empty());
-  es::string_view xmAnimTypeData = xmAnimType.text().as_string();
+  std::string_view xmAnimTypeData = xmAnimType.text().as_string();
   TEST_EQUAL(xmAnimTypeData, anim->GetAnimationTypeName());
 
   auto xmDuration = nde.find_child_by_attribute("name", "duration");
@@ -186,7 +186,7 @@ int test_animation(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   auto xmExM = nde.find_child_by_attribute("name", "extractedMotion");
   TEST_NOT_CHECK(xmExM.empty());
 
-  if (es::string_view("null") == xmExM.text().as_string()) {
+  if (std::string_view("null") == xmExM.text().as_string()) {
     TEST_CHECK(!anim->GetExtractedMotion());
   } else {
     TEST_CHECK(anim->GetExtractedMotion());
@@ -196,7 +196,7 @@ int test_animation(pugi::xml_node nde, IhkVirtualClass *hkNode) {
 
   TEST_NOT_CHECK(xmAnnots.empty());
 
-  es::string_view xmBoneLinks = xmAnnots.text().as_string();
+  std::string_view xmBoneLinks = xmAnnots.text().as_string();
 
   xmBoneLinks = es::SkipStartWhitespace(xmBoneLinks, true);
 

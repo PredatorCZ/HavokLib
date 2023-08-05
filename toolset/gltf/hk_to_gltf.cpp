@@ -31,7 +31,7 @@
 
 constexpr size_t NUM_EXTS = 18;
 
-es::string_view filters[NUM_EXTS]{
+std::string_view filters[NUM_EXTS]{
     ".hkx$",
     ".hka$",
 };
@@ -141,8 +141,8 @@ REFLECT(CLASS(Scene), MEMBER(units, "u", ReflDesc{"Input scene units."}),
         MEMBERNAME(forwardAxis, "forward-axis", "F",
                    ReflDesc{"Input scene forward axis."}),
         MEMBERNAME(rightHanded, "right-handed", "R",
-                   ReflDesc{
-                       "Input scene uses right handed coordiante system. (Finicky with root motion rotations)"}), )
+                   ReflDesc{"Input scene uses right handed coordiante system. "
+                            "(Finicky with root motion rotations)"}), )
 
 REFLECT(CLASS(Havok2GLTF),
         MEMBERNAME(extensionsPatterns, "extension-patterns", "p",
@@ -151,13 +151,11 @@ REFLECT(CLASS(Havok2GLTF),
         MEMBER(animation), MEMBER(skeleton), MEMBER(scene))
 
 static AppInfo_s appInfo{
-    AppInfo_s::CONTEXT_VERSION,
-    AppMode_e::CONVERT,
-    ArchiveLoadType::FILTERED,
-    Havok2GLTF_DESC " v" Havok2GLTF_VERSION ", " Havok2GLTF_COPYRIGHT
-                    "Lukas Cone",
-    reinterpret_cast<ReflectorFriend *>(&settings),
-    filters,
+    .filteredLoad = true,
+    .header = Havok2GLTF_DESC " v" Havok2GLTF_VERSION ", " Havok2GLTF_COPYRIGHT
+                              "Lukas Cone",
+    .settings = reinterpret_cast<ReflectorFriend *>(&settings),
+    .filters = filters,
 };
 
 AppInfo_s *AppInitModule() { return &appInfo; }
@@ -229,7 +227,7 @@ bool AppInitContext(const std::string &) {
 
   size_t filterIndex = 2;
   if (!settings.extensionsPatterns.empty()) {
-    es::string_view sv(settings.extensionsPatterns);
+    std::string_view sv(settings.extensionsPatterns);
     size_t lastPost = 0;
     auto found = sv.find(',');
 
@@ -289,7 +287,7 @@ static struct {
   IhkPackFile::Ptr skelFile;
   BinReader skelRdb;
   AppContextStream skelStream;
-  BinReaderRef skelRd;
+  BinReaderRef_e skelRd;
   std::mutex mtx;
 
   void LoadSkeleton(AppContext *ctx) {
@@ -367,8 +365,7 @@ struct GLTFHK : GLTF {
     const size_t startIndex = nodes.size();
     std::set<size_t> rootIndices;
     std::map<size_t, Vector4A16> controlBones;
-    std::vector<std::pair<size_t, es::Matrix44>> boneLookupTMs;
-    std::map<size_t, float> boneLens;
+    gltfutils::BoneInfo infos;
 
     for (auto b : skel) {
       gltf::Node bone;
@@ -380,8 +377,6 @@ struct GLTFHK : GLTF {
       memcpy(bone.rotation.data(), &value.rotation, sizeof(bone.rotation));
       auto parent = b->Parent();
       bone.name = b->Name();
-      auto boneLen = value.translation.Length();
-      boneLens.emplace(startIndex + b->Index(), boneLen);
 
       if ((settings.skeleton.generation == SkeletonGeneration::MANUAL &&
            settings.generateControlBones.contains(bone.name)) ||
@@ -391,25 +386,16 @@ struct GLTFHK : GLTF {
         memcpy(bone.scale.data(), &value.scale, sizeof(bone.scale));
       }
 
+      const size_t boneIndex = startIndex + b->Index();
+
       if (parent) {
-        auto &parentNode = nodes[startIndex + parent->Index()];
-        parentNode.children.push_back(startIndex + b->Index());
-
-        // Generate octahedron transforms for bone visualization
-        // This might be still finicky
-        es::Matrix44 lookupMtx;
-        lookupMtx.r1() = value.translation.Normalized();
-        lookupMtx.r2() =
-            lookupMtx.r1() * es::Matrix44(Vector4A16(0, 0, 0.7, 0.7));
-        lookupMtx.r3() = lookupMtx.r1().Cross(lookupMtx.r2());
-
-        lookupMtx.r1() *= boneLen;
-        lookupMtx.r2() *= boneLen;
-        lookupMtx.r3() *= boneLen;
-
-        boneLookupTMs.emplace_back(startIndex + parent->Index(), lookupMtx);
+        const size_t parentIndex = startIndex + parent->Index();
+        auto &parentNode = nodes[parentIndex];
+        parentNode.children.push_back(boneIndex);
+        infos.Add(boneIndex, value.translation, parentIndex);
       } else {
-        rootIndices.emplace(startIndex + b->Index());
+        rootIndices.emplace(boneIndex);
+        infos.Add(boneIndex, value.translation);
       }
 
       nodes.emplace_back(std::move(bone));
@@ -465,7 +451,6 @@ struct GLTFHK : GLTF {
         memcpy(bone.scale.data(), &scale, sizeof(scale));
         cBone.name.append("_control");
         cBone.children.push_back(nodes.size());
-        boneLens.emplace(nodes.size(), boneLens.at(index));
         nodes.emplace_back(std::move(bone));
       }
 
@@ -475,199 +460,20 @@ struct GLTFHK : GLTF {
     }
 
     if (settings.skeleton.visualize) {
-      size_t idStreamSlot = 0;
-      {
-        static const Vector octa[]{
-            {0, 0, 0},   {1, 1, -1}, {1, 1, 1},
-            {1, -1, -1}, {1, -1, 1}, {10, 0, 0},
-        };
-        static const uint16 octaIndices[]{
-            0, 2, 1, 0, 4, 2, 0, 3, 4, 0, 1, 3,
-            5, 1, 2, 5, 2, 4, 5, 4, 3, 5, 3, 1,
-        };
-
-        auto &vtStream = NewStream("visual-vertices", 20);
-        vtStream.target = gltf::BufferView::TargetType::ArrayBuffer;
-        size_t vtStreamSlot = vtStream.slot;
-        size_t numVerts = 6 * boneLookupTMs.size();
-        auto [vpAcc, vpId] = NewAccessor(vtStream, 4);
-        vpAcc.componentType = gltf::Accessor::ComponentType::Float;
-        vpAcc.type = gltf::Accessor::Type::Vec3;
-        vpAcc.count = numVerts;
-        auto [biAcc, biId] = NewAccessor(vtStream, 4, 12);
-        biAcc.componentType = gltf::Accessor::ComponentType::UnsignedByte;
-        biAcc.type = gltf::Accessor::Type::Vec4;
-        biAcc.count = numVerts;
-        auto [bwAcc, bwId] = NewAccessor(vtStream, 4, 16, &biAcc);
-        bwAcc.normalized = true;
-
-        auto &idStream = NewStream("visual-indices");
-        idStreamSlot = idStream.slot;
-        idStream.target = gltf::BufferView::TargetType::ElementArrayBuffer;
-        auto [idAcc, idId] = NewAccessor(idStream, 2);
-        idAcc.componentType = gltf::Accessor::ComponentType::UnsignedShort;
-        idAcc.type = gltf::Accessor::Type::Scalar;
-        idAcc.count = 24 * boneLookupTMs.size();
-
-        gltf::Primitive prim;
-        prim.mode = gltf::Primitive::Mode::Triangles;
-        prim.indices = idId;
-        prim.attributes["POSITION"] = vpId;
-        prim.attributes["JOINTS_0"] = biId;
-        prim.attributes["WEIGHTS_0"] = bwId;
-
-        gltf::Mesh mesh;
-        mesh.primitives.emplace_back(std::move(prim));
-
-        gltf::Skin skin;
-        std::map<size_t, size_t> remaps;
-
-        for (auto [id, len] : boneLookupTMs) {
-          if (remaps.contains(id)) {
-            continue;
-          }
-          skin.joints.push_back(id);
-          remaps.emplace(id, remaps.size());
-        };
-
-        gltf::Node meshNode;
-        meshNode.mesh = meshes.size();
-        meshNode.skin = skins.size();
-        scenes.back().nodes.push_back(nodes.size());
-        nodes.push_back(meshNode);
-
-        meshes.emplace_back(std::move(mesh));
-        skins.emplace_back(std::move(skin));
-
-        size_t localId = 0;
-
-        auto &vtnStream = Stream(vtStreamSlot);
-
-        for (auto [id, len] : boneLookupTMs) {
-          for (auto t : octa) {
-            Vector correctedPos = (t * 0.1f) * len;
-            vtnStream.wr.Write(correctedPos);
-            uint8 boneId[]{uint8(remaps[id]), 0, 0, 0};
-            vtnStream.wr.Write(boneId);
-            uint8 boneWt[]{0xff, 0, 0, 0};
-            vtnStream.wr.Write(boneWt);
-          }
-
-          for (auto t : octaIndices) {
-            uint16 correctedIndex = t + (localId * 6);
-            idStream.wr.Write(correctedIndex);
-          }
-          localId++;
-        }
-      }
-      {
-
-#include "icosphere.hpp"
-        auto &idStream = Stream(idStreamSlot);
-
-        auto [idAcc, idId] = NewAccessor(idStream, 2);
-        idAcc.componentType = gltf::Accessor::ComponentType::UnsignedShort;
-        idAcc.type = gltf::Accessor::Type::Scalar;
-        idAcc.count = 960;
-        idStream.wr.Write(icoSphereIndices);
-
-        auto &vtStream = NewStream("icovisual-basevertices", 16);
-        vtStream.target = gltf::BufferView::TargetType::ArrayBuffer;
-        auto [vpAcc, vpId] = NewAccessor(vtStream, 4);
-        vpAcc.componentType = gltf::Accessor::ComponentType::Float;
-        vpAcc.type = gltf::Accessor::Type::Vec3;
-        vpAcc.count = 162;
-        auto [bwAcc, bwId] = NewAccessor(vtStream, 4, 12);
-        bwAcc.componentType = gltf::Accessor::ComponentType::UnsignedByte;
-        bwAcc.type = gltf::Accessor::Type::Vec4;
-        bwAcc.count = 162;
-        bwAcc.normalized = true;
-
-        for (auto t : icoSphereX3) {
-          vtStream.wr.Write(t);
-          uint8 boneWt[]{0xff, 0, 0, 0};
-          vtStream.wr.Write(boneWt);
-        }
-
-        gltf::Mesh mesh;
-        gltf::Skin skin;
-        uint8 localId = 0;
-
-        auto vbStreamSlot = NewStream("icovisual-vertices").slot;
-        auto &viStream = NewStream("icovisual-ibms");
-        auto [viAcc, viId] = NewAccessor(viStream, 16);
-        skin.inverseBindMatrices = viId;
-        viAcc.componentType = gltf::Accessor::ComponentType::Float;
-        viAcc.type = gltf::Accessor::Type::Mat4;
-        viAcc.count = boneLens.size();
-
-        auto &vbStream = Stream(vbStreamSlot);
-        vbStream.target = gltf::BufferView::TargetType::ArrayBuffer;
-
-        const float avgLen = [&] {
-          float totalLen = 0;
-          int32 totalItems = 0;
-
-          for (auto [id, len] : boneLens) {
-            if (len < 0.00001) {
-              continue;
-            }
-
-            totalLen += len;
-            totalItems++;
-          }
-
-          return totalLen / totalItems;
-        }();
-
-        for (auto [id, len] : boneLens) {
-          if (len < 0.00001) {
-            len = avgLen;
-          }
-          es::Matrix44 ibm;
-          len *= 0.05f;
-          ibm.r1() *= len;
-          ibm.r2() *= len;
-          ibm.r3() *= len;
-          viStream.wr.Write(ibm);
-          skin.joints.push_back(id);
-          auto [biAcc, biId] = NewAccessor(vbStream, 4);
-          biAcc.componentType = gltf::Accessor::ComponentType::UnsignedByte;
-          biAcc.type = gltf::Accessor::Type::Vec4;
-          biAcc.count = 162;
-
-          gltf::Primitive prim;
-          prim.mode = gltf::Primitive::Mode::Triangles;
-          prim.indices = idId;
-          prim.attributes["POSITION"] = vpId;
-          prim.attributes["NORMAL"] = vpId;
-          prim.attributes["JOINTS_0"] = biId;
-          prim.attributes["WEIGHTS_0"] = bwId;
-
-          mesh.primitives.emplace_back(std::move(prim));
-          uint8 boneId[]{localId++, 0, 0, 0};
-
-          for (size_t i = 0; i < biAcc.count; i++) {
-            vbStream.wr.Write(boneId);
-          }
-        }
-
-        gltf::Node meshNode;
-        meshNode.mesh = meshes.size();
-        meshNode.skin = skins.size();
-        scenes.back().nodes.push_back(nodes.size());
-        nodes.push_back(meshNode);
-
-        meshes.emplace_back(std::move(mesh));
-        skins.emplace_back(std::move(skin));
-      }
+      gltfutils::VisualizeSkeleton(*this, infos);
     }
   }
+
+  size_t animIndex = 0;
 
   void ProcessAnimation(const hkaAnimation *anim,
                         const hkaAnimationBinding *binding) {
     gltf::Animation glanim;
     glanim.channels.reserve(anim->GetNumOfTransformTracks() * 3);
+    glanim.name = anim->Name();
+    if (glanim.name.empty()) {
+      glanim.name = "Motion[" + std::to_string(animIndex++) + "]";
+    }
     const size_t upperLimit =
         gltfutils::FindTimeEndIndex(times, anim->Duration());
     uni::Element<const uni::MotionTrack> rootTrack;
@@ -1126,27 +932,30 @@ struct GLTFHK : GLTF {
   int32 rootNodeIndex;
 };
 
-void AppProcessFile(std::istream &stream, AppContext *ctx) {
-  BinReaderRef rd(stream);
-  auto hkFile = IhkPackFile::Create(rd);
-  auto skeletons = hkFile->GetClasses(hkaSkeleton::GetHash());
+void AppProcessFile(AppContext *ctx) {
+  IhkPackFile::VirtualClassesRef skeletons;
+
+  if (!settings.skeleton.path.empty()) {
+    if (!skeleton.skelFile) {
+      skeleton.LoadSkeleton(ctx);
+    }
+
+    skeletons = skeleton.skelFile->GetClasses(hkaSkeleton::GetHash());
+  }
+
+  auto hkFile = IhkPackFile::Create(ctx->GetStream());
+
+  if (skeletons.empty()) {
+    skeletons = hkFile->GetClasses(hkaSkeleton::GetHash());
+  }
 
   if (skeletons.empty()) {
     if (settings.skeleton.path.empty()) {
       throw std::runtime_error(
           "No skeleton data found and no skeleton path provided.");
     }
-
-    if (!skeleton.skelFile) {
-      skeleton.LoadSkeleton(ctx);
-    }
-
-    skeletons = skeleton.skelFile->GetClasses(hkaSkeleton::GetHash());
-
-    if (skeletons.empty()) {
-      throw std::runtime_error(
-          "Even provided skeleton file doesn't contain skeleton data.");
-    }
+    throw std::runtime_error(
+        "Even provided skeleton file doesn't contain skeleton data.");
   }
 
   GLTFHK main;
@@ -1154,7 +963,9 @@ void AppProcessFile(std::istream &stream, AppContext *ctx) {
   // Load skeletons
   for (auto skel_ : skeletons) {
     auto skel = checked_deref_cast<const hkaSkeleton>(skel_);
-    main.ProcessSkeleton(*skel);
+    if (skel->GetNumBones()) {
+      main.ProcessSkeleton(*skel);
+    }
   }
 
   // Animations
@@ -1199,8 +1010,7 @@ void AppProcessFile(std::istream &stream, AppContext *ctx) {
     }
   }();
 
-  AFileInfo outPath(ctx->outFile);
-  BinWritter wr(outPath.GetFullPathNoExt().to_string() + ".glb");
+  BinWritterRef wr(ctx->NewFile(ctx->workingFile.ChangeExtension(".glb")));
 
-  main.FinishAndSave(wr, outPath.GetFolder());
+  main.FinishAndSave(wr, std::string(ctx->workingFile.GetFolder()));
 }

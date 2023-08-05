@@ -21,7 +21,7 @@
 #include <map>
 #include <random>
 
-static const es::string_view names[]{
+static const std::string_view names[]{
     "allosaur_run_S32_V16_B255_D1",
     "allosaur_run_S40_V16_B25_D3",
     "allosaur_run_S48_V8_B255_D2",
@@ -29,12 +29,12 @@ static const es::string_view names[]{
     "allosaur_run",
 };
 
-static const es::string_view compiledFlags[] = {
+static const std::string_view compiledFlags[] = {
     "[4001].hkx", "[4011].hkx", "[4101].hkx", "[4111].hkx",
     "[8001].hkx", "[8011].hkx", "[8101].hkx", "[8111].hkx",
 };
 
-static const es::string_view versions[] = {
+static const std::string_view versions[] = {
     "550/",    "660/",    "710/",    "2010_2/", "2011_1/",
     "2011_2/", "2012_2/", "2013_1/", "2014_1/",
 };

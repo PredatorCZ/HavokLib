@@ -95,7 +95,7 @@ PyObject *IHavokPy::ToXML(IHavokPy *self, PyObject *args) {
   }
 
   if (fileNameRaw) {
-    es::string_view fileName = fileNameRaw;
+    std::string_view fileName = fileNameRaw;
     self->file->ToXML(fileName, toolsetVersion);
     Py_RETURN_NONE;
   } else {

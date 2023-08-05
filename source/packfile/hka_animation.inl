@@ -13,8 +13,16 @@ static const std::set<ClassData<_count_>> LAYOUTS {
 };
 struct Interface {
   Interface(char *data_, LayoutLookup layout_): data{data_}, layout{GetLayout(LAYOUTS, {layout_, {LookupFlag::Ptr}})}, lookup{layout_} {}
+  Interface(const Interface&) = default;
+  Interface(Interface&&) = default;
+  Interface &operator=(const Interface&) = default;
+  Interface &operator=(Interface&&) = default;
   uint16 LayoutVersion() const { return lookup.version; }
   float Time() const { return m(time) == -1 ? float{} : *reinterpret_cast<float*>(data + m(time)); }
+  Pointer<char> TextPtr() {
+    int16 off = m(text); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
   char *Text() {
     int16 off = m(text); if (off == -1) return nullptr;
     if (layout->ptrSize == 8) return *reinterpret_cast<char**>(data + off);
@@ -48,7 +56,15 @@ static const std::set<ClassData<_count_>> LAYOUTS {
 };
 struct Interface {
   Interface(char *data_, LayoutLookup layout_): data{data_}, layout{GetLayout(LAYOUTS, {layout_, {LookupFlag::Ptr}})}, lookup{layout_} {}
+  Interface(const Interface&) = default;
+  Interface(Interface&&) = default;
+  Interface &operator=(const Interface&) = default;
+  Interface &operator=(Interface&&) = default;
   uint16 LayoutVersion() const { return lookup.version; }
+  Pointer<char> NamePtr() {
+    int16 off = m(name); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
   char *Name() {
     int16 off = m(name); if (off == -1) return nullptr;
     if (layout->ptrSize == 8) return *reinterpret_cast<char**>(data + off);
@@ -58,6 +74,10 @@ struct Interface {
     int16 off = m(name); if (off == -1) return nullptr;
     if (layout->ptrSize == 8) return *reinterpret_cast<char**>(data + off);
     return *reinterpret_cast<es::PointerX86<char>*>(data + off);
+  }
+  Pointer<hkaAnnotation::Interface> AnnotationsPtr() {
+    int16 off = m(annotations); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
   }
   Iterator<hkaAnnotation::Interface> Annotations() {
     int16 off = m(annotations); if (off == -1) return {nullptr, lookup};
@@ -109,6 +129,10 @@ static const std::set<ClassData<_count_>> LAYOUTS {
 };
 struct Interface {
   Interface(char *data_, LayoutLookup layout_): data{data_}, layout{GetLayout(LAYOUTS, {layout_, {LookupFlag::Padding ,LookupFlag::Ptr}})}, lookup{layout_} {}
+  Interface(const Interface&) = default;
+  Interface(Interface&&) = default;
+  Interface &operator=(const Interface&) = default;
+  Interface &operator=(Interface&&) = default;
   uint16 LayoutVersion() const { return lookup.version; }
   hkReferenceObject::Interface BasehkReferenceObject() const {
     int16 off = m(basehkReferenceObject); if (off == -1) return {nullptr, lookup};
@@ -117,6 +141,10 @@ struct Interface {
   uint32 AnimationType() const { return m(animationType) == -1 ? uint32{} : *reinterpret_cast<uint32*>(data + m(animationType)); }
   float Duration() const { return m(duration) == -1 ? float{} : *reinterpret_cast<float*>(data + m(duration)); }
   uint32 NumOfTransformTracks() const { return m(numOfTransformTracks) == -1 ? uint32{} : *reinterpret_cast<uint32*>(data + m(numOfTransformTracks)); }
+  Pointer<hkaAnimatedReferenceFrame::Interface> ExtractedMotionPtr() {
+    int16 off = m(extractedMotion); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
   Iterator<hkaAnimatedReferenceFrame::Interface> ExtractedMotion() {
     int16 off = m(extractedMotion); if (off == -1) return {nullptr, lookup};
     if (layout->ptrSize == 8) return {*reinterpret_cast<char**>(data + off), lookup};
@@ -126,6 +154,10 @@ struct Interface {
     int16 off = m(extractedMotion); if (off == -1) return {nullptr, lookup};
     if (layout->ptrSize == 8) return {*reinterpret_cast<char**>(data + off), lookup};
     return {*reinterpret_cast<es::PointerX86<char>*>(data + off), lookup};
+  }
+  Pointer<Pointer<hkaAnnotationTrack::Interface>> AnnotationsPtr() {
+    int16 off = m(annotations); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
   }
   Iterator<Pointer<hkaAnnotationTrack::Interface>> Annotations() {
     int16 off = m(annotations); if (off == -1) return {nullptr, lookup};
@@ -138,6 +170,10 @@ struct Interface {
     return {*reinterpret_cast<es::PointerX86<char>*>(data + off), lookup};
   }
   uint32 NumAnnotations() const { return m(numAnnotations) == -1 ? uint32{} : *reinterpret_cast<uint32*>(data + m(numAnnotations)); }
+  Pointer<hkaAnnotationTrack::Interface> AnnotationsPtrHK700() {
+    int16 off = m(annotations); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
   Iterator<hkaAnnotationTrack::Interface> AnnotationsHK700() {
     int16 off = m(annotations); if (off == -1) return {nullptr, lookup};
     if (layout->ptrSize == 8) return {*reinterpret_cast<char**>(data + off), lookup};

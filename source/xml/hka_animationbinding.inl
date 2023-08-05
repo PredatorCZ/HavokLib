@@ -126,7 +126,7 @@ void hkaAnimationBindingInternalInterface::ToXML(XMLHandle hdl) const {
   blendNode.append_attribute(_hkName).set_value("blendHint");
 
   BlendHint blendHint = GetBlendHint();
-  es::string_view blendName = GetReflectedEnum<
+  std::string_view blendName = GetReflectedEnum<
       BlendHint>()->names[blendHint + (!blendHint || hdl.toolset > HK700 ? 0 : 1)];
 
   blendNode.append_buffer(blendName.data(), blendName.size());

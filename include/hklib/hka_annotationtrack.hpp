@@ -22,12 +22,12 @@
 // event trigger
 struct hkaAnnotationFrame {
   float time;
-  es::string_view text;
+  std::string_view text;
 };
 
 struct hkaAnnotationTrack : uni::Vector<hkaAnnotationFrame>, IhkVirtualClass {
   DECLARE_HKCLASS(hkaAnnotationTrack)
 
-  virtual es::string_view GetName() const = 0;
-  operator es::string_view() const { return GetName(); }
+  virtual std::string_view GetName() const = 0;
+  operator std::string_view() const { return GetName(); }
 };

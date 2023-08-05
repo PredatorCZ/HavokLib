@@ -27,9 +27,17 @@ static const std::set<ClassData<_count_>> LAYOUTS {
 };
 struct Interface {
   Interface(char *data_, LayoutLookup layout_): data{data_}, layout{GetLayout(LAYOUTS, {layout_, {LookupFlag::Padding ,LookupFlag::Ptr}})}, lookup{layout_} {}
+  Interface(const Interface&) = default;
+  Interface(Interface&&) = default;
+  Interface &operator=(const Interface&) = default;
+  Interface &operator=(Interface&&) = default;
   uint16 LayoutVersion() const { return lookup.version; }
   hkaAnimation::Interface BasehkaAnimation() const {
     int16 off = m(basehkaAnimation); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
+  Pointer<hkQTransform> TransformsPtr() {
+    int16 off = m(transforms); if (off == -1) return {nullptr, lookup};
     return {data + off, lookup};
   }
   hkQTransform *Transforms() {
@@ -43,6 +51,10 @@ struct Interface {
     return *reinterpret_cast<es::PointerX86<hkQTransform>*>(data + off);
   }
   uint32 NumTransforms() const { return m(numTransforms) == -1 ? uint32{} : *reinterpret_cast<uint32*>(data + m(numTransforms)); }
+  Pointer<float> FloatsPtr() {
+    int16 off = m(floats); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
   float *Floats() {
     int16 off = m(floats); if (off == -1) return nullptr;
     if (layout->ptrSize == 8) return *reinterpret_cast<float**>(data + off);

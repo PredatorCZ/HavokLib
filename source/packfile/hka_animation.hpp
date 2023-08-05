@@ -85,7 +85,7 @@ struct hkaAnnotationTrackMidInterface : hkaAnnotationTrackInternalInterface {
     }
   }
 
-  es::string_view GetName() const override { return interface.Name(); };
+  std::string_view GetName() const override { return interface.Name(); };
   size_t Size() const override { return interface.NumAnnotations(); };
   const hkaAnnotationFrame At(size_t id) const override {
     auto item = interface.Annotations().Next(id);
@@ -125,7 +125,7 @@ struct hkaAnimationMidInterface : virtual ParentInterface {
               true};
     } else {
       return {
-          new hkaAnnotationTrackMidInterface{*Anim().Annotations().Next(id)},
+          new hkaAnnotationTrackMidInterface{**Anim().Annotations().Next(id)},
           true};
     }
   }
@@ -147,7 +147,7 @@ struct hkaAnimationMidInterface : virtual ParentInterface {
         auto parts = base.Annotations();
 
         for (size_t i = 0; i < numParts; i++, parts.Next()) {
-          hkaAnnotationTrackMidInterface{*parts}.SwapEndian();
+          hkaAnnotationTrackMidInterface{**parts}.SwapEndian();
         }
       }
     }

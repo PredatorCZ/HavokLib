@@ -37,7 +37,7 @@ endif()
 set(TPD_PATH ${CMAKE_CURRENT_SOURCE_DIR}/3rd_party)
 add_subdirectory(${TPD_PATH}/PreCore)
 include(targetex)
-# add_subdirectory(classgen)
+add_subdirectory(classgen)
 add_subdirectory(source)
 
 if(TOOLSET)

@@ -36,12 +36,12 @@ struct hkChunk {
 struct ClassName;
 
 struct ClassTemplateArgument {
-  es::string_view argName;
+  std::string_view argName;
   ClassName *argType;
 };
 
 struct ClassName {
-  es::string_view className;
+  std::string_view className;
   std::vector<ClassTemplateArgument> templateArguments;
 };
 
@@ -50,7 +50,7 @@ struct classEntryFixup : hkChunk {
 };
 
 struct hkxNewHeader : IhkPackFile, hkChunk {
-  using StrVec = std::vector<es::string_view>;
+  using StrVec = std::vector<std::string_view>;
   hkToolset toolset;
   std::string dataBuffer;
   std::string classNamesBuffer;

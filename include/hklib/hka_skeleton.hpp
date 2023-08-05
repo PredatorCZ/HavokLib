@@ -32,27 +32,27 @@ struct hkaPartition {
   uint16 numBones;
 
   hkaPartition() = default;
-  hkaPartition(es::string_view iName, int16 stboneid, uint16 iNumBones)
+  hkaPartition(std::string_view iName, int16 stboneid, uint16 iNumBones)
       : name(iName), startBoneIndex(stboneid), numBones(iNumBones) {}
 };
 
 struct hkaSkeleton : IhkVirtualClass, uni::Skeleton {
   DECLARE_HKCLASS(hkaSkeleton)
   virtual size_t GetNumFloatSlots() const = 0;
-  virtual es::string_view GetFloatSlot(size_t id) const = 0;
+  virtual std::string_view GetFloatSlot(size_t id) const = 0;
   virtual size_t GetNumLocalFrames() const = 0;
   virtual hkLocalFrameOnBone GetLocalFrame(size_t id) const = 0;
   virtual size_t GetNumPartitions() const = 0;
   virtual hkaPartition GetPartition(size_t id) const = 0;
   virtual size_t GetNumBones() const = 0;
-  virtual es::string_view GetBoneName(size_t id) const = 0;
+  virtual std::string_view GetBoneName(size_t id) const = 0;
   virtual const hkQTransform *GetBoneTM(size_t id) const = 0;
   virtual int16 GetBoneParentID(size_t id) const = 0;
   virtual size_t GetNumReferenceFloats() const = 0;
   virtual float GetReferenceFloat(size_t id) const = 0;
 
   typedef uni::VirtualIteratorProxy<hkaSkeleton, &hkaSkeleton::GetNumFloatSlots,
-                                    es::string_view, &hkaSkeleton::GetFloatSlot>
+                                    std::string_view, &hkaSkeleton::GetFloatSlot>
       iteratorFloatSlots;
   typedef uni::VirtualIteratorProxy<
       hkaSkeleton, &hkaSkeleton::GetNumLocalFrames, hkLocalFrameOnBone,
@@ -66,7 +66,7 @@ struct hkaSkeleton : IhkVirtualClass, uni::Skeleton {
                                     &hkaSkeleton::GetReferenceFloat>
       iteratorReferenceFloat;
   typedef uni::VirtualIteratorProxy<hkaSkeleton, &hkaSkeleton::GetNumBones,
-                                    es::string_view, &hkaSkeleton::GetBoneName>
+                                    std::string_view, &hkaSkeleton::GetBoneName>
       iteratorBoneNames;
   typedef uni::VirtualIteratorProxy<hkaSkeleton, &hkaSkeleton::GetNumBones,
                                     const hkQTransform *,

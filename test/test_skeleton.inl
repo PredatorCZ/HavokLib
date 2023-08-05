@@ -38,7 +38,7 @@ int test_environment(pugi::xml_node nde, IhkVirtualClass *hkNode) {
     }
 
     for (auto &b : *xmVar) {
-      es::string_view paramName = b.attribute("name").as_string();
+      std::string_view paramName = b.attribute("name").as_string();
       auto xmText = b.text().as_string();
 
       if (paramName == "value") {
@@ -74,7 +74,7 @@ int test_skeleton(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   TEST_EQUAL(skel->GetNumBones(),
              xmParentIndices.attribute("numelements").as_int());
 
-  es::string_view xmParentIDs = xmParentIndices.text().as_string();
+  std::string_view xmParentIDs = xmParentIndices.text().as_string();
 
   xmParentIDs = es::SkipStartWhitespace(xmParentIDs, true);
 
@@ -90,7 +90,7 @@ int test_skeleton(pugi::xml_node nde, IhkVirtualClass *hkNode) {
       checked_deref_cast<const hkVirtualClass>(hkNode)->rule.version;
 
   if (cVersion < HK2010_1) {
-    es::string_view xmBoneLinks = xmBones.text().as_string();
+    std::string_view xmBoneLinks = xmBones.text().as_string();
 
     xmBoneLinks = es::SkipStartWhitespace(xmBoneLinks, true);
 
@@ -135,7 +135,7 @@ int test_skeleton(pugi::xml_node nde, IhkVirtualClass *hkNode) {
 
   TEST_NOT_CHECK(xmRefPose.empty());
 
-  es::string_view xmRefPoses = xmRefPose.text().as_string();
+  std::string_view xmRefPoses = xmRefPose.text().as_string();
 
   for (auto b : skel->BoneTransforms()) {
     xmRefPoses.remove_prefix(xmRefPoses.find_first_of('(') + 1);
@@ -178,7 +178,7 @@ int test_skeleton(pugi::xml_node nde, IhkVirtualClass *hkNode) {
     TEST_EQUAL(skel->GetNumReferenceFloats(),
                xmRefFloats.attribute("numelements").as_int());
 
-    es::string_view xmRefFloatsText = xmRefFloats.text().as_string();
+    std::string_view xmRefFloatsText = xmRefFloats.text().as_string();
     xmRefFloatsText = es::SkipStartWhitespace(xmRefFloatsText, true);
 
     for (auto f : skel->ReferenceFloats()) {
@@ -241,7 +241,7 @@ int test_skeleton() {
       auto rootNode = doc.first_child().first_child();
 
       for (auto &c : rootNode) {
-        es::string_view childName = c.attribute("class").as_string();
+        std::string_view childName = c.attribute("class").as_string();
 
         if (childName == "hkRootLevelContainer") {
           auto allClasses = curHk->GetClasses(childName);

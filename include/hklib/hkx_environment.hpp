@@ -20,8 +20,8 @@
 #include "uni/list.hpp"
 
 struct hkxEnvironmentVariable {
-  es::string_view name;
-  es::string_view value;
+  std::string_view name;
+  std::string_view value;
 };
 
 struct hkxEnvironment : IhkVirtualClass,

@@ -74,7 +74,7 @@ struct hkaAnimationInternalInterface : hkaAnimation, hkVirtualClass {
   std::string Name() const override { return ""; }
   MotionType_e MotionType() const override { return Relative; }
 
-  es::string_view GetAnimationTypeName() const override {
+  std::string_view GetAnimationTypeName() const override {
     return GetReflectedEnum<hkaAnimationType>()->names[GetAnimationType()];
   }
 

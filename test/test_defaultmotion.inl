@@ -29,7 +29,7 @@ int test_defaultmotion(pugi::xml_node nde, IhkVirtualClass *hkNode) {
 
   auto xmUp = nde.find_child_by_attribute("name", "up");
   TEST_NOT_CHECK(xmUp.empty());
-  es::string_view xmUpData = xmUp.text().as_string();
+  std::string_view xmUpData = xmUp.text().as_string();
 
   xmUpData.remove_prefix(xmUpData.find_first_of('(') + 1);
 
@@ -42,7 +42,7 @@ int test_defaultmotion(pugi::xml_node nde, IhkVirtualClass *hkNode) {
 
   auto xmForward = nde.find_child_by_attribute("name", "forward");
   TEST_NOT_CHECK(xmForward.empty());
-  es::string_view xmFwdData = xmForward.text().as_string();
+  std::string_view xmFwdData = xmForward.text().as_string();
 
   xmFwdData.remove_prefix(xmFwdData.find_first_of('(') + 1);
 
@@ -62,7 +62,7 @@ int test_defaultmotion(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   const size_t numFrames = defan->GetNumFrames();
   TEST_EQUAL(numFrames, xmData.attribute("numelements").as_int());
 
-  es::string_view xmFrames = xmData.text().as_string();
+  std::string_view xmFrames = xmData.text().as_string();
 
   for (size_t f = 0; f < numFrames; f++) {
     xmFrames.remove_prefix(xmFrames.find_first_of('(') + 1);
@@ -97,7 +97,7 @@ int test_defaultmotion() {
       auto rootNode = doc.first_child().first_child();
 
       for (auto &c : rootNode) {
-        es::string_view childName = c.attribute("class").as_string();
+        std::string_view childName = c.attribute("class").as_string();
 
         if (childName == "hkRootLevelContainer") {
           auto allClasses = curHk->GetClasses(childName);

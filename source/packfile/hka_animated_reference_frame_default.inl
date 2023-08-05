@@ -21,6 +21,10 @@ static const std::set<ClassData<_count_>> LAYOUTS {
 };
 struct Interface {
   Interface(char *data_, LayoutLookup layout_): data{data_}, layout{GetLayout(LAYOUTS, {layout_, {LookupFlag::Padding ,LookupFlag::Ptr}})}, lookup{layout_} {}
+  Interface(const Interface&) = default;
+  Interface(Interface&&) = default;
+  Interface &operator=(const Interface&) = default;
+  Interface &operator=(Interface&&) = default;
   uint16 LayoutVersion() const { return lookup.version; }
   hkaAnimatedReferenceFrame::Interface BasehkaAnimatedReferenceFrame() const {
     int16 off = m(basehkaAnimatedReferenceFrame); if (off == -1) return {nullptr, lookup};
@@ -29,6 +33,10 @@ struct Interface {
   Vector4A16 Up() const { return m(up) == -1 ? Vector4A16{} : *reinterpret_cast<Vector4A16*>(data + m(up)); }
   Vector4A16 Forward() const { return m(forward) == -1 ? Vector4A16{} : *reinterpret_cast<Vector4A16*>(data + m(forward)); }
   float Duration() const { return m(duration) == -1 ? float{} : *reinterpret_cast<float*>(data + m(duration)); }
+  Pointer<Vector4A16> ReferenceFrameSamplesPtr() {
+    int16 off = m(referenceFrameSamples); if (off == -1) return {nullptr, lookup};
+    return {data + off, lookup};
+  }
   Vector4A16 *ReferenceFrameSamples() {
     int16 off = m(referenceFrameSamples); if (off == -1) return nullptr;
     if (layout->ptrSize == 8) return *reinterpret_cast<Vector4A16**>(data + off);

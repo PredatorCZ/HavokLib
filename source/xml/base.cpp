@@ -45,7 +45,7 @@ template <class C> static void ExportReflectedClass(C &input, XMLnode &parent) {
   for (size_t t = 0; t < refl.GetNumReflectedValues(); t++) {
     Reflector::KVPair pair = refl.GetReflectedPair(t);
     XMLnode nameNode = parent.append_child(_hkParam);
-    nameNode.append_attribute(_hkName).set_value(pair.name.c_str());
+    nameNode.append_attribute(_hkName).set_value(pair.name.data());
     nameNode.append_buffer(pair.value.c_str(), pair.value.size());
   }
 }
@@ -138,7 +138,7 @@ void IhkPackFile::ToXML(pugi::xml_node nde, hkToolset toolsetVersion) {
 
     addrAttr.set_value(_buffer.c_str());
     classNode.append_attribute(_hkClass).set_value(
-        cls->GetClassName(toolsetVersion).c_str());
+        cls->GetClassName(toolsetVersion).data());
 
     if (cls->HasHash(hkRootLevelContainer::GetHash()) &&
         propRef.flags[xmlToolsetProp::TopLevelObject])

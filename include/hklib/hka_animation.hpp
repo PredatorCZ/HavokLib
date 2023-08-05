@@ -37,7 +37,7 @@ MAKE_ENUM(ENUM(hkaAnimationType), EMEMBER(HK_UNKNOWN_ANIMATION),
 struct hkaAnimation : uni::Motion, IhkVirtualClass {
   DECLARE_HKCLASS(hkaAnimation)
 
-  virtual es::string_view GetAnimationTypeName() const = 0;
+  virtual std::string_view GetAnimationTypeName() const = 0;
   virtual hkaAnimationType GetAnimationType() const = 0;
   virtual size_t GetNumOfTransformTracks() const = 0;
   virtual size_t GetNumOfFloatTracks() const = 0;
