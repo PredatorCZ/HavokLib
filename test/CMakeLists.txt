@@ -19,7 +19,7 @@ add_test(
   COMMAND test_main
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/resources)
 
-if(Python3_FOUND)
+if(PYTHON_MODULE)
   add_test(
     NAME havokpy_test
     COMMAND ${Python3_EXECUTABLE} havok.py

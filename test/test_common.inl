@@ -18,6 +18,7 @@
 #pragma once
 #include "havok_xml.hpp"
 #include "spike/util/unit_testing.hpp"
+#include <algorithm>
 
 int test_rootcontainer(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   TEST_CHECK(hkNode);
@@ -101,26 +102,34 @@ int test_animationcontainer(pugi::xml_node nde, IhkVirtualClass *hkNode) {
 
 int GetNumber(float hkNum, std::string_view &sw) {
   char *strEnd = nullptr;
-  auto xmNum = std::strtof(sw.begin(), &strEnd);
+  auto xmNum = std::strtof(sw.data(), &strEnd);
 
-  TEST_NOT_EQUAL(strEnd, sw.begin());
+  const size_t processed =
+      std::distance(sw.data(), const_cast<const char *>(strEnd));
+
+  TEST_NOT_EQUAL(processed, 0);
 
   TEST_EQUAL(hkNum, xmNum);
+  sw.remove_prefix(processed);
 
-  sw = es::SkipStartWhitespace<std::string_view>({strEnd, sw.end()}, true);
+  sw = es::SkipStartWhitespace(sw, true);
 
   return 0;
 };
 
 int GetInt(float hkNum, std::string_view &sw) {
   char *strEnd = nullptr;
-  auto xmNum = std::strtol(sw.begin(), &strEnd, 10);
+  auto xmNum = std::strtol(sw.data(), &strEnd, 10);
 
-  TEST_NOT_EQUAL(strEnd, sw.begin());
+  const size_t processed =
+      std::distance(sw.data(), const_cast<const char *>(strEnd));
+
+  TEST_NOT_EQUAL(processed, 0);
 
   TEST_EQUAL(hkNum, xmNum);
+  sw.remove_prefix(processed);
 
-  sw = es::SkipStartWhitespace<std::string_view>({strEnd, sw.end()}, true);
+  sw = es::SkipStartWhitespace(sw, true);
 
   return 0;
 };
@@ -208,7 +217,7 @@ int test_animation(pugi::xml_node nde, IhkVirtualClass *hkNode) {
 
     TEST_NOT_EQUAL(fndEnd, swNPOS);
 
-    const std::string subName(xmBoneLinks.begin(), fndEnd);
+    const std::string subName(xmBoneLinks.substr(0, fndEnd));
 
     auto xmBone = xmParent.find_child_by_attribute("name", subName.c_str());
 

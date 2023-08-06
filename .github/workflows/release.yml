@@ -1,12 +1,18 @@
-name: release
+name: release nightly
 
 on:
-  release:
-    types: [published]
+  workflow_run:
+    workflows:
+      - build
+    types:
+      - completed
+    branches:
+      - master
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
     - name: Download artifacts
       uses: dawidd6/action-download-artifact@v2
@@ -15,16 +21,48 @@ jobs:
         branch: ${{ github.event.release.target_commitish }}
         workflow_conclusion: success
 
-    - name: Repack them
+    - name: Import signature key
+      uses: crazy-max/ghaction-import-gpg@v5
+      with:
+        gpg_private_key: ${{ secrets.GHA_GPG_KEY }}
+        passphrase: ${{ secrets.GHA_GPG_PWD }}
+
+    - name: Move artifacts to workspace
       run: |
         for file in *; do
           if [ -d $file ]; then
               pushd $file
-              7z a ../$file.7z .
+              if [[ $file == *-win64 ]]; then
+                7z a ../$file.7z .
+                gpg --detach-sign ../$file.7z
+              else
+                mv *.tar.xz ..
+                gpg --detach-sign ../*.tar.xz
+              fi
               popd
           fi
         done
+
+    - name: Clear nightly assets
+      uses: andreaswilli/delete-release-assets-action@v3.0.0
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        tag: nightly
+        deleteOnlyFromDrafts: false
+
     - name: Release them
       uses: softprops/action-gh-release@v1
       with:
-        files: '*.7z'
+        files: |
+          *.xz
+          *.7z
+          *.sig
+        tag_name: nightly
+
+    - uses: actions/checkout@v3
+    - name: Redirect nightly tag
+      run: |
+        git config --global user.email "nightly-bot"
+        git config --global user.name "nightly-bot"
+        git tag nightly --message "" --force
+        git push origin nightly --force

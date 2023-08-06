@@ -1,100 +1,139 @@
 name: build
 
-on: [push]
+on:
+  push:
 
 env:
   BUILD_TYPE: Release
+  SK_VERSION: nover
+  PY_VERSION: nover
 
 jobs:
-  build-linux:
-    runs-on: ubuntu-20.04
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: GCC 10 & GCOV & ODR
-            CC: gcc-10
-            CXX: g++-10
-            use-odr: true
-            use-gcov: true
-          - name: Clang 10 & Artifacts
-            CC: clang-10
-            CXX: clang++-10
+  ubuntu-test:
+    runs-on: ubuntu-22.04
 
     env:
-      CC: ${{matrix.CC}}
-      CXX: ${{matrix.CXX}}
-      USE_GCOV: ${{matrix.use-gcov == true}}
-      ODR_TEST: ${{matrix.odr-test == true}}
+      CC: gcc-12
+      CXX: g++-12
 
     defaults:
       run:
         shell: bash
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: recursive
 
       - name: Configure stuff
         run: |
-          sudo apt install zstd
+          sudo apt install g++-12
           mkdir ${{github.workspace}}/build
           cd ${{github.workspace}}/build
-          cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DUSE_GCOV=$USE_GCOV -DODR_TEST=$ODR_TEST -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/tmp ..
+          cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DUSE_GCOV=TRUE -DTOOLSET=FALSE -DODR_TEST=TRUE ..
 
       - name: Build
         working-directory: ${{github.workspace}}/build
-        run: cmake --build . -j 6
-
-      - name: Install
-        if: ${{matrix.use-gcov == false}}
-        working-directory: ${{github.workspace}}/build
-        run: |
-          cmake --build . --target install
-          cd ../tmp
-          install -D ../LICENSE share/doc/havok-toolset/LICENSE.md
-          install -D ../toolset/README.md share/doc/havok-toolset/README.md
+        run: cmake --build .
 
       - name: Test
         working-directory: ${{github.workspace}}/build
         run: ctest --output-on-failure
 
-      - name: Upload Artifacts
-        if: ${{matrix.use-gcov == false}}
-        uses: actions/upload-artifact@v2
-        with:
-          name: HavokToolset-linux-amd64
-          path: ${{github.workspace}}/tmp
-          retention-days: 5
-
-      - name: Upload coverage report
+      - name: Install coverage parser
         working-directory: ${{github.workspace}}
-        if: ${{matrix.use-gcov == true}}
-        env:
-          COVERALLS_REPO_TOKEN: ${{ secrets.CoverallsToken }}
         run: |
           sudo apt install python3-setuptools python3-idna python3-requests python3-urllib3
           git clone https://github.com/PredatorCZ/cpp-coveralls.git
           pushd cpp-coveralls
           sudo python3 setup.py install
           popd
-          export COVERALLS_SERVICE_NAME="gitlab-ci"
-          coveralls -E ".*/build/.*.[ch]((pp)|(c)|(xx))?$" -e test -e 3rd_party --gcov-options '\-lp'
 
-  build-widle:
-    runs-on: windows-2019
+      - name: Upload coverage report
+        working-directory: ${{github.workspace}}
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.CoverallsToken }}
+          COVERALLS_SERVICE_NAME: github-actions-ci
+        run: >
+          coveralls --gcov gcov-12
+          -E ".*/build/.*.[ch]((pp)|(c)|(xx))?$"
+          -e test
+          -e 3rd_party
+          -e toolset
+          --gcov-options '\-lp' > /dev/null
+
+  toolset:
+    runs-on: ubuntu-22.04
+
+    env:
+      CC: gcc-12
+      CXX: g++-12
+
+    defaults:
+      run:
+        shell: bash
+
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: recursive
+          fetch-depth: 0
 
       - name: Configure stuff
         run: |
-          choco install ninja
+          sudo apt install g++-12
+          mkdir ${{github.workspace}}/build
+          cd ${{github.workspace}}/build
+          cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/tmp ..
+          echo "SK_VERSION=$(cat toolset/version)" >> $GITHUB_ENV
+          echo "PY_VERSION=$(cat python/version_havokpy)" >> $GITHUB_ENV
+
+      - name: Build
+        working-directory: ${{github.workspace}}/build
+        run: cmake --build . -j 6
+
+      - name: Install
+        working-directory: ${{github.workspace}}/build
+        run: |
+          cmake --build . --target install
+          cd ../tmp
+          mv ../LICENSE .
+          mv ../toolset/README.md .
+          tar -cvaf ../HavokToolset-v${{env.SK_VERSION}}-linux-amd64.tar.xz --exclude python_module .
+          cd python_module/lib
+          tar -cvaf ${{github.workspace}}/HavokPy-v${{env.PY_VERSION}}-linux-amd64.tar.xz .
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: HavokToolset-linux-amd64
+          path: ${{github.workspace}}/HavokToolset-v${{env.SK_VERSION}}-linux-amd64.tar.xz
+          retention-days: 5
+
+      - name: Upload Python Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: HavokPy-linux-amd64
+          path: ${{github.workspace}}/HavokPy-v${{env.PY_VERSION}}-linux-amd64.tar.xz
+          retention-days: 5
+
+  build-widle:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Configure stuff
+        # REMOVEME: llvm install when v16 is deployed
+        run: |
+          choco install ninja llvm
           mkdir ${{github.workspace}}/build
           cd ${{github.workspace}}/build
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${{github.workspace}} ..
+          echo "SK_VERSION=$(Get-Content -Path ./toolset/version)" >> $env:GITHUB_ENV
+          echo "PY_VERSION=$(Get-Content -Path ./python/version_havokpy)" >> $env:GITHUB_ENV
         env:
           CC: clang
           CXX: clang++
@@ -102,19 +141,22 @@ jobs:
         working-directory: ${{github.workspace}}/build
         run: cmake --build . -j 6
 
-      - name: Test
-        working-directory: ${{github.workspace}}/build
-        run: ctest --output-on-failure
-
       - name: Install
         run: |
           cmake --build build --target install
-          copy LICENSE bin/LICENSE.md
+          copy LICENSE bin/LICENSE
           copy toolset/README.md bin/README.md
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
-          name: HavokToolset-win64
+          name: HavokToolset-v${{env.SK_VERSION}}-win64
           path: ${{github.workspace}}/bin
+          retention-days: 5
+
+      - name: Upload Python Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: HavokPy-v${{env.PY_VERSION}}-win64
+          path: ${{github.workspace}}/python_module/lib
           retention-days: 5

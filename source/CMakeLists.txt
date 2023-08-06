@@ -54,6 +54,13 @@ if(BUILD_SHARED_LIBS)
     "Lukas Cone"
     NO_PROJECT_H)
 
+  if(WIN32 OR MINGW)
+    set_target_properties(havok PROPERTIES SUFFIX ${PROJECT_VERSION_MAJOR}.dll
+                                           PREFIX "")
+  else()
+    set_target_properties(havok PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
+  endif()
+
   target_include_directories(
     havok
     PUBLIC ../include

@@ -15,7 +15,7 @@ find_package(Python3 COMPONENTS Development Interpreter)
 #  - havok: shared library target (BUILD_SHARED_LIBS == ON)
 # ~~~
 
-option(PYTHON_MODULE "Build a module for Python 3 (enables OBJECTS_PID)." OFF)
+option(PYTHON_MODULE "Build a module for Python 3 (enables OBJECTS_PID)." ON)
 option(TOOLSET "Build toolset." ON)
 option(ODR_TEST "Enable ODR testing." OFF)
 

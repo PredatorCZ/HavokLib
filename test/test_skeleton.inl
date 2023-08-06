@@ -102,7 +102,7 @@ int test_skeleton(pugi::xml_node nde, IhkVirtualClass *hkNode) {
 
       TEST_NOT_EQUAL(fndEnd, swNPOS);
 
-      const std::string subName(xmBoneLinks.begin(), fndEnd);
+      const std::string subName(xmBoneLinks.substr(0, fndEnd));
 
       auto xmBone = xmParent.find_child_by_attribute("name", subName.c_str());
 
