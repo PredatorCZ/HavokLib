@@ -1,6 +1,6 @@
 import sys
 import os.path as pt
-sys.path.append(pt.dirname(pt.abspath(__file__)) + '/../3rd_party/PreCore/classgen')
+sys.path.append(pt.dirname(pt.abspath(__file__)) + '/../3rd_party/spike/classgen')
 from classgen import *
 
 BASE = MainSettings()
@@ -124,5 +124,5 @@ if __name__ == "__main__":
     BASE.class_layout_gnu = False
     CLASSES = [hkVariant,hkReferenceObject,]
     print('// This file has been automatically generated. Do not modify.')
-    print('#include "classgen/classgen.hpp"')
+    print('#include "spike/classgen.hpp"')
     dump_classes(CLASSES)

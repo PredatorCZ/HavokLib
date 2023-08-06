@@ -9,7 +9,7 @@ build_target(
   test.cpp
   LINKS
   havok-objects
-  precore-objects
+  spike-objects
   pugixml-objects
   NO_PROJECT_H
   NO_VERINFO)
@@ -27,7 +27,7 @@ if(Python3_FOUND)
 endif()
 
 if(ODR_TEST)
-  include(${PRECORE_SOURCE_DIR}/cmake/odr_test.cmake)
+  include(odr_test)
   test_odr(PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-  set_precore_sources(test_odr)
+  target_link_libraries(test_odr spike-interface)
 endif()

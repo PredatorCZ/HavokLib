@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2022 Lukas Cone
+    Copyright(C) 2016-2023 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -18,25 +18,19 @@
 #pragma once
 #include "hka_decompressor.hpp"
 #include "internal/hka_deltaanimation.hpp"
+#include <span>
 
 struct hkaDeltaDecompressor {
-  typedef hvector<unsigned char> bitWidths_type;
-  typedef hvector<StaticMask> masks_type;
-  typedef hvector<float> offsets_type;
-  typedef hvector<float> scales_type;
-  typedef ITrack<float> floats_track;
-
-private:
-  hvector<unsigned char> bitWidths;
-  hvector<StaticMask> masks;
-  hvector<float> offsets;
-  hvector<float> scales;
-  std::vector<std::unique_ptr<MasterTrack>> tracks;
-  std::vector<std::unique_ptr<floats_track>> floats;
-
-public:
   void Assign(hkaDeltaCompressedAnimationInternalInterface *input);
   void GetFrame(size_t trackID, int32 frame, hkQTransform &out) const;
+
+private:
+  std::span<unsigned char> bitWidths;
+  std::span<StaticMask> masks;
+  std::span<float> offsets;
+  std::span<float> scales;
+  std::vector<std::unique_ptr<MasterTrack>> tracks;
+  std::vector<std::unique_ptr<ITrack<float>>> floats;
 };
 
 inline void hkaDeltaDecompressor::GetFrame(size_t trackID, int32 frame,

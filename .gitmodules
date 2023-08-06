@@ -1,3 +1,3 @@
-[submodule "3rd_party/PreCore"]
-	path = 3rd_party/PreCore
-	url = https://github.com/PredatorCZ/PreCore.git
+[submodule "3rd_party/spike"]
+	path = 3rd_party/spike
+	url = https://github.com/PredatorCZ/Spike.git

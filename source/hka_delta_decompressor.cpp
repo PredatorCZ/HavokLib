@@ -70,12 +70,10 @@ void hkaDeltaDecompressor::Assign(
   float *scalesStart =
       reinterpret_cast<float *>(buffer + input->GetScalesOffset());
 
-  es::allocator_hybrid_base::LinkStorage(bitWidths, bitWidthStart,
-                                         numDynTracks);
-  es::allocator_hybrid_base::LinkStorage(masks, masksStart,
-                                         numTracks + numFloatTracks);
-  es::allocator_hybrid_base::LinkStorage(offsets, offsetsStart, numDynTracks);
-  es::allocator_hybrid_base::LinkStorage(scales, scalesStart, numDynTracks);
+  bitWidths = {bitWidthStart, numDynTracks};
+  masks = {masksStart, numTracks + numFloatTracks};
+  offsets = {offsetsStart, numDynTracks};
+  scales = {scalesStart, numDynTracks};
 
   tracks.reserve(numTracks);
   floats.reserve(numFloatTracks);

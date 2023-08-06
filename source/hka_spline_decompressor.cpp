@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2022 Lukas Cone
+    Copyright(C) 2016-2023 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -133,7 +133,7 @@ Vector4A16 ReadQuat(QuantizationType qType, const char *&buffer) {
 
 // Algorithm A2.1 The NURBS Book 2nd edition, page 68
 int FindKnotSpan(int degree, float value, int cPointsSize,
-                 SplineDynamicTrackVector::knots_type &knots) {
+                 std::span<uint8> &knots) {
   if (value >= knots[cPointsSize])
     return cPointsSize - 1;
 
@@ -157,8 +157,7 @@ int FindKnotSpan(int degree, float value, int cPointsSize,
 // pages 64 & 65
 template <class C>
 C GetSinglePoint(int knotSpanIndex, int degree, float frame,
-                 SplineDynamicTrackVector::knots_type &knots,
-                 std::vector<C> &cPoints) {
+                 std::span<uint8> &knots, std::vector<C> &cPoints) {
   float N[5] = {1.0f};
 
   for (int i = 1; i <= degree; i++)
@@ -171,7 +170,7 @@ C GetSinglePoint(int knotSpanIndex, int degree, float frame,
     }
 
   C retVal;
-  memset(&retVal, 0, sizeof(C));
+  memset(static_cast<void *>(&retVal), 0, sizeof(C));
 
   for (int i = 0; i <= degree; i++)
     retVal += cPoints[knotSpanIndex - i] * N[i];
@@ -243,7 +242,7 @@ void TransformSplineBlock::Assign(char *buffer, size_t numTracks,
   buffer += sizeof(TransformMask) * numTracks + numFloatTractks;
   ApplyPadding(buffer);
   int cTrack = 0;
-  es::allocator_hybrid_base::LinkStorage(masks, trackStart, numTracks);
+  masks = {trackStart, numTracks};
   tracks.resize(numTracks);
 
   for (auto &m : masks) {
@@ -263,9 +262,8 @@ void TransformSplineBlock::Assign(char *buffer, size_t numTracks,
         uint16 numItems = *reinterpret_cast<const uint16 *>(buffer++);
         buffer++;
         sTrack->degree = *reinterpret_cast<const uint8 *>(buffer++);
-        const int bufferSkip = numItems + sTrack->degree + 2;
-        es::allocator_hybrid_base::LinkStorage(
-            sTrack->knots, reinterpret_cast<uint8 *>(buffer), bufferSkip);
+        const size_t bufferSkip = numItems + sTrack->degree + 2;
+        sTrack->knots = {reinterpret_cast<uint8 *>(buffer), bufferSkip};
         buffer += bufferSkip;
         ApplyPadding(buffer);
 
@@ -365,9 +363,8 @@ void TransformSplineBlock::Assign(char *buffer, size_t numTracks,
       uint16 numItems = *reinterpret_cast<const uint16 *>(buffer++);
       buffer++;
       rTrack->degree = *reinterpret_cast<const uint8 *>(buffer++);
-      const int bufferSkip = numItems + rTrack->degree + 2;
-      es::allocator_hybrid_base::LinkStorage(
-          rTrack->knots, reinterpret_cast<uint8 *>(buffer), bufferSkip);
+      const size_t bufferSkip = numItems + rTrack->degree + 2;
+      rTrack->knots = {reinterpret_cast<uint8 *>(buffer), bufferSkip};
       buffer += bufferSkip;
 
       if (m.GetRotQuantizationType() == QT_48bit)

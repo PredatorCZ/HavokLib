@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2022 Lukas Cone
+    Copyright(C) 2016-2023 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -16,10 +16,10 @@
 */
 
 #pragma once
-#include "datas/binwritter.hpp"
-#include "datas/pointer.hpp"
 #include "fixups.hpp"
 #include "hklib/hk_packfile.hpp"
+#include "spike/io/binwritter.hpp"
+#include "spike/type/pointer.hpp"
 
 template <class C, template <class _C> class _ipointer> struct hkArray {
   typedef C value_type;

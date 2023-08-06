@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2022 Lukas Cone
+    Copyright(C) 2016-2023 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -15,23 +15,23 @@
     along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "datas/endian.hpp"
+#include "spike/util/endian.hpp"
 
-#include "format_old.hpp"
-#include "datas/except.hpp"
-#include "datas/jenkinshash.hpp"
-#include "datas/master_printer.hpp"
-#include "datas/pointer.hpp"
 #include "fixups.hpp"
+#include "format_old.hpp"
 #include "hklib/hka_skeleton.hpp"
 #include "internal/hk_internal_api.hpp"
+#include "spike/crypto/jenkinshash.hpp"
+#include "spike/except.hpp"
+#include "spike/master_printer.hpp"
+#include "spike/type/pointer.hpp"
 #include <algorithm>
 #include <ctype.h>
 #include <string>
 #include <unordered_map>
 
-#include "datas/binreader.hpp"
-#include "datas/binwritter.hpp"
+#include "spike/io/binreader.hpp"
+#include "spike/io/binwritter.hpp"
 
 void hkxHeader::Load(BinReaderRef_e rd) {
   rd.Read<hkxHeaderData>(*this);
@@ -307,7 +307,8 @@ void hkxSectionHeader::Finalize() {
       CRule rule(header->toolset, header->layout.reusePaddingOptimization,
                  header->layout.bytesInPointer > 4);
       IhkVirtualClass *clsn = hkVirtualClass::Create(chash, rule);
-      auto cls = const_cast<hkVirtualClass *>(safe_deref_cast<const hkVirtualClass>(clsn));
+      auto cls = const_cast<hkVirtualClass *>(
+          safe_deref_cast<const hkVirtualClass>(clsn));
 
       if (cls) {
         cls->SetDataPointer(sectionBuffer + vf.dataoffset);
@@ -364,7 +365,7 @@ void hkxHeader::Save(BinWritterRef wr, const VirtualClasses &classes) const {
   hkxSectionHeader classSection;
   std::string_view classSectionTag = "__classnames__";
   memcpy(classSection.sectionTag, classSectionTag.data(),
-          classSectionTag.size() + 1);
+         classSectionTag.size() + 1);
 
   wr.Push();
   wr.Write<hkxSectionHeaderData>(classSection);
@@ -413,7 +414,8 @@ void hkxHeader::Save(BinWritterRef wr, const VirtualClasses &classes) const {
       continue;
     }
 
-    auto cls = const_cast<hkVirtualClass *>(checked_deref_cast<const hkVirtualClass>(nClass));
+    auto cls = const_cast<hkVirtualClass *>(
+        checked_deref_cast<const hkVirtualClass>(nClass));
 
     clsRemap[c.get()] = nClass;
     cls->Reflect(c.get());

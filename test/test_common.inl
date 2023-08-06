@@ -1,5 +1,5 @@
 /*  Havok Format Unit Tests for common classes
-    Copyright(C) 2020-2022 Lukas Cone
+    Copyright(C) 2020-2023 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
 */
 
 #pragma once
-#include "datas/unit_testing.hpp"
 #include "havok_xml.hpp"
+#include "spike/util/unit_testing.hpp"
 
 int test_rootcontainer(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   TEST_CHECK(hkNode);

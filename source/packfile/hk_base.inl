@@ -1,5 +1,5 @@
 // This file has been automatically generated. Do not modify.
-#include "classgen/classgen.hpp"
+#include "spike/classgen.hpp"
 namespace clgen::hkVariant {
 enum Members {
   classDesc,

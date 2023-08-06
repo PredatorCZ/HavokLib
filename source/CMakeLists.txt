@@ -9,7 +9,7 @@ if((NOT NO_OBJECTS) OR HK_STATIC_LIB)
     SOURCES
     ${CORE_SOURCE_FILES}
     LINKS
-    precore-objects
+    spike-objects
     NO_VERINFO
     NO_PROJECT_H)
 
@@ -47,7 +47,7 @@ if(BUILD_SHARED_LIBS)
     SOURCES
     ${CORE_SOURCE_FILES}
     LINKS
-    precore
+    spike
     START_YEAR
     2017
     AUTHOR

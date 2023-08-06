@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2022 Lukas Cone
+    Copyright(C) 2016-2023 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -15,11 +15,11 @@
     along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "datas/except.hpp"
-#include "datas/master_printer.hpp"
-#include "datas/pugiex.hpp"
-#include "datas/vectors_string.hpp"
 #include "hklib/hk_packfile.hpp"
+#include "spike/except.hpp"
+#include "spike/master_printer.hpp"
+#include "spike/util/pugiex.hpp"
+#include "spike/util/vectors_string.hpp"
 #include "toolset.hpp"
 #include <cinttypes>
 

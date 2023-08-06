@@ -1,8 +1,8 @@
 #include "hk_packfile.hpp"
-#include "datas/python/reflected_enum.hpp"
 #include "hk_core.hpp"
 #include "hklib/hk_packfile.hpp"
 #include "pugixml.hpp"
+#include "python/reflected_enum.hpp"
 #include <sstream>
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 
@@ -24,14 +24,14 @@ static PyMethodDef IHavokPyMethods[] = {
 
 PyTypeObject *IHavokPy::GetType() {
   static PyTypeObject IHavokPyType{
-    .tp_name = "hkPackfile",
-    .tp_basicsize = sizeof(IHavokPy),
-    .tp_dealloc = (destructor)IHavokPy::Dealloc,
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_doc = "Havok resource",
-    .tp_methods = IHavokPyMethods,
-    .tp_getset = (PyGetSetDef *)IHavokPyGetSets,
-    .tp_new = IHavokPy::New,
+      .tp_name = "hkPackfile",
+      .tp_basicsize = sizeof(IHavokPy),
+      .tp_dealloc = (destructor)IHavokPy::Dealloc,
+      .tp_flags = Py_TPFLAGS_DEFAULT,
+      .tp_doc = "Havok resource",
+      .tp_methods = IHavokPyMethods,
+      .tp_getset = (PyGetSetDef *)IHavokPyGetSets,
+      .tp_new = IHavokPy::New,
   };
   return &IHavokPyType;
 }
@@ -95,8 +95,7 @@ PyObject *IHavokPy::ToXML(IHavokPy *self, PyObject *args) {
   }
 
   if (fileNameRaw) {
-    std::string_view fileName = fileNameRaw;
-    self->file->ToXML(fileName, toolsetVersion);
+    self->file->ToXML(fileNameRaw, toolsetVersion);
     Py_RETURN_NONE;
   } else {
     pugi::xml_document doc;

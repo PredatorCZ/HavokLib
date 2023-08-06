@@ -1,30 +1,33 @@
 /*  Havok2GLTF
-    Copyright(C) 2022 Lukas Cone
+    Copyright(C) 2022-2023 Lukas Cone
+
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
     GNU General Public License for more details.
+
     You should have received a copy of the GNU General Public License
     along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "datas/app_context.hpp"
-#include "datas/binreader.hpp"
-#include "datas/binwritter.hpp"
-#include "datas/fileinfo.hpp"
-#include "datas/master_printer.hpp"
-#include "datas/matrix44.hpp"
-#include "datas/reflector.hpp"
-#include "gltf.hpp"
 #include "havok_api.hpp"
 #include "hklib/hka_animation.hpp"
 #include "hklib/hka_animationbinding.hpp"
 #include "hklib/hka_skeleton.hpp"
 #include "project.h"
+#include "spike/app_context.hpp"
+#include "spike/gltf.hpp"
+#include "spike/io/binreader.hpp"
+#include "spike/io/binwritter.hpp"
+#include "spike/io/fileinfo.hpp"
+#include "spike/master_printer.hpp"
+#include "spike/reflect/reflector.hpp"
+#include "spike/type/matrix44.hpp"
 #include <glm/gtx/quaternion.hpp>
 #include <mutex>
 #include <set>
@@ -1010,7 +1013,7 @@ void AppProcessFile(AppContext *ctx) {
     }
   }();
 
-  BinWritterRef wr(ctx->NewFile(ctx->workingFile.ChangeExtension(".glb")));
+  BinWritterRef wr(ctx->NewFile(ctx->workingFile.ChangeExtension(".glb")).str);
 
   main.FinishAndSave(wr, std::string(ctx->workingFile.GetFolder()));
 }

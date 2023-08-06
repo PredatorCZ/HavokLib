@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2022 Lukas Cone
+    Copyright(C) 2016-2023 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -16,9 +16,8 @@
 */
 
 #pragma once
-#include "datas/allocator_hybrid.hpp"
-#include "datas/flags.hpp"
 #include "internal/hka_splineanimation.hpp"
+#include "spike/type/flags.hpp"
 #include <vector>
 
 enum SplineTrackType { STT_DYNAMIC, STT_STATIC, STT_IDENTITY };
@@ -133,9 +132,8 @@ template <class C> struct SplineStaticTrack : ISplineTrack<C> {
 };
 
 struct SplineDynamicTrackVector : ISplineTrack<Vector> {
-  typedef std::vector<uint8, es::allocator_hybrid<uint8>> knots_type;
   std::vector<float> tracks[3];
-  knots_type knots;
+  std::span<uint8> knots;
   uint8 degree;
 
   Vector GetValue(float localFrame);
@@ -143,9 +141,8 @@ struct SplineDynamicTrackVector : ISplineTrack<Vector> {
 };
 
 struct SplineDynamicTrackQuat : ISplineTrack<Vector4A16> {
-  typedef std::vector<uint8, es::allocator_hybrid<uint8>> knots_type;
   std::vector<Vector4A16> track;
-  knots_type knots;
+  std::span<uint8> knots;
   uint8 degree;
 
   Vector4A16 GetValue(float localFrame);
@@ -159,16 +156,12 @@ struct TransformTrack {
 };
 
 struct TransformSplineBlock {
-  typedef std::vector<TransformMask, es::allocator_hybrid<TransformMask>>
-      masks_type;
-
-private:
-  masks_type masks;
-  std::vector<TransformTrack> tracks;
-
-public:
   void Assign(char *buffer, size_t numTracks, size_t numFloatTractks);
   void GetValue(size_t trackID, float time, hkQTransform &out) const;
+
+private:
+  std::span<TransformMask> masks;
+  std::vector<TransformTrack> tracks;
 };
 
 struct hkaSplineDecompressor {

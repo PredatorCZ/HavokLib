@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2022 Lukas Cone
+    Copyright(C) 2016-2023 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -16,11 +16,11 @@
 */
 
 #pragma once
-#include "datas/jenkinshash.hpp"
-#include "datas/pugi_fwd.hpp"
-#include "datas/reflector.hpp"
-#include "uni/common.hpp"
-#include "uni/rts.hpp"
+#include "spike/crypto/jenkinshash.hpp"
+#include "spike/reflect/reflector.hpp"
+#include "spike/uni/common.hpp"
+#include "spike/uni/rts.hpp"
+#include "spike/util/pugi_fwd.hpp"
 
 #define DECLARE_HKCLASS(classname)                                             \
   static constexpr JenHash GetHash() { return JenHash(#classname); }

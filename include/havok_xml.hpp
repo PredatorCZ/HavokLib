@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2022 Lukas Cone
+    Copyright(C) 2016-2023 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
 #include "internal/hka_interleavedanimation.hpp"
 #include "internal/hka_skeleton.hpp"
 #include "internal/hkx_environment.hpp"
-#include "uni/list_vector.hpp"
+#include "spike/uni/list_vector.hpp"
 
 #define DECLARE_XMLCLASS(classname, parent)                                    \
   DECLARE_HKCLASS(classname)                                                   \

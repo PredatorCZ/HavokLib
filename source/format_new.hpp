@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2022 Lukas Cone
+    Copyright(C) 2016-2023 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
 */
 
 #pragma once
-#include "datas/bincore_fwd.hpp"
 #include "hklib/hk_packfile.hpp"
+#include "spike/io/bincore_fwd.hpp"
 
 #define hkHederTAG 0x30474154
 

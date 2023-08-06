@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2022 Lukas Cone
+    Copyright(C) 2016-2023 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -16,14 +16,11 @@
 */
 
 #pragma once
-#include "datas/allocator_hybrid.hpp"
-#include "datas/endian.hpp"
-#include "datas/flags.hpp"
-#include "datas/vectors_simd.hpp"
-#include <vector>
+#include "spike/type/flags.hpp"
+#include "spike/type/vectors_simd.hpp"
+#include "spike/util/endian.hpp"
 #include <memory>
-
-template <typename T> using hvector = std::vector<T, es::allocator_hybrid<T>>;
+#include <vector>
 
 struct MasterTrack;
 

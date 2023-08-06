@@ -6,6 +6,8 @@ endif()
 
 project(HavokLib VERSION 1)
 
+find_package(Python3 COMPONENTS Development Interpreter)
+
 # ~~~
 # Valid targets:
 #  - havok-static: static library target (HK_STATIC_LIB == ON, force enables havok-objects target)
@@ -17,25 +19,24 @@ option(PYTHON_MODULE "Build a module for Python 3 (enables OBJECTS_PID)." OFF)
 option(TOOLSET "Build toolset." ON)
 option(ODR_TEST "Enable ODR testing." OFF)
 
-option(OBJECTS_PID "Imply PID for all objects." ${PYTHON_MODULE})
-option(HK_STATIC_LIB "Builds havok-static target." OFF)
-
-set(CMAKE_CXX_STANDARD 20)
-add_compile_options(-Wall -Wextra)
-find_package(Python3 COMPONENTS Development Interpreter)
-
-if(TOOLSET)
-  set(BUILD_SHARED_LIBS ON)
-endif()
-
-if(Python3_FOUND)
-  set(OBJECTS_PID ON)
-elseif(PYTHON_MODULE)
+if(NOT Python3_FOUND AND PYTHON_MODULE)
   message(FATAL_ERROR "Python3 not found.")
 endif()
 
+option(OBJECTS_PID "Imply PID for all objects." ${PYTHON_MODULE})
+option(HK_STATIC_LIB "Builds havok-static target." OFF)
+
+set(BUILD_SHARED_LIBS ${TOOLSET})
+
+option(NO_OBJECTS "" OFF)
+option(CLI "" ${TOOLSET})
+option(GLTF "" ${TOOLSET})
+
+set(CMAKE_CXX_STANDARD 20)
+add_compile_options(-Wall -Wextra)
+
 set(TPD_PATH ${CMAKE_CURRENT_SOURCE_DIR}/3rd_party)
-add_subdirectory(${TPD_PATH}/PreCore)
+add_subdirectory(${TPD_PATH}/spike)
 include(targetex)
 add_subdirectory(classgen)
 add_subdirectory(source)
@@ -44,7 +45,7 @@ if(TOOLSET)
   add_subdirectory(toolset)
 endif()
 
-if(Python3_FOUND AND RELEASEVER)
+if(PYTHON_MODULE)
   add_subdirectory(python)
 endif()
 

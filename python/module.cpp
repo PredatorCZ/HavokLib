@@ -1,5 +1,5 @@
 
-#include "datas/master_printer.hpp"
+#include "spike/master_printer.hpp"
 
 #include "hk_core.hpp"
 #include "hk_packfile.hpp"
@@ -8,7 +8,7 @@
 #include "hka_skeleton.hpp"
 #include "hkx_environment.hpp"
 
-#include "uni/python/pyskeleton.hpp"
+#include "python/uni/skeleton.hpp"
 
 #include <unordered_map>
 
