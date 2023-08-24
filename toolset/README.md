@@ -4,7 +4,18 @@ Havok Toolset is a collection of conversion tools under HavokLib.
 
 This toolset runs on Spike foundation.
 
-Head to this **[Wiki](https://github.com/PredatorCZ/PreCore/wiki/Spike)** for more information on how to effectively use it.
+Head to this **[Wiki](https://github.com/PredatorCZ/Spike/wiki/Spike)** for more information on how to effectively use it.
+
+## Release authenticity
+
+Every release asset will contain corresponding `.sig` file, together with [Sign Key](sign_key.asc) can be used to verify asset via gpg.
+
+Simple usage:
+
+```bash
+gpg --import sign_key.asc # Required only once
+gpg --verify <asset_name>.sig
+```
 
 ## Havok2GLTF
 
