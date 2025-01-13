@@ -1,5 +1,5 @@
 /*  Havok2GLTF
-    Copyright(C) 2022-2023 Lukas Cone
+    Copyright(C) 2022-2025 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -14,6 +14,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
+#define GLM_FORCE_QUAT_DATA_XYZW
 
 #include "havok_api.hpp"
 #include "hklib/hka_animation.hpp"
@@ -70,6 +71,7 @@ struct AnimationSettings {
   uint8 sampleRate = 60;
   BlendHintOverride blendOverride = BlendHintOverride::AUTO;
   ScaleType scaleType = ScaleType::NONE;
+  bool unnamedAnimsAsFile = false;
   void ReflectorTag();
 };
 
@@ -77,6 +79,7 @@ struct SkeletonSettings {
   std::string path;
   SkeletonGeneration generation;
   bool visualize = true;
+  bool createRootNode = false;
   std::string generateControlBones;
   void ReflectorTag();
 };
@@ -114,7 +117,7 @@ struct Havok2GLTF : ReflectorBase<Havok2GLTF> {
   float sceneScale = 0.f;
   es::Matrix44 corMat;
 } settings;
-
+// bpnrsuBCFGNRSUV
 REFLECT(
     CLASS(AnimationSettings),
     MEMBERNAME(blendOverride, "blend-override", "b",
@@ -123,7 +126,10 @@ REFLECT(
                ReflDesc{"Specify frames per second for GLTF."}),
     MEMBERNAME(scaleType, "scale-type", "S",
                ReflDesc{
-                   "Select desired processing mode for node scale tracks."}), )
+                   "Select desired processing mode for node scale tracks."}),
+    MEMBERNAME(unnamedAnimsAsFile, "filename-anims", "f",
+               ReflDesc{
+                   "Use filename for unnamed animations instead of Motion[]"}), )
 
 REFLECT(CLASS(SkeletonSettings),
         MEMBERNAME(path, "skeleton-path", "s",
@@ -135,7 +141,10 @@ REFLECT(CLASS(SkeletonSettings),
                             "applied scale tracks."}),
         MEMBER(visualize, "V",
                ReflDesc{"Create visualization mesh for skeletons. (Enforces "
-                        "armature object for Blender)"}), )
+                        "armature object for Blender)"}),
+        MEMBERNAME(createRootNode, "create-root-node", "N",
+                   ReflDesc{"Force create root node named after skeleton. "
+                            "(Separates root motion)"}), )
 
 REFLECT(CLASS(Scene), MEMBER(units, "u", ReflDesc{"Input scene units."}),
         MEMBERNAME(customScale, "custom-scale", "C",
@@ -418,7 +427,7 @@ struct GLTFHK : GLTF {
       controlBones = std::move(controlBonesFiltered);
     }
 
-    if (rootIndices.size() > 1) {
+    if (rootIndices.size() > 1 || settings.skeleton.createRootNode) {
       gltf::Node rootNode;
       rootNode.name = skel.Name();
 
@@ -468,6 +477,8 @@ struct GLTFHK : GLTF {
   }
 
   size_t animIndex = 0;
+  std::string_view fileName;
+  bool singleAnim = false;
 
   void ProcessAnimation(const hkaAnimation *anim,
                         const hkaAnimationBinding *binding) {
@@ -475,7 +486,15 @@ struct GLTFHK : GLTF {
     glanim.channels.reserve(anim->GetNumOfTransformTracks() * 3);
     glanim.name = anim->Name();
     if (glanim.name.empty()) {
-      glanim.name = "Motion[" + std::to_string(animIndex++) + "]";
+      if (settings.animation.unnamedAnimsAsFile) {
+        glanim.name = fileName;
+      } else {
+        glanim.name = "Motion";
+      }
+
+      if (!singleAnim) {
+        glanim.name.append("[" + std::to_string(animIndex++) + "]");
+      }
     }
     const size_t upperLimit =
         gltfutils::FindTimeEndIndex(times, anim->Duration());
@@ -815,8 +834,8 @@ struct GLTFHK : GLTF {
         v *= nodeVal;
       }
     } else if (componentIndex == uni::MotionTrack::Rotation) {
-      glm::quat nodeVal{node.rotation[3], node.rotation[0], node.rotation[1],
-                        node.rotation[2]};
+      glm::quat nodeVal{node.rotation[0], node.rotation[1], node.rotation[2],
+                        node.rotation[3]};
 
       for (auto &v : r.values) {
         glm::quat rVal = AsQuat(v);
@@ -962,6 +981,7 @@ void AppProcessFile(AppContext *ctx) {
   }
 
   GLTFHK main;
+  main.fileName = ctx->workingFile.GetFilename();
 
   // Load skeletons
   for (auto skel_ : skeletons) {
@@ -979,6 +999,8 @@ void AppProcessFile(AppContext *ctx) {
     if (anims.empty()) {
       return;
     }
+
+    main.singleAnim = anims.size() == 1;
 
     main.times = [&] {
       float maxDuration = 0;
