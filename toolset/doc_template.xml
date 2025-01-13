@@ -1,10 +1,42 @@
 <?xml version="1.0"?>
-<toolset_name>HavokToolset</toolset_name>
-<toolset_description>Havok Toolset is a collection of conversion tools under HavokLib.
+<toolset_description><![CDATA[
+<h1 align="center">Havok Toolset</h1>
 
-This toolset runs on Spike foundation.
+<p align="center">
+    Havok Toolset is a collection of conversion tools under HavokLib.
+</p>
 
-Head to this **[Wiki](https://github.com/PredatorCZ/PreCore/wiki/Spike)** for more information on how to effectively use it.</toolset_description>
+<p align="center">
+    This toolset runs on Spike foundation.
+</p>
+
+<p align="center">
+    Head to this
+    <b><a href="https://github.com/PredatorCZ/Spike/wiki/Spike">Wiki</a></b>
+    for more information on how to effectively use it.
+</p>
+
+<p align="center">
+<b><a href="https://github.com/PredatorCZ/RevilLib/releases">Latest Release</a></b>
+</p>]]>
+
+## Release authenticity
+
+Every release asset will contain corresponding `.sig` file, together with [Sign Key](sign_key.asc) can be used to verify asset via gpg.
+
+Simple usage:
+
+```bash
+gpg --import sign_key.asc # Required only once
+gpg --verify &lt;asset_name&gt;.sig
+```</toolset_description>
 <hk_to_gltf>Converts Havok data into GLTF.
 
 Supports animation and skeleton data.</hk_to_gltf>
+<toolset_footer>## License
+
+This toolset is available under GPL v3 license. (See LICENSE)\
+This toolset uses following libraries:
+
+- HavokLib, Copyright (c) 2017-2025 Lukas Cone
+</toolset_footer>

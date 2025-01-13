@@ -21,7 +21,7 @@ jobs:
         shell: bash
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
 
@@ -74,7 +74,7 @@ jobs:
         shell: bash
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-depth: 0
@@ -104,14 +104,14 @@ jobs:
           tar -cvaf ${{github.workspace}}/HavokPy-v${{env.PY_VERSION}}-linux-amd64.tar.xz .
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: HavokToolset-linux-amd64
           path: ${{github.workspace}}/HavokToolset-v${{env.SK_VERSION}}-linux-amd64.tar.xz
           retention-days: 5
 
       - name: Upload Python Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: HavokPy-linux-amd64
           path: ${{github.workspace}}/HavokPy-v${{env.PY_VERSION}}-linux-amd64.tar.xz
@@ -120,15 +120,14 @@ jobs:
   build-widle:
     runs-on: windows-2022
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-depth: 0
 
       - name: Configure stuff
-        # REMOVEME: llvm install when v16 is deployed
         run: |
-          choco install ninja llvm
+          choco install ninja
           mkdir ${{github.workspace}}/build
           cd ${{github.workspace}}/build
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${{github.workspace}} ..
@@ -148,7 +147,7 @@ jobs:
           copy toolset/README.md bin/README.md
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: HavokToolset-v${{env.SK_VERSION}}-win64
           path: ${{github.workspace}}/bin

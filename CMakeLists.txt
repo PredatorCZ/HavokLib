@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.13)
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
   message(FATAL_ERROR "X86 architecture is not supported!")
@@ -10,7 +10,6 @@ find_package(Python3 COMPONENTS Development Interpreter)
 
 # ~~~
 # Valid targets:
-#  - havok-static: static library target (HK_STATIC_LIB == ON, force enables havok-objects target)
 #  - havok-objects: static objects target (enabled by default, set NO_OBJECTS to disable all)
 #  - havok: shared library target (BUILD_SHARED_LIBS == ON)
 # ~~~
@@ -24,9 +23,6 @@ if(NOT Python3_FOUND AND PYTHON_MODULE)
 endif()
 
 option(OBJECTS_PID "Imply PID for all objects." ${PYTHON_MODULE})
-option(HK_STATIC_LIB "Builds havok-static target." OFF)
-
-set(BUILD_SHARED_LIBS ${TOOLSET})
 
 option(NO_OBJECTS "" OFF)
 option(CLI "" ${TOOLSET})
@@ -34,6 +30,10 @@ option(GLTF "" ${TOOLSET})
 
 set(CMAKE_CXX_STANDARD 20)
 add_compile_options(-Wall -Wextra)
+
+if(TOOLSET)
+  set(EXPOSE_SYMBOLS spike;gltf;havok;pugixml)
+endif()
 
 set(TPD_PATH ${CMAKE_CURRENT_SOURCE_DIR}/3rd_party)
 add_subdirectory(${TPD_PATH}/spike)

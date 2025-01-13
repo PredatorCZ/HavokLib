@@ -1,21 +1,26 @@
-# HavokToolset
 
-Havok Toolset is a collection of conversion tools under HavokLib.
+<h1 align="center">Havok Toolset</h1>
 
-This toolset runs on Spike foundation.
+<p align="center">
+    Havok Toolset is a collection of conversion tools under HavokLib.
+</p>
 
-Head to this **[Wiki](https://github.com/PredatorCZ/Spike/wiki/Spike)** for more information on how to effectively use it.
+<p align="center">
+    This toolset runs on Spike foundation.
+</p>
 
-## Release authenticity
+<p align="center">
+    Head to this
+    <b><a href="https://github.com/PredatorCZ/Spike/wiki/Spike">Wiki</a></b>
+    for more information on how to effectively use it.
+</p>
 
-Every release asset will contain corresponding `.sig` file, together with [Sign Key](sign_key.asc) can be used to verify asset via gpg.
-
-Simple usage:
-
-```bash
-gpg --import sign_key.asc # Required only once
-gpg --verify <asset_name>.sig
-```
+<p align="center">
+<b><a href="https://github.com/PredatorCZ/RevilLib/releases">Latest Release</a></b>
+</p><h2>Module list</h2>
+<ul>
+<li><a href="#Havok2GLTF">Havok2GLTF</a></li>
+</ul>
 
 ## Havok2GLTF
 
@@ -24,6 +29,8 @@ gpg --verify <asset_name>.sig
 Converts Havok data into GLTF.
 
 Supports animation and skeleton data.
+
+### Input file patterns: `.hkx$`, `.hka$` or user specified
 
 ### Settings
 
@@ -63,15 +70,24 @@ Supports animation and skeleton data.
 
     **Default value:** NONE
 
-    **Valid values:** 
+    **Valid values:**
 
     - NONE: Ignore scale tracks.
 
-    - INDEPENDENT: Input scale tracks does not affect child nodes positions.
-They also doesn't introduce shearing like in MATRICIAL case.
-They however require modified skeleton. See SkeletonGeneration.
+    - INDEPENDENT:
+    Input scale tracks does not affect child nodes positions.
+    They also doesn't introduce shearing like in MATRICIAL case.
 
     Select desired processing mode for node scale tracks.
+
+  - **filename-anims**
+
+    **CLI Long:** ***--filename-anims***\
+    **CLI Short:** ***-f***
+
+    **Default value:** false
+
+    Use filename for unnamed animations instead of Motion[]
 
 - **skeleton**
 
@@ -89,7 +105,7 @@ They however require modified skeleton. See SkeletonGeneration.
 
     **Default value:** DEFAULT
 
-    **Valid values:** 
+    **Valid values:**
 
     - DEFAULT: Do not modify skeleton in any way.
 
@@ -114,6 +130,15 @@ They however require modified skeleton. See SkeletonGeneration.
     **Default value:** true
 
     Create visualization mesh for skeletons. (Enforces armature object for Blender)
+
+  - **create-root-node**
+
+    **CLI Long:** ***--create-root-node***\
+    **CLI Short:** ***-N***
+
+    **Default value:** false
+
+    Force create root node named after skeleton. (Separates root motion)
 
 - **scene**
 
@@ -167,4 +192,3 @@ They however require modified skeleton. See SkeletonGeneration.
     **Default value:** true
 
     Input scene uses right handed coordiante system. (Finicky with root motion rotations)
-

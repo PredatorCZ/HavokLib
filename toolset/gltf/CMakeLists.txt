@@ -10,8 +10,8 @@ build_target(
   SOURCES
   hk_to_gltf.cpp
   LINKS
-  havok
-  gltf
+  havok-interface
+  gltf-interface
   AUTHOR
   "Lukas Cone"
   DESCR
