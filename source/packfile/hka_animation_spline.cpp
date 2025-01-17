@@ -28,10 +28,7 @@ struct hkaSplineCompressedAnimationMidInterface
 
   hkaSplineCompressedAnimationMidInterface(clgen::LayoutLookup rules,
                                            char *data)
-      : interface {
-    data, rules
-  } {
-  }
+      : interface{data, rules} {}
 
   void SetDataPointer(void *ptr) override {
     interface.data = static_cast<char *>(ptr);
@@ -107,8 +104,15 @@ struct hkaSplineCompressedAnimationMidInterface
 
   void GetValue(uni::RTSValue &output, float time,
                 size_t trackID) const override {
-    size_t blockID = static_cast<size_t>(time * GetBlockInverseDuration());
-    float localTime = time - (static_cast<float>(blockID) * GetBlockDuration());
+    const float blockInverseDuration = GetBlockInverseDuration();
+    const float blockDuration = GetBlockDuration();
+    size_t blockID = static_cast<size_t>(time * blockInverseDuration);
+
+    if (blockID >= GetNumBlocks()) [[unlikely]] {
+      blockID = GetNumBlocks() - 1;
+    }
+
+    float localTime = time - (static_cast<float>(blockID) * blockDuration);
 
     if (localTime < 0.f) {
       localTime = 0.f;
