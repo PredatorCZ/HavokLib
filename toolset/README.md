@@ -149,7 +149,7 @@ Supports animation and skeleton data.
 
     **Default value:** METER
 
-    **Valid values:** MM, CM, DM, METER, KM, INCH, FEET, MILE, CUSTOM
+    **Valid values:** MM, CM, DM, METER, KM, INCH, FEET, MILE, YARD, CUSTOM
 
     Input scene units.
 

@@ -87,11 +87,13 @@ struct SkeletonSettings {
 constexpr float INCH = 0.0254f;
 constexpr float FEET = 0.3048f;
 constexpr float MILE = 1609.344f;
+constexpr float YARD = 0.9144f;
 
 MAKE_ENUM(ENUMSCOPE(class Unit
                     : uint8, Unit),
           EMEMBER(MM), EMEMBER(CM), EMEMBER(DM), EMEMBER(METER), EMEMBER(KM),
-          EMEMBER(INCH), EMEMBER(FEET), EMEMBER(MILE), EMEMBER(CUSTOM))
+          EMEMBER(INCH), EMEMBER(FEET), EMEMBER(MILE), EMEMBER(YARD),
+          EMEMBER(CUSTOM))
 
 MAKE_ENUM(ENUMSCOPE(class Axis
                     : uint8, Axis),
@@ -202,6 +204,9 @@ bool AppInitContext(const std::string &) {
     break;
   case Unit::MILE:
     settings.sceneScale = MILE;
+    break;
+  case Unit::YARD:
+    settings.sceneScale = YARD;
     break;
   case Unit::CUSTOM:
     settings.sceneScale = settings.scene.customScale;
