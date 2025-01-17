@@ -39,6 +39,8 @@ jobs:
                 7z a ../$file.7z .
                 gpg --detach-sign ../$file.7z
               else
+                BASENAME=$(basename *.tar.xz .tar.xz)
+                echo "SK_VERSION=$(echo ${BASENAME} | cut -d'-' -f 2)" >> $GITHUB_ENV
                 mv *.tar.xz ..
                 gpg --detach-sign ../*.tar.xz
               fi
