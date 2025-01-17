@@ -138,7 +138,17 @@ Supports animation and skeleton data.
 
     **Default value:** false
 
-    Force create root node named after skeleton. (Separates root motion)
+    Force create root node named after `root-node-name` setting. This node is automatically generated when there is multiple root nodes inside skeleton.(Separates root motion)
+
+  - **root-node-name**
+
+    **CLI Long:** ***--root-node-name***\
+    **CLI Short:** ***-A***
+
+    **Default value:** {SKELETON_NAME}
+
+    When create-root-node is active, generate root node name from specified pattern.
+`{SKELETON_NAME}` will be substitued by actual skeleton name. For example `root_{SKELETON_NAME}_bone` will generate `root_Refernce_bone` (skeleton name is Reference)
 
 - **scene**
 
@@ -192,3 +202,10 @@ Supports animation and skeleton data.
     **Default value:** true
 
     Input scene uses right handed coordiante system. (Finicky with root motion rotations)
+
+## License
+
+This toolset is available under GPL v3 license. (See LICENSE)\
+This toolset uses following libraries:
+
+- HavokLib, Copyright (c) 2017-2025 Lukas Cone

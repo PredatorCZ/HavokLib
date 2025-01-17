@@ -81,6 +81,7 @@ struct SkeletonSettings {
   bool visualize = true;
   bool createRootNode = false;
   std::string generateControlBones;
+  std::string rootNodeName = "{SKELETON_NAME}";
   void ReflectorTag();
 };
 
@@ -119,7 +120,7 @@ struct Havok2GLTF : ReflectorBase<Havok2GLTF> {
   float sceneScale = 0.f;
   es::Matrix44 corMat;
 } settings;
-// bpnrsuBCFGNRSUV
+// bpnrsuABCFGNRSUV
 REFLECT(
     CLASS(AnimationSettings),
     MEMBERNAME(blendOverride, "blend-override", "b",
@@ -129,9 +130,9 @@ REFLECT(
     MEMBERNAME(scaleType, "scale-type", "S",
                ReflDesc{
                    "Select desired processing mode for node scale tracks."}),
-    MEMBERNAME(unnamedAnimsAsFile, "filename-anims", "f",
-               ReflDesc{
-                   "Use filename for unnamed animations instead of Motion[]"}), )
+    MEMBERNAME(
+        unnamedAnimsAsFile, "filename-anims", "f",
+        ReflDesc{"Use filename for unnamed animations instead of Motion[]"}), )
 
 REFLECT(CLASS(SkeletonSettings),
         MEMBERNAME(path, "skeleton-path", "s",
@@ -145,8 +146,18 @@ REFLECT(CLASS(SkeletonSettings),
                ReflDesc{"Create visualization mesh for skeletons. (Enforces "
                         "armature object for Blender)"}),
         MEMBERNAME(createRootNode, "create-root-node", "N",
-                   ReflDesc{"Force create root node named after skeleton. "
-                            "(Separates root motion)"}), )
+                   ReflDesc{"Force create root node named after "
+                            "`root-node-name` setting. This "
+                            "node is automatically generated when there is "
+                            "multiple root nodes inside skeleton."
+                            "(Separates root motion)"}),
+        MEMBERNAME(
+            rootNodeName, "root-node-name", "A",
+            ReflDesc{"When create-root-node is active, generate root node name "
+                     "from specified pattern.\n`{SKELETON_NAME}` will be "
+                     "substitued by actual skeleton name. For example "
+                     "`root_{SKELETON_NAME}_bone` will generate "
+                     "`root_Refernce_bone` (skeleton name is Reference)"}), )
 
 REFLECT(CLASS(Scene), MEMBER(units, "u", ReflDesc{"Input scene units."}),
         MEMBERNAME(customScale, "custom-scale", "C",
@@ -434,7 +445,11 @@ struct GLTFHK : GLTF {
 
     if (rootIndices.size() > 1 || settings.skeleton.createRootNode) {
       gltf::Node rootNode;
-      rootNode.name = skel.Name();
+      rootNode.name = settings.skeleton.rootNodeName;
+      const size_t found = rootNode.name.find("{SKELETON_NAME}");
+      if (found != rootNode.name.npos) {
+        rootNode.name.replace(found, 15, skel.Name());
+      }
 
       for (auto i : rootIndices) {
         rootNode.children.push_back(i);
