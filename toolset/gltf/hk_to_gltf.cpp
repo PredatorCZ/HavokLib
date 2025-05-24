@@ -14,6 +14,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
+#include "spike/type/vectors_fwd.hpp"
 #define GLM_FORCE_QUAT_DATA_XYZW
 
 #include "havok_api.hpp"
@@ -119,6 +120,8 @@ struct Havok2GLTF : ReflectorBase<Havok2GLTF> {
   std::set<std::string_view> generateControlBones;
   float sceneScale = 0.f;
   es::Matrix44 corMat;
+  Vector4A16 flipSidesQuat{1, 1, 1, 1};
+  Vector4A16 flipSidesTransform{1, 1, 1, 1};
 } settings;
 // bpnrsuABCFGNRSUV
 REFLECT(
@@ -166,8 +169,7 @@ REFLECT(CLASS(Scene), MEMBER(units, "u", ReflDesc{"Input scene units."}),
         MEMBERNAME(forwardAxis, "forward-axis", "F",
                    ReflDesc{"Input scene forward axis."}),
         MEMBERNAME(rightHanded, "right-handed", "R",
-                   ReflDesc{"Input scene uses right handed coordiante system. "
-                            "(Finicky with root motion rotations)"}), )
+                   ReflDesc{"Input scene uses right handed coordiante system."}), )
 
 REFLECT(CLASS(Havok2GLTF),
         MEMBERNAME(extensionsPatterns, "extension-patterns", "p",
@@ -249,10 +251,6 @@ bool AppInitContext(const std::string &) {
   settings.corMat.r2() = SetAxis(settings.scene.upAxis);
   settings.corMat.r1() = settings.corMat.r2().Cross(settings.corMat.r3());
 
-  if (!settings.scene.rightHanded) {
-    settings.corMat.r1() *= -1;
-  }
-
   size_t filterIndex = 2;
   if (!settings.extensionsPatterns.empty()) {
     std::string_view sv(settings.extensionsPatterns);
@@ -302,6 +300,11 @@ bool AppInitContext(const std::string &) {
       auto sub = es::TrimWhitespace(sv.substr(lastPost));
       settings.generateControlBones.emplace(sub);
     }
+  }
+
+  if (!settings.scene.rightHanded) {
+    settings.flipSidesQuat = Vector4A16(-1, -1, 1, 1);
+    settings.flipSidesTransform = Vector4A16(1, 1, -1, 1);
   }
 
   return true;
@@ -399,7 +402,8 @@ struct GLTFHK : GLTF {
       gltf::Node bone;
       uni::RTSValue value;
       b->GetTM(value);
-      value.translation *= settings.sceneScale;
+      value.translation = value.translation * settings.sceneScale * settings.flipSidesTransform;
+      value.rotation *= settings.flipSidesQuat;
       memcpy(bone.translation.data(), &value.translation,
              sizeof(bone.translation));
       memcpy(bone.rotation.data(), &value.rotation, sizeof(bone.rotation));
@@ -894,11 +898,13 @@ struct GLTFHK : GLTF {
 
         if (isRootNode) {
           for (auto v : r.values) {
-            auto rot = settings.corMat * es::Matrix44(v);
-            wr.Write(Vector4A16(rot.ToQuat() * 32767).Convert<int16>());
+            es::Matrix44 rot = settings.corMat * es::Matrix44(v);
+            Vector4A16 quatRot = rot.ToQuat() * settings.flipSidesQuat;
+            wr.Write(Vector4A16(quatRot * 32767).Convert<int16>());
           }
         } else {
           for (auto v : r.values) {
+            v *= settings.flipSidesQuat;
             wr.Write(Vector4A16(v * 32767).Convert<int16>());
           }
         }
@@ -909,7 +915,7 @@ struct GLTFHK : GLTF {
         if (isRootNode) {
           if (componentIndex == uni::MotionTrack::Position) {
             for (auto v : r.values) {
-              Vector4A16 val = (v * settings.sceneScale) * settings.corMat;
+              Vector4A16 val = ((v * settings.sceneScale) * settings.corMat) * settings.flipSidesTransform;
               wr.Write<Vector>(val);
             }
           } else {
@@ -920,7 +926,7 @@ struct GLTFHK : GLTF {
         } else {
           if (componentIndex == uni::MotionTrack::Position) {
             for (auto v : r.values) {
-              Vector4A16 val = v * settings.sceneScale;
+              Vector4A16 val = v * settings.sceneScale * settings.flipSidesTransform;
               wr.Write<Vector>(val);
             }
           } else {

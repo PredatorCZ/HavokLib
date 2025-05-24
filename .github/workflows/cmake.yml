@@ -154,7 +154,7 @@ jobs:
           retention-days: 5
 
       - name: Upload Python Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: HavokPy-v${{env.PY_VERSION}}-win64
           path: ${{github.workspace}}/python_module/lib

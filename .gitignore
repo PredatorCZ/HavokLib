@@ -4,6 +4,7 @@
 *hkaWaveletDecompressor*
 
 .vscode/
+.cache/
 build/
 test/resources*
 lib/

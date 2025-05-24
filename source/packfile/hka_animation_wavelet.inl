@@ -35,7 +35,7 @@ static const std::set<ClassData<_count_>> LAYOUTS {
   {{{{HK700, HK2010_2, 4, 1}}, 112}, {0, 84, 88, 44, 100, 104, 80, 76, 40, 48, 92, 96, 72, 68}, {0xa8a8, 0xaa2}}
 };
 struct Interface {
-  Interface(char *data_, LayoutLookup layout_): data{data_}, layout{GetLayout(LAYOUTS, {layout_, {LookupFlag::Padding ,LookupFlag::Ptr}})}, lookup{layout_} {}
+  Interface(char *data_, LayoutLookup layout_): data{data_}, layout{GetLayout(LAYOUTS, {layout_, {LookupFlag::Ptr ,LookupFlag::Padding}})}, lookup{layout_} {}
   Interface(const Interface&) = default;
   Interface(Interface&&) = default;
   Interface &operator=(const Interface&) = default;
