@@ -126,6 +126,11 @@ Vector4A16 ReadQuat(QuantizationType qType, const char *&buffer) {
     return Read40Quat(buffer);
   case QT_48bit:
     return Read48Quat(buffer);
+  case QT_Uncompressed: {
+    Vector4A16 retVal = *reinterpret_cast<const Vector4 *>(buffer);
+    buffer += 16;
+    return retVal;
+  }
   default:
     return {0.0f, 0.0f, 0.0f, 1.0f};
   }
@@ -367,16 +372,17 @@ void TransformSplineBlock::Assign(char *buffer, size_t numTracks,
       rTrack->knots = {reinterpret_cast<uint8 *>(buffer), bufferSkip};
       buffer += bufferSkip;
 
-      if (m.GetRotQuantizationType() == QT_48bit)
+      QuantizationType quantType = m.GetRotQuantizationType();
+
+      if (quantType == QT_48bit || quantType == QT_16bitQuat)
         ApplyPadding(buffer, 2);
-      else if (m.GetRotQuantizationType() == QT_32bit)
+      else if (quantType == QT_32bit || quantType == QT_Uncompressed)
         ApplyPadding(buffer);
 
       rTrack->track.resize(numItems + 1);
 
       for (int t = 0; t <= numItems; t++) {
-        rTrack->track[t] =
-            ReadQuat(m.GetRotQuantizationType(), (const char *&)buffer);
+        rTrack->track[t] = ReadQuat(quantType, (const char *&)buffer);
       }
     } else {
       auto rTrack = std::make_unique<SplineStaticTrack<Vector4A16>>();
