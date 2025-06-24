@@ -108,8 +108,8 @@ struct hkaSplineCompressedAnimationMidInterface
     const float blockDuration = GetBlockDuration();
     size_t blockID = static_cast<size_t>(time * blockInverseDuration);
 
-    if (blockID >= GetNumBlocks()) [[unlikely]] {
-      blockID = GetNumBlocks() - 1;
+    if (blockID >= decomp.blocks.size()) [[unlikely]] {
+      blockID = decomp.blocks.size() - 1;
     }
 
     float localTime = time - (static_cast<float>(blockID) * blockDuration);
