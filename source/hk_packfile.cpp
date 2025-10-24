@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2023 Lukas Cone
+    Copyright(C) 2016-2025 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -26,7 +26,8 @@
 #include "spike/io/binwritter.hpp"
 #include "spike/master_printer.hpp"
 
-IhkPackFile::Ptr IhkPackFile::Create(BinReaderRef_e rd) {
+IhkPackFile::Ptr IhkPackFile::Create(BinReaderRef_e rd,
+                                     IhkPackFile *compendium) {
   struct {
     uint32 ID1, ID2;
     void NoSwap();
@@ -39,13 +40,24 @@ IhkPackFile::Ptr IhkPackFile::Create(BinReaderRef_e rd) {
     auto hdr = std::make_unique<hkxHeader>();
     hdr->Load(rd);
     return hdr;
-  } else if (testerStruct.ID2 == hkHederTAG) {
+  } else if (testerStruct.ID2 == HK_HEADER_TAG) {
     auto hdr = std::make_unique<hkxNewHeader>();
+    if (compendium) {
+      hdr->SetCompendium(compendium);
+    }
+    hdr->Load(rd);
+    return hdr;
+  } else if (testerStruct.ID2 == HK_HEADER_TCM) {
+    auto hdr = std::make_unique<hkCompendium>();
     hdr->Load(rd);
     return hdr;
   }
 
   throw es::InvalidHeaderError(testerStruct.ID1);
+}
+
+IhkPackFile::Ptr IhkPackFile::Create(BinReaderRef_e rd) {
+  return Create(rd, nullptr);
 }
 
 IhkPackFile::Ptr IhkPackFile::Create(const std::string &fileName) {

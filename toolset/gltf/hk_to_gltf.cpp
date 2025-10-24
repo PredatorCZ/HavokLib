@@ -41,14 +41,12 @@ std::string_view filters[NUM_EXTS]{
     ".hka$",
 };
 
-MAKE_ENUM(ENUMSCOPE(class BlendHintOverride
-                    : uint8, BlendHintOverride),
+MAKE_ENUM(ENUMSCOPE(class BlendHintOverride : uint8, BlendHintOverride),
           EMEMBER(AUTO), EMEMBER(NORMAL), EMEMBER(ADDITIVE_DEPRECATED),
           EMEMBER(ADDITIVE));
 
 MAKE_ENUM(
-    ENUMSCOPE(class ScaleType
-              : uint8, ScaleType),
+    ENUMSCOPE(class ScaleType : uint8, ScaleType),
     EMEMBER(NONE, "Ignore scale tracks."),
     /*EMEMBER(MATRICIAL,
             "Input scale tracks are from matricial decomposition.\nIt's common "
@@ -60,8 +58,7 @@ MAKE_ENUM(
             "They also doesn't introduce shearing like in MATRICIAL case.\n"
             "They however require modified skeleton. See SkeletonGeneration."))
 
-MAKE_ENUM(ENUMSCOPE(class SkeletonGeneration
-                    : uint8, SkeletonGeneration),
+MAKE_ENUM(ENUMSCOPE(class SkeletonGeneration : uint8, SkeletonGeneration),
           EMEMBER(DEFAULT, "Do not modify skeleton in any way."),
           EMEMBER(AUTO, "Automatically detect nodes with children where scale "
                         "animation might occur."),
@@ -91,16 +88,13 @@ constexpr float FEET = 0.3048f;
 constexpr float MILE = 1609.344f;
 constexpr float YARD = 0.9144f;
 
-MAKE_ENUM(ENUMSCOPE(class Unit
-                    : uint8, Unit),
-          EMEMBER(MM), EMEMBER(CM), EMEMBER(DM), EMEMBER(METER), EMEMBER(KM),
-          EMEMBER(INCH), EMEMBER(FEET), EMEMBER(MILE), EMEMBER(YARD),
-          EMEMBER(CUSTOM))
+MAKE_ENUM(ENUMSCOPE(class Unit : uint8, Unit), EMEMBER(MM), EMEMBER(CM),
+          EMEMBER(DM), EMEMBER(METER), EMEMBER(KM), EMEMBER(INCH),
+          EMEMBER(FEET), EMEMBER(MILE), EMEMBER(YARD), EMEMBER(CUSTOM))
 
-MAKE_ENUM(ENUMSCOPE(class Axis
-                    : uint8, Axis),
-          EMEMBERNAME(Xn, "X-"), EMEMBERNAME(Yn, "Y-"), EMEMBERNAME(Zn, "Z-"),
-          EMEMBERNAME(Xp, "X+"), EMEMBERNAME(Yp, "Y+"), EMEMBERNAME(Zp, "Z+"))
+MAKE_ENUM(ENUMSCOPE(class Axis : uint8, Axis), EMEMBERNAME(Xn, "X-"),
+          EMEMBERNAME(Yn, "Y-"), EMEMBERNAME(Zn, "Z-"), EMEMBERNAME(Xp, "X+"),
+          EMEMBERNAME(Yp, "Y+"), EMEMBERNAME(Zp, "Z+"))
 
 struct Scene {
   float customScale = 1.f;
@@ -169,7 +163,8 @@ REFLECT(CLASS(Scene), MEMBER(units, "u", ReflDesc{"Input scene units."}),
         MEMBERNAME(forwardAxis, "forward-axis", "F",
                    ReflDesc{"Input scene forward axis."}),
         MEMBERNAME(rightHanded, "right-handed", "R",
-                   ReflDesc{"Input scene uses right handed coordiante system."}), )
+                   ReflDesc{
+                       "Input scene uses right handed coordiante system."}), )
 
 REFLECT(CLASS(Havok2GLTF),
         MEMBERNAME(extensionsPatterns, "extension-patterns", "p",
@@ -316,6 +311,7 @@ static const glm::quat &AsQuat(const Vector4A16 &in) {
 
 static struct {
   IhkPackFile::Ptr skelFile;
+  IhkPackFile::Ptr compendium;
   BinReader skelRdb;
   AppContextStream skelStream;
   BinReaderRef_e skelRd;
@@ -333,7 +329,15 @@ static struct {
         skelRd = *skelStream.Get();
       }
 
-      skelFile = IhkPackFile::Create(skelRd);
+      AppContextFoundStream foundCompendium = ctx->FindFile(
+          std::string(ctx->workingFile.GetFolder()), ".compendium");
+
+      if (foundCompendium) {
+        compendium = IhkPackFile::Create(*foundCompendium.Get());
+        skelFile = IhkPackFile::Create(skelRd, compendium.get());
+      } else {
+        skelFile = IhkPackFile::Create(skelRd);
+      }
     }
   }
 } skeleton;
@@ -402,7 +406,8 @@ struct GLTFHK : GLTF {
       gltf::Node bone;
       uni::RTSValue value;
       b->GetTM(value);
-      value.translation = value.translation * settings.sceneScale * settings.flipSidesTransform;
+      value.translation =
+          value.translation * settings.sceneScale * settings.flipSidesTransform;
       value.rotation *= settings.flipSidesQuat;
       memcpy(bone.translation.data(), &value.translation,
              sizeof(bone.translation));
@@ -553,8 +558,8 @@ struct GLTFHK : GLTF {
     bool useScaleMotion = false;
 
     for (auto tracks = anim->Tracks(); auto t : *tracks) {
-      size_t componentIndex = 0;
-      int32 nodeId = binding
+      int32 componentIndex = -1;
+      int32 nodeId = binding && binding->GetNumTransformTrackToBoneIndices() > 0
                          ? binding->GetTransformTrackToBoneIndex(t->BoneIndex())
                          : t->BoneIndex();
       if (rootMotion && nodeId == rootNodeIndex) {
@@ -565,6 +570,8 @@ struct GLTFHK : GLTF {
       for (auto stripResults =
                gltfutils::StripValuesBlock(times, upperLimit, t.get());
            auto &r : stripResults) {
+        componentIndex++;
+
         if (componentIndex == uni::MotionTrack::Scale) {
           if (settings.animation.scaleType == ScaleType::NONE) {
             if (!useScaleMotion && r.timeIndices.size() > 1) {
@@ -595,7 +602,6 @@ struct GLTFHK : GLTF {
         chan.sampler = glanim.samplers.size();
         Sample(r, componentIndex, nodeId == rootNodeIndex);
         glanim.channels.emplace_back(std::move(chan));
-        componentIndex++;
       }
     }
 
@@ -915,7 +921,8 @@ struct GLTFHK : GLTF {
         if (isRootNode) {
           if (componentIndex == uni::MotionTrack::Position) {
             for (auto v : r.values) {
-              Vector4A16 val = ((v * settings.sceneScale) * settings.corMat) * settings.flipSidesTransform;
+              Vector4A16 val = ((v * settings.sceneScale) * settings.corMat) *
+                               settings.flipSidesTransform;
               wr.Write<Vector>(val);
             }
           } else {
@@ -926,7 +933,8 @@ struct GLTFHK : GLTF {
         } else {
           if (componentIndex == uni::MotionTrack::Position) {
             for (auto v : r.values) {
-              Vector4A16 val = v * settings.sceneScale * settings.flipSidesTransform;
+              Vector4A16 val =
+                  v * settings.sceneScale * settings.flipSidesTransform;
               wr.Write<Vector>(val);
             }
           } else {
@@ -991,7 +999,18 @@ void AppProcessFile(AppContext *ctx) {
     skeletons = skeleton.skelFile->GetClasses(hkaSkeleton::GetHash());
   }
 
-  auto hkFile = IhkPackFile::Create(ctx->GetStream());
+  AppContextFoundStream foundCompendium =
+      ctx->FindFile(std::string(ctx->workingFile.GetFolder()), ".compendium");
+
+  IhkPackFile::Ptr compendium;
+  IhkPackFile::Ptr hkFile;
+
+  if (foundCompendium) {
+    compendium = IhkPackFile::Create(*foundCompendium.Get());
+    hkFile = IhkPackFile::Create(ctx->GetStream(), compendium.get());
+  } else {
+    hkFile = IhkPackFile::Create(ctx->GetStream());
+  }
 
   if (skeletons.empty()) {
     skeletons = hkFile->GetClasses(hkaSkeleton::GetHash());

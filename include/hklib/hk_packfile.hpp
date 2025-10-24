@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2023 Lukas Cone
+    Copyright(C) 2016-2025 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -38,6 +38,7 @@ struct HK_EXTERN IhkPackFile {
 
   static Ptr Create(const std::string &fileName);
   static Ptr Create(BinReaderRef_e rd);
+  static Ptr Create(BinReaderRef_e rd, IhkPackFile *compendium);
 
   void ToXML(const std::string &fileName, hkToolset toolset);
   void ToXML(pugi::xml_node node, hkToolset toolset);

@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2023 Lukas Cone
+    Copyright(C) 2016-2025 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -32,7 +32,9 @@ template <class C> void PtrGuard(const C *val) {
 using ReadFunc = void (*)(BinReaderRef, hkChunk *, hkxNewHeader *);
 
 template <uint32 tag>
-ReadFunc Read = [](BinReaderRef, hkChunk *, hkxNewHeader *) {};
+ReadFunc Read = [](BinReaderRef, hkChunk *, hkxNewHeader *) {
+  throw std::logic_error("Unimplemented function");
+};
 
 template <>
 ReadFunc Read<1> = [](BinReaderRef rd, hkChunk *holder, hkxNewHeader *) {
@@ -40,6 +42,29 @@ ReadFunc Read<1> = [](BinReaderRef rd, hkChunk *holder, hkxNewHeader *) {
 
   rd.Skip(holder->Size());
 };
+
+using ReadCompFunc = void (*)(BinReaderRef, hkChunk *, hkCompendiumData *);
+
+template <uint32 tag>
+ReadCompFunc ReadComp = [](BinReaderRef, hkChunk *, hkCompendiumData *) {
+  throw std::logic_error("Unimplemented function");
+};
+
+template <>
+ReadCompFunc ReadComp<1> =
+    [](BinReaderRef rd, hkChunk *holder, hkCompendiumData *) {
+      PtrGuard(holder);
+
+      rd.Skip(holder->Size());
+    };
+
+template <>
+ReadFunc Read<CompileFourCC("INDX")> =
+    [](BinReaderRef, hkChunk *, hkxNewHeader *) {};
+
+template <>
+ReadCompFunc ReadComp<CompileFourCC("TYPE")> =
+    [](BinReaderRef, hkChunk *, hkCompendiumData *) {};
 
 template <>
 ReadFunc Read<CompileFourCC("SDKV")> =
@@ -86,10 +111,9 @@ ReadFunc Read<CompileFourCC("DATA")> =
       rd.ReadContainer(root->dataBuffer, dataSize);
     };
 
-void ReadTypeNames(BinReaderRef rd, hkChunk *holder, hkxNewHeader *root,
-                   std::string &outBuffer, hkxNewHeader::StrVec &outVec) {
+void ReadTypeNames(BinReaderRef rd, hkChunk *holder, std::string &outBuffer,
+                   hkCompendiumData::StrVec &outVec) {
   PtrGuard(holder);
-  PtrGuard(root);
 
   const uint32 bufferSize = holder->Size();
   rd.ReadContainer(outBuffer, bufferSize);
@@ -109,16 +133,22 @@ void ReadTypeNames(BinReaderRef rd, hkChunk *holder, hkxNewHeader *root,
 }
 
 template <>
-ReadFunc Read<CompileFourCC("TSTR")> =
-    [](BinReaderRef rd, hkChunk *holder, hkxNewHeader *root) {
-      ReadTypeNames(rd, holder, root, root->classNamesBuffer, root->classNames);
+ReadCompFunc ReadComp<CompileFourCC("TSTR")> =
+    [](BinReaderRef rd, hkChunk *holder, hkCompendiumData *root) {
+      ReadTypeNames(rd, holder, root->classNamesBuffer, root->classNames);
     };
 
 template <>
-ReadFunc Read<CompileFourCC("FSTR")> = [](BinReaderRef rd, hkChunk *holder,
-                                          hkxNewHeader *root) {
-  ReadTypeNames(rd, holder, root, root->memberNamesBuffer, root->memberNames);
-};
+ReadCompFunc ReadComp<CompileFourCC("TST1")> = ReadComp<CompileFourCC("TSTR")>;
+
+template <>
+ReadCompFunc ReadComp<CompileFourCC("FSTR")> =
+    [](BinReaderRef rd, hkChunk *holder, hkCompendiumData *root) {
+      ReadTypeNames(rd, holder, root->memberNamesBuffer, root->memberNames);
+    };
+
+template <>
+ReadCompFunc ReadComp<CompileFourCC("FST1")> = ReadComp<CompileFourCC("FSTR")>;
 
 int32 ReadCompressedInt(BinReaderRef rd) {
   uint8 firstInt;
@@ -146,8 +176,9 @@ int32 ReadCompressedInt(BinReaderRef rd) {
 }
 
 template <>
-ReadFunc Read<CompileFourCC("TNAM")> = [](BinReaderRef rd, hkChunk *holder,
-                                          hkxNewHeader *root) {
+ReadCompFunc ReadComp<CompileFourCC("TNAM")> = [](BinReaderRef rd,
+                                                  hkChunk *holder,
+                                                  hkCompendiumData *root) {
   PtrGuard(holder);
   PtrGuard(root);
 
@@ -184,11 +215,12 @@ ReadFunc Read<CompileFourCC("TNAM")> = [](BinReaderRef rd, hkChunk *holder,
   rd.Skip(diff);
 };
 
-template <> ReadFunc Read<CompileFourCC("TNA1")> = Read<CompileFourCC("TNAM")>;
+template <>
+ReadCompFunc ReadComp<CompileFourCC("TNA1")> = ReadComp<CompileFourCC("TNAM")>;
 
 template <>
-ReadFunc Read<CompileFourCC("ITEM")> =
-    [](BinReaderRef rd, hkChunk *holder, hkxNewHeader *root) {
+ReadCompFunc ReadComp<CompileFourCC("ITEM")> =
+    [](BinReaderRef rd, hkChunk *holder, hkCompendiumData *root) {
       PtrGuard(holder);
       PtrGuard(root);
 
@@ -202,8 +234,9 @@ ReadFunc Read<CompileFourCC("PTCH")> =
     [](BinReaderRef rd, hkChunk *holder, hkxNewHeader *root) {
       PtrGuard(holder);
       PtrGuard(root);
+      hkCompendiumData &cData = root->Compendium();
 
-      if (!root->weldedClassNames.size()) {
+      if (!cData.weldedClassNames.size()) {
         throw std::runtime_error("File is missing type infos.");
       }
 
@@ -214,7 +247,7 @@ ReadFunc Read<CompileFourCC("PTCH")> =
         rd.Read(classNameIndex);
 
         std::string_view toclassname =
-            root->weldedClassNames[classNameIndex - 1].className;
+            cData.weldedClassNames[classNameIndex - 1].className;
 
         bool isHKArray = toclassname == "hkArray";
         bool isHKRelArray = toclassname == "hkRelArray";
@@ -229,7 +262,7 @@ ReadFunc Read<CompileFourCC("PTCH")> =
           if (isHKRelArray) {
             uint32 *retarget =
                 reinterpret_cast<uint32 *>(&root->dataBuffer[0] + cPointer);
-            const classEntryFixup &xfix = root->classEntries[*retarget];
+            const classEntryFixup &xfix = cData.classEntries[*retarget];
 
             uint16 *relRetarget = reinterpret_cast<uint16 *>(retarget);
             *relRetarget = xfix.tag - cPointer;
@@ -237,7 +270,7 @@ ReadFunc Read<CompileFourCC("PTCH")> =
           } else {
             uint64 *retarget =
                 reinterpret_cast<uint64 *>(&root->dataBuffer[0] + cPointer);
-            const classEntryFixup &xfix = root->classEntries[*retarget];
+            const classEntryFixup &xfix = cData.classEntries[*retarget];
 
             *retarget =
                 reinterpret_cast<uint64>(xfix.tag + root->dataBuffer.data());
@@ -249,14 +282,14 @@ ReadFunc Read<CompileFourCC("PTCH")> =
         }
       }
 
-      for (auto &f : root->classEntries) {
+      for (auto &f : cData.classEntries) {
         const int32 clsID = f.Size() - 1;
 
         if (clsID < 0) {
           continue;
         }
 
-        std::string_view clName = root->weldedClassNames[clsID].className;
+        std::string_view clName = cData.weldedClassNames[clsID].className;
         const JenHash chash(clName);
         CRule rule(root->toolset, false, 8); // No way to detect so far
         IhkVirtualClass *clsn = hkVirtualClass::Create(chash, rule);
@@ -273,7 +306,32 @@ ReadFunc Read<CompileFourCC("PTCH")> =
         }
       }
 
-      es::Dispose(root->classEntries);
+      es::Dispose(cData.classEntries);
+    };
+
+template <>
+ReadFunc Read<CompileFourCC("TCRF")> =
+    [](BinReaderRef rd, hkChunk *holder, hkxNewHeader *root) {
+      PtrGuard(holder);
+      PtrGuard(root);
+
+      const size_t savepos = rd.Tell();
+
+      uint64 signature;
+      rd.Read(signature);
+
+      const int32 diff = static_cast<int32>(holder->Size()) -
+                         static_cast<int32>(rd.Tell() - savepos);
+      rd.Skip(diff);
+
+      if (!std::holds_alternative<hkCompendium *>(root->compendium)) {
+        throw std::runtime_error("no external compendium to be referenced");
+      }
+
+      hkCompendium *comp = std::get<hkCompendium *>(root->compendium);
+      if (!comp->signatures.contains(signature)) {
+        throw std::runtime_error("external compendium signature mismatch");
+      }
     };
 
 template <uint32 fourcc> constexpr auto make() {
@@ -286,20 +344,35 @@ template <uint32 fourcc> constexpr auto makeSkip() {
 
 static const std::map<uint32, ReadFunc> hkChunkRegistry = {
     makeSkip<CompileFourCC("TAG0")>(), //
-    makeSkip<CompileFourCC("TPTR")>(), //
-    makeSkip<CompileFourCC("TPAD")>(), //
-    makeSkip<CompileFourCC("THSH")>(), //
-    makeSkip<CompileFourCC("TBOD")>(), // TODO
-    make<CompileFourCC("TYPE")>(),     //
     make<CompileFourCC("INDX")>(),     //
     make<CompileFourCC("SDKV")>(),     //
     make<CompileFourCC("DATA")>(),     //
-    make<CompileFourCC("TSTR")>(),     //
-    make<CompileFourCC("FSTR")>(),     //
-    make<CompileFourCC("TNAM")>(),     //
-    make<CompileFourCC("ITEM")>(),     //
     make<CompileFourCC("PTCH")>(),     //
-    make<CompileFourCC("TNA1")>(),     //
+    make<CompileFourCC("TCRF")>(),     //
+};
+
+template <uint32 fourcc> constexpr auto makeComp() {
+  return std::make_pair(fourcc, ReadComp<fourcc>);
+}
+
+template <uint32 fourcc> constexpr auto makeCompSkip() {
+  return std::make_pair(fourcc, ReadComp<1>);
+}
+
+static const std::map<uint32, ReadCompFunc> hkCompChunkRegistry = {
+    makeCompSkip<CompileFourCC("TPTR")>(), //
+    makeCompSkip<CompileFourCC("TPAD")>(), //
+    makeCompSkip<CompileFourCC("THSH")>(), //
+    makeCompSkip<CompileFourCC("TBOD")>(), // TODO
+    makeCompSkip<CompileFourCC("TBDY")>(), // TODO
+    makeComp<CompileFourCC("TYPE")>(),     //
+    makeComp<CompileFourCC("TSTR")>(),     //
+    makeComp<CompileFourCC("FSTR")>(),     //
+    makeComp<CompileFourCC("TNAM")>(),     //
+    makeComp<CompileFourCC("TST1")>(),     //
+    makeComp<CompileFourCC("FST1")>(),     //
+    makeComp<CompileFourCC("TNA1")>(),     //
+    makeComp<CompileFourCC("ITEM")>(),     //
 };
 
 void hkChunk::Reorder() {
@@ -307,38 +380,42 @@ void hkChunk::Reorder() {
   sizeAndFlags = ((sizeAndFlags & 0xffffff) - 8) | (sizeAndFlags & 0xff000000);
 }
 
-void hkChunk::Read(BinReaderRef rd, hkxNewHeader *root) {
-  rd.Read(*this);
-  Reorder();
-
-  if (!hkChunkRegistry.count(tag)) {
-    auto dec = es::InvalidHeaderError::DecompileFourCC(tag, 4);
-    printwarning("[Havok] Unhandled tag chunk: " << dec);
-    rd.Skip(Size());
-    return;
-  }
-
-  hkChunkRegistry.at(tag)(rd, this, root);
-}
-
 void hkxNewHeader::Load(BinReaderRef rd) {
-  rd.Read(static_cast<hkChunk &>(*this));
-  Reorder();
+  hkChunk hdr;
+  rd.Read(hdr);
+  hdr.Reorder();
 
-  if (tag != CompileFourCC("TAG0")) {
-    throw es::InvalidHeaderError(tag);
+  if (hdr.tag != HK_HEADER_TAG) {
+    throw es::InvalidHeaderError(hdr.tag);
   }
 
-  const uint32 fileSize = Size();
+  const uint32 fileSize = hdr.Size();
 
   while (rd.Tell() < fileSize) {
-    hkChunk curChunk;
-    curChunk.Read(rd, this);
+    hkChunk chunk;
+    rd.Read(chunk);
+    chunk.Reorder();
+
+    if (hkCompChunkRegistry.count(chunk.tag)) {
+      hkCompChunkRegistry.at(chunk.tag)(rd, &chunk, &Compendium());
+      continue;
+    }
+
+    if (!hkChunkRegistry.count(chunk.tag)) {
+      auto dec = es::InvalidHeaderError::DecompileFourCC(chunk.tag, 4);
+      printwarning("[Havok] Unhandled tag chunk: " << dec);
+      rd.Skip(chunk.Size());
+      return;
+    }
+
+    hkChunkRegistry.at(chunk.tag)(rd, &chunk, this);
   }
 }
 
 void hkxNewHeader::DumpClassNames(std::ostream &str) {
-  for (auto &cl : weldedClassNames) {
+  auto &cData = Compendium();
+
+  for (auto &cl : cData.weldedClassNames) {
     str << cl.className;
 
     if (cl.templateArguments.size()) {
@@ -354,5 +431,48 @@ void hkxNewHeader::DumpClassNames(std::ostream &str) {
     }
 
     str << '\n';
+  }
+}
+
+void hkCompendium::Load(BinReaderRef rd) {
+  hkChunk hdr;
+  rd.Read(hdr);
+  hdr.Reorder();
+
+  if (hdr.tag != HK_HEADER_TCM) {
+    throw es::InvalidHeaderError(hdr.tag);
+  }
+
+  {
+    hkChunk chunk;
+    rd.Read(chunk);
+    chunk.Reorder();
+
+    if (chunk.tag != CompileFourCC("TCID")) {
+      throw es::InvalidHeaderError(chunk.tag);
+    }
+
+    const uint32 numSignatures = chunk.Size() / sizeof(uint64);
+    std::vector<uint64> signatures;
+
+    rd.ReadContainer(signatures, numSignatures);
+    this->signatures = {signatures.begin(), signatures.end()};
+  }
+
+  const uint32 fileSize = hdr.Size();
+
+  while (rd.Tell() < fileSize) {
+    hkChunk chunk;
+    rd.Read(chunk);
+    chunk.Reorder();
+
+    if (!hkCompChunkRegistry.count(chunk.tag)) {
+      auto dec = es::InvalidHeaderError::DecompileFourCC(chunk.tag, 4);
+      printwarning("[Havok] Unhandled tag chunk: " << dec);
+      rd.Skip(chunk.Size());
+      return;
+    }
+
+    hkCompChunkRegistry.at(chunk.tag)(rd, &chunk, this);
   }
 }
