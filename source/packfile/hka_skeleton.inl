@@ -7,8 +7,8 @@ enum Members {
   _count_,
 };
 static const std::set<ClassData<_count_>> LAYOUTS {
-  {{{{HK500, HK2017, 8, 0}}, 16}, {8, 0}, {0x2}},
-  {{{{HK500, HK2017, 4, 0}}, 8}, {4, 0}, {0x2}}
+  {{{{HK500, HK2019, 8, 0}}, 16}, {8, 0}, {0x2}},
+  {{{{HK500, HK2019, 4, 0}}, 8}, {4, 0}, {0x2}}
 };
 struct Interface {
   Interface(char *data_, LayoutLookup layout_): data{data_}, layout{GetLayout(LAYOUTS, {layout_, {LookupFlag::Ptr}})}, lookup{layout_} {}
@@ -49,9 +49,9 @@ enum Members {
 };
 static const std::set<ClassData<_count_>> LAYOUTS {
   {{{{HK500, HK2010_2, 8, 0}}, 16}, {8, 0}, {0x2}},
-  {{{{HK2011_1, HK2017, 8, 0}}, 16}, {8, 0}, {0x1}},
+  {{{{HK2011_1, HK2019, 8, 0}}, 16}, {8, 0}, {0x1}},
   {{{{HK500, HK2010_2, 4, 0}}, 8}, {4, 0}, {0x2}},
-  {{{{HK2011_1, HK2017, 4, 0}}, 8}, {4, 0}, {0x1}}
+  {{{{HK2011_1, HK2019, 4, 0}}, 8}, {4, 0}, {0x1}}
 };
 struct Interface {
   Interface(char *data_, LayoutLookup layout_): data{data_}, layout{GetLayout(LAYOUTS, {layout_, {LookupFlag::Ptr}})}, lookup{layout_} {}
@@ -94,8 +94,8 @@ enum Members {
   _count_,
 };
 static const std::set<ClassData<_count_>> LAYOUTS {
-  {{{{HK500, HK2017, 8, 0}}, 16}, {0, 10, 8}, {0x14}},
-  {{{{HK500, HK2017, 4, 0}}, 8}, {0, 6, 4}, {0x14}}
+  {{{{HK500, HK2019, 8, 0}}, 16}, {0, 10, 8}, {0x14}},
+  {{{{HK500, HK2019, 4, 0}}, 8}, {0, 6, 4}, {0x14}}
 };
 struct Interface {
   Interface(char *data_, LayoutLookup layout_): data{data_}, layout{GetLayout(LAYOUTS, {layout_, {LookupFlag::Ptr}})}, lookup{layout_} {}
@@ -157,14 +157,14 @@ static const std::set<ClassData<_count_>> LAYOUTS {
   {{{{HK700, HK710, 8, 0}}, 104}, {0, 40, 72, 88, 16, 48, 80, 96, 32, -1, -1, 64, 24, -1, -1, 56}, {0xa800, 0x82}},
   {{{{HK2010_1, HK2011_3, 8, 0}}, 120}, {0, 40, 88, 104, 16, 48, 96, 112, 32, -1, 80, 64, 24, -1, 72, 56}, {0xa800, 0xa2}},
   {{{{HK2012_1, HK2015, 8, 0}}, 136}, {0, 40, 88, 104, 16, 48, 96, 112, 32, 128, 80, 64, 24, 120, 72, 56}, {0xa800, 0xaa}},
-  {{{{HK2016, HK2017, 8, 0}}, 144}, {0, 48, 96, 112, 24, 56, 104, 120, 40, 136, 88, 72, 32, 128, 80, 64}, {0xa800, 0xaa}},
+  {{{{HK2016, HK2019, 8, 0}}, 144}, {0, 48, 96, 112, 24, 56, 104, 120, 40, 136, 88, 72, 32, 128, 80, 64}, {0xa800, 0xaa}},
   {{{{HK500, HK510, 4, 0}}, 28}, {-1, 12, -1, -1, 0, 16, -1, -1, 8, -1, -1, 24, 4, -1, -1, 20}, {0x800, 0x82}},
   {{{{HK550, HK550, 4, 0}}, 36}, {-1, 12, 28, -1, 0, 16, 32, -1, 8, -1, -1, 24, 4, -1, -1, 20}, {0x2800, 0x82}},
   {{{{HK600, HK660, 4, 0}}, 44}, {-1, 12, 28, 36, 0, 16, 32, 40, 8, -1, -1, 24, 4, -1, -1, 20}, {0xa800, 0x82}},
   {{{{HK700, HK710, 4, 0}}, 72}, {0, 24, 48, 60, 8, 28, 52, 64, 16, -1, -1, 40, 12, -1, -1, 36}, {0xa800, 0x82}},
   {{{{HK2010_1, HK2011_3, 4, 0}}, 84}, {0, 24, 60, 72, 8, 28, 64, 76, 16, -1, 52, 40, 12, -1, 48, 36}, {0xa800, 0xa2}},
   {{{{HK2012_1, HK2015, 4, 0}}, 96}, {0, 24, 60, 72, 8, 28, 64, 76, 16, 88, 52, 40, 12, 84, 48, 36}, {0xa800, 0xaa}},
-  {{{{HK2016, HK2017, 4, 0}}, 100}, {0, 28, 64, 76, 12, 32, 68, 80, 20, 92, 56, 44, 16, 88, 52, 40}, {0xa800, 0xaa}}
+  {{{{HK2016, HK2019, 4, 0}}, 100}, {0, 28, 64, 76, 12, 32, 68, 80, 20, 92, 56, 44, 16, 88, 52, 40}, {0xa800, 0xaa}}
 };
 struct Interface {
   Interface(char *data_, LayoutLookup layout_): data{data_}, layout{GetLayout(LAYOUTS, {layout_, {LookupFlag::Ptr}})}, lookup{layout_} {}

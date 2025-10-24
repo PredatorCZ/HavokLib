@@ -25,7 +25,9 @@ BASE.permutators = [
     'HK2014',
     'HK2015',
     'HK2016',
-    'HK2017'
+    'HK2017',
+    'HK2018',
+    'HK2019',
 ]
 BASE.pointer_x86 = True
 BASE.pointer_x64 = True

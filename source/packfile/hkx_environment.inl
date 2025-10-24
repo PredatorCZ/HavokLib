@@ -7,8 +7,8 @@ enum Members {
   _count_,
 };
 static const std::set<ClassData<_count_>> LAYOUTS {
-  {{{{HK500, HK2017, 8, 0}}, 16}, {0, 8}, {0x0}},
-  {{{{HK500, HK2017, 4, 0}}, 8}, {0, 4}, {0x0}}
+  {{{{HK500, HK2019, 8, 0}}, 16}, {0, 8}, {0x0}},
+  {{{{HK500, HK2019, 4, 0}}, 8}, {0, 4}, {0x0}}
 };
 struct Interface {
   Interface(char *data_, LayoutLookup layout_): data{data_}, layout{GetLayout(LAYOUTS, {layout_, {LookupFlag::Ptr}})}, lookup{layout_} {}
@@ -63,10 +63,10 @@ enum Members {
 static const std::set<ClassData<_count_>> LAYOUTS {
   {{{{HK500, HK660, 8, 0}}, 16}, {-1, 8, 0}, {0x8}},
   {{{{HK700, HK2015, 8, 0}}, 32}, {0, 24, 16}, {0x8}},
-  {{{{HK2016, HK2017, 8, 0}}, 40}, {0, 32, 24}, {0x8}},
+  {{{{HK2016, HK2019, 8, 0}}, 40}, {0, 32, 24}, {0x8}},
   {{{{HK500, HK660, 4, 0}}, 12}, {-1, 4, 0}, {0x8}},
   {{{{HK700, HK2015, 4, 0}}, 20}, {0, 12, 8}, {0x8}},
-  {{{{HK2016, HK2017, 4, 0}}, 24}, {0, 16, 12}, {0x8}}
+  {{{{HK2016, HK2019, 4, 0}}, 24}, {0, 16, 12}, {0x8}}
 };
 struct Interface {
   Interface(char *data_, LayoutLookup layout_): data{data_}, layout{GetLayout(LAYOUTS, {layout_, {LookupFlag::Ptr}})}, lookup{layout_} {}

@@ -60,6 +60,10 @@ ReadFunc Read<CompileFourCC("SDKV")> =
           return HK2016;
         case 2017:
           return HK2017;
+        case 2018:
+          return HK2018;
+        case 2019:
+          return HK2019;
         default:
           return HKUNKVER;
         }
