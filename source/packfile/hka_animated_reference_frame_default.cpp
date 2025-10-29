@@ -45,7 +45,8 @@ struct hkaDefaultAnimatedReferenceFrameMidInterface
   const void *GetPointer() const override { return interface.data; }
 
   void Process() override {
-    frameRate = static_cast<uint32>(GetNumFrames() / GetDuration());
+    const size_t numFrames = GetNumFrames();
+    frameRate = numFrames > 0 ? (numFrames - 1) / GetDuration() : 30;
   }
 
   const Vector4A16 GetUp() const override { return interface.Up(); }
