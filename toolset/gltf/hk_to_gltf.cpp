@@ -329,8 +329,12 @@ static struct {
         skelRd = *skelStream.Get();
       }
 
-      AppContextFoundStream foundCompendium = ctx->FindFile(
-          std::string(ctx->workingFile.GetFolder()), ".compendium");
+      AppContextFoundStream foundCompendium;
+      try {
+        foundCompendium = ctx->FindFile(
+            std::string(ctx->workingFile.GetFolder()), ".compendium");
+      } catch (es::FileNotFoundError &) {
+      }
 
       if (foundCompendium) {
         compendium = IhkPackFile::Create(*foundCompendium.Get());
@@ -999,8 +1003,12 @@ void AppProcessFile(AppContext *ctx) {
     skeletons = skeleton.skelFile->GetClasses(hkaSkeleton::GetHash());
   }
 
-  AppContextFoundStream foundCompendium =
-      ctx->FindFile(std::string(ctx->workingFile.GetFolder()), ".compendium");
+  AppContextFoundStream foundCompendium;
+  try {
+    foundCompendium =
+        ctx->FindFile(std::string(ctx->workingFile.GetFolder()), ".compendium");
+  } catch (es::FileNotFoundError &) {
+  }
 
   IhkPackFile::Ptr compendium;
   IhkPackFile::Ptr hkFile;
