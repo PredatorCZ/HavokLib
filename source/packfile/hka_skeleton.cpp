@@ -130,10 +130,8 @@ struct hkaSkeletonMidInterface : hkaSkeletonInternalInterface {
   std::unique_ptr<hkaSkeletonSaver> saver;
   uni::VectorList<uni::Bone, hkFullBone> bones;
 
-  hkaSkeletonMidInterface(clgen::LayoutLookup rules, char *data) : interface {
-    data, rules
-  } {
-  }
+  hkaSkeletonMidInterface(clgen::LayoutLookup rules, char *data)
+      : interface{data, rules} {}
 
   void SetDataPointer(void *ptr) override {
     interface.data = static_cast<char *>(ptr);
@@ -292,7 +290,7 @@ struct hkaSkeletonMidInterface : hkaSkeletonInternalInterface {
   }
 };
 
-IhkVirtualClass *hkaSkeletonInternalInterface::Create(CRule rule) {
-  return new hkaSkeletonMidInterface{
-      clgen::LayoutLookup{rule.version, rule.x64, rule.reusePadding}, nullptr};
-}
+CREATE_HK_CLASS(hkaSkeleton);
+
+REFLECT(CLASS(hkaPartition), MEMBER(name), MEMBER(startBoneIndex),
+        MEMBER(numBones));

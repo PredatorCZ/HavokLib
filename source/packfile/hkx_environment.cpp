@@ -105,7 +105,4 @@ struct hkxEnvironmentMidInterface : hkxEnvironmentInternalInterface {
   }
 };
 
-IhkVirtualClass *hkxEnvironmentInternalInterface::Create(CRule rule) {
-  return new hkxEnvironmentMidInterface{
-      clgen::LayoutLookup{rule.version, rule.x64, rule.reusePadding}, nullptr};
-}
+CREATE_HK_CLASS(hkxEnvironment);

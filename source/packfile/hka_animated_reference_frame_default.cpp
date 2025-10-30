@@ -78,8 +78,5 @@ struct hkaDefaultAnimatedReferenceFrameMidInterface
   }
 };
 
-IhkVirtualClass *
-hkaDefaultAnimatedReferenceFrameInternalInterface::Create(CRule rule) {
-  return new hkaDefaultAnimatedReferenceFrameMidInterface{
-      clgen::LayoutLookup{rule.version, rule.x64, rule.reusePadding}, nullptr};
-}
+struct hkaDefaultAnimatedReferenceFrame;
+CREATE_HK_CLASS(hkaDefaultAnimatedReferenceFrame);

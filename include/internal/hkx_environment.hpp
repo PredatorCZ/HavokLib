@@ -23,5 +23,4 @@ struct hkxEnvironmentInternalInterface : hkxEnvironment, hkVirtualClass {
   operator hkxEnvironment const *() const override { return this; }
   operator hkVirtualClass const *() const override { return this; }
   void ToXML(XMLHandle hdl) const override;
-  static IhkVirtualClass *Create(CRule rule);
 };

@@ -37,5 +37,4 @@ struct hkaSplineCompressedAnimationInternalInterface
   operator hkVirtualClass const *() const override { return this; }
 
   // void ToXML(XMLHandle hdl) const;
-  static IhkVirtualClass *Create(CRule rule);
 };

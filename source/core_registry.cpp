@@ -15,52 +15,28 @@
     along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "internal/custom/hka_losslesscompressedanimation.hpp"
-#include "internal/hk_rootlevelcontainer.hpp"
-#include "internal/hka_animationbinding.hpp"
-#include "internal/hka_animationcontainer.hpp"
-#include "internal/hka_annotationtrack.hpp"
-#include "internal/hka_defaultanimrefframe.hpp"
-#include "internal/hka_deltaanimation.hpp"
-#include "internal/hka_interleavedanimation.hpp"
-#include "internal/hka_skeleton.hpp"
-#include "internal/hka_splineanimation.hpp"
-#include "internal/hka_waveletanimation.hpp"
-#include "internal/hkx_environment.hpp"
+#include "internal/hk_internal_api.hpp"
 #include <map>
 
-#define hkRegisterCreator(cname)                                               \
-  {JenHash(#cname), cname##InternalInterface::Create},
-#define hkCreatorAlias(cname, aliasName)                                       \
-  { JenHash(#aliasName), cname##InternalInterface::Create }
+static auto &Reg() {
+  static std::map<JenHash, IhkVirtualClass *(*)(CRule)> hkConstrRegistry;
+  return hkConstrRegistry;
+}
 
-static const std::map<JenHash, IhkVirtualClass *(*)(CRule)> hkConstrRegistry{
-    hkCreatorAlias(hkaInterleavedAnimation, hkaInterleavedSkeletalAnimation),
-    hkCreatorAlias(hkaInterleavedAnimation,
-                   hkaInterleavedUncompressedAnimation),
-    hkCreatorAlias(hkaSplineCompressedAnimation, hkaSplineSkeletalAnimation),
-    hkCreatorAlias(hkaDeltaCompressedAnimation,
-                   hkaDeltaCompressedSkeletalAnimation),
-    hkCreatorAlias(hkaWaveletCompressedAnimation,
-                   hkaWaveletCompressedSkeletalAnimation),
-    StaticFor(hkRegisterCreator, hkRootLevelContainer, hkxEnvironment,
-              hkaSkeleton, hkaSplineCompressedAnimation,
-              hkaDeltaCompressedAnimation, hkaWaveletCompressedAnimation,
-              hkaAnimationContainer, hkaDefaultAnimatedReferenceFrame,
-              hkaAnimationBinding, hkaLosslessCompressedAnimation)};
+void RegisterHkClass(JenHash hash, ClassCreatorFunc func) {
+  Reg().emplace(hash, func);
+}
 
 IhkVirtualClass *hkVirtualClass::Create(JenHash hash, CRule rule) {
-  auto found = hkConstrRegistry.find(hash);
+  auto found = Reg().find(hash);
 
-  if (es::IsEnd(hkConstrRegistry, found)) {
+  if (es::IsEnd(Reg(), found)) {
     return nullptr;
   }
   auto rclass = found->second(rule);
 
-  const_cast<hkVirtualClass *>(checked_deref_cast<const hkVirtualClass>(rclass))->rule = rule;
+  const_cast<hkVirtualClass *>(checked_deref_cast<const hkVirtualClass>(rclass))
+      ->rule = rule;
 
   return rclass;
 }
-
-REFLECT(CLASS(hkaPartition), MEMBER(name), MEMBER(startBoneIndex),
-        MEMBER(numBones));

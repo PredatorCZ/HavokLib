@@ -27,11 +27,9 @@ struct hkaWaveletCompressedAnimationMidInterface
   clgen::hkaWaveletCompressedAnimation::Interface interface;
   //hkaWaveletDecompressor decomp;
 
-  hkaWaveletCompressedAnimationMidInterface(clgen::LayoutLookup rules, char *data)
-      : interface {
-    data, rules
-  } {
-  }
+  hkaWaveletCompressedAnimationMidInterface(clgen::LayoutLookup rules,
+                                            char *data)
+      : interface{data, rules} {}
 
   void SetDataPointer(void *ptr) override {
     interface.data = static_cast<char *>(ptr);
@@ -72,8 +70,8 @@ struct hkaWaveletCompressedAnimationMidInterface
   };
 };
 
-IhkVirtualClass *hkaWaveletCompressedAnimationInternalInterface::Create(CRule rule) {
-  return new hkaWaveletCompressedAnimationMidInterface{
-       clgen::LayoutLookup{rule.version, rule.x64, rule.reusePadding}, nullptr};
-
-}
+struct hkaWaveletCompressedAnimation;
+CREATE_HK_CLASS(hkaWaveletCompressedAnimation);
+struct hkaWaveletSkeletalAnimation;
+CREATE_HK_CLASS_ALIAS(hkaWaveletSkeletalAnimation,
+                      hkaWaveletCompressedAnimation);

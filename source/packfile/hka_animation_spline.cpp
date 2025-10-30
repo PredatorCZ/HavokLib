@@ -122,8 +122,8 @@ struct hkaSplineCompressedAnimationMidInterface
   }
 };
 
-IhkVirtualClass *
-hkaSplineCompressedAnimationInternalInterface::Create(CRule rule) {
-  return new hkaSplineCompressedAnimationMidInterface{
-      clgen::LayoutLookup{rule.version, rule.x64, rule.reusePadding}, nullptr};
-}
+struct hkaSplineCompressedAnimation;
+CREATE_HK_CLASS(hkaSplineCompressedAnimation);
+struct hkaSplineSkeletalAnimation;
+CREATE_HK_CLASS_ALIAS(hkaSplineSkeletalAnimation,
+                      hkaSplineCompressedAnimation);

@@ -21,5 +21,4 @@
 struct hkaLosslessCompressedAnimationInternalInterface
     : virtual hkaAnimationLerpSampler {
   operator hkVirtualClass const *() const override { return this; }
-  static IhkVirtualClass *Create(CRule rule);
 };

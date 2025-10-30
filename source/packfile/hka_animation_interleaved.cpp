@@ -27,10 +27,7 @@ struct hkaInterleavedAnimationMidInterface
   clgen::hkaInterleavedAnimation::Interface interface;
 
   hkaInterleavedAnimationMidInterface(clgen::LayoutLookup rules, char *data)
-      : interface {
-    data, rules
-  } {
-  }
+      : interface{data, rules} {}
 
   void SetDataPointer(void *ptr) override {
     interface.data = static_cast<char *>(ptr);
@@ -79,7 +76,8 @@ struct hkaInterleavedAnimationMidInterface
   float GetFloat(size_t id) const override { return interface.Floats()[id]; }
 };
 
-IhkVirtualClass *hkaInterleavedAnimationInternalInterface::Create(CRule rule) {
-  return new hkaInterleavedAnimationMidInterface{
-      clgen::LayoutLookup{rule.version, rule.x64, rule.reusePadding}, nullptr};
-}
+struct hkaInterleavedSkeletalAnimation;
+CREATE_HK_CLASS_ALIAS(hkaInterleavedSkeletalAnimation, hkaInterleavedAnimation);
+struct hkaInterleavedUncompressedAnimation;
+CREATE_HK_CLASS_ALIAS(hkaInterleavedUncompressedAnimation,
+                      hkaInterleavedAnimation);

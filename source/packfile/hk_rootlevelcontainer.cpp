@@ -111,7 +111,4 @@ struct hkRootLevelContainerMidInterface
   }
 };
 
-IhkVirtualClass *hkRootLevelContainerInternalInterface::Create(CRule rule) {
-  return new hkRootLevelContainerMidInterface{
-      clgen::LayoutLookup{rule.version, rule.x64, rule.reusePadding}, nullptr};
-}
+CREATE_HK_CLASS(hkRootLevelContainer);

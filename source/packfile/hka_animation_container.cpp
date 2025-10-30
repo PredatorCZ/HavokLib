@@ -16,12 +16,12 @@
 */
 
 #include "base.hpp"
-#include "hklib/hka_animation.hpp"
-#include "hklib/hka_animationbinding.hpp"
 #include "hklib/hka_boneattachment.hpp"
-#include "hklib/hka_meshbinding.hpp"
-#include "hklib/hka_skeleton.hpp"
+#include "internal/hka_animation.hpp"
+#include "internal/hka_animationbinding.hpp"
 #include "internal/hka_animationcontainer.hpp"
+#include "internal/hka_meshbinding.hpp"
+#include "internal/hka_skeleton.hpp"
 
 #include "hka_animation_container.inl"
 
@@ -95,10 +95,7 @@ struct hkaAnimationContainerMidInterface
   std::unique_ptr<hkaAnimationContainerSaver> saver;
 
   hkaAnimationContainerMidInterface(clgen::LayoutLookup rules, char *data)
-      : interface {
-    data, rules
-  } {
-  }
+      : interface{data, rules} {}
 
   void SetDataPointer(void *ptr) override {
     interface.data = static_cast<char *>(ptr);
@@ -161,7 +158,4 @@ struct hkaAnimationContainerMidInterface
   }
 };
 
-IhkVirtualClass *hkaAnimationContainerInternalInterface::Create(CRule rule) {
-  return new hkaAnimationContainerMidInterface{
-      clgen::LayoutLookup{rule.version, rule.x64, rule.reusePadding}, nullptr};
-}
+CREATE_HK_CLASS(hkaAnimationContainer);

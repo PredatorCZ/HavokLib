@@ -80,7 +80,7 @@ struct hkVirtualClass {
 
   virtual std::string_view GetClassName(hkToolset) const { return className; }
   virtual void SwapEndian() = 0;
-  virtual void Process(){};
+  virtual void Process() {};
   virtual void SetDataPointer(void *Ptr) = 0;
   virtual void ToXML(XMLHandle) const {}
   virtual void Reflect(const IhkVirtualClass *) {}
@@ -88,4 +88,31 @@ struct hkVirtualClass {
   virtual ~hkVirtualClass() = default;
 
   static IhkVirtualClass *Create(JenHash hash, CRule rule);
+  template <class C> static IhkVirtualClass *Create(CRule rule);
 };
+
+using ClassCreatorFunc = IhkVirtualClass *(*)(CRule);
+void RegisterHkClass(JenHash, ClassCreatorFunc);
+template <class C, class G> consteval ClassCreatorFunc CreateHkClass() {
+  return [](CRule rule) -> IhkVirtualClass * {
+    return new C{G{rule.version, rule.x64, rule.reusePadding}, nullptr};
+  };
+}
+
+template <class C> struct ClassRegisterInvoker;
+
+#define CREATE_HK_CLASS_ALIAS(name, ...)                                       \
+  template <> struct ClassRegisterInvoker<name> {                              \
+    static inline const bool VALUE = [] {                                      \
+      RegisterHkClass(                                                         \
+          JenHash(#name),                                                      \
+          CreateHkClass<__VA_ARGS__##MidInterface, clgen::LayoutLookup>());    \
+      return true;                                                             \
+    }();                                                                       \
+  };                                                                           \
+  template <> IhkVirtualClass *hkVirtualClass::Create<name>(CRule rule) {      \
+    return CreateHkClass<__VA_ARGS__##MidInterface, clgen::LayoutLookup>()(    \
+        rule);                                                                 \
+  }
+
+#define CREATE_HK_CLASS(...) CREATE_HK_CLASS_ALIAS(__VA_ARGS__, __VA_ARGS__)

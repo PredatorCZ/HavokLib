@@ -21,5 +21,4 @@
 struct hkaDefaultAnimatedReferenceFrameInternalInterface
     : virtual hkaAnimatedReferenceFrameInternalInterface {
   // void ToXML(XMLHandle hdl) const;
-  static IhkVirtualClass *Create(CRule rule);
 };
