@@ -27,6 +27,8 @@ int test_sample() {
       "allosaur_run_S32_V16_B255_D1",
       "allosaur_run_S40_V16_B25_D3",
       "allosaur_run_S48_V8_B255_D2",
+      "allosaur_run_W12_8_3",
+      "allosaur_run_W12_128_3",
   };
 
   std::unique_ptr<IhkPackFile> interFile(
@@ -54,8 +56,15 @@ int test_sample() {
       if (n == "allosaur_run_D12_8_3" && v == "2011_1/") {
         break;
       }
+
+      if (n.starts_with("allosaur_run_W") && v == "2011_1/") {
+        break;
+      }
       for (auto &r : compiledFlags) {
         std::string curFile(v);
+        if (n.starts_with("allosaur_run_W")) {
+          curFile =  "../resources_wavelet/" + curFile;
+        }
         curFile.append(n);
         curFile.append(r);
 

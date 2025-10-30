@@ -21,7 +21,22 @@
 struct hkaWaveletCompressedAnimationInternalInterface
     : virtual hkaAnimationLerpSampler {
 
-  operator hkaWaveletCompressedAnimationInternalInterface const *() const override { return this; }
+  virtual size_t GetNumOfPoses() const = 0;
+  virtual size_t GetBlockSize() const = 0;
+  virtual size_t GetQuantizedDataOffset() const = 0;
+  virtual size_t GetStaticMaskOffset() const = 0;
+  virtual size_t GetStaticDataOffset() const = 0;
+  virtual const char *GetData() const = 0;
+  virtual size_t GetNumDynamicTracks() const = 0;
+  virtual size_t GetOffsetsOffset() const = 0;
+  virtual size_t GetBitWidthOffset() const = 0;
+  virtual size_t GetScalesOffset() const = 0;
+  virtual size_t GetNumPreserved() const = 0;
+
+  operator hkaWaveletCompressedAnimationInternalInterface const *()
+      const override {
+    return this;
+  }
   operator hkVirtualClass const *() const override { return this; }
 
   // void ToXML(XMLHandle hdl) const;

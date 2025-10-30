@@ -33,6 +33,7 @@ static const std::string_view versions[] = {
 #include "test_interleaved.inl"
 #include "test_skeleton.inl"
 #include "test_spline.inl"
+#include "test_wavelet.inl"
 #include "test_xml.inl"
 
 #include "test_sample.inl"
@@ -43,7 +44,8 @@ int main() {
   TEST_CASES(int resultVar, TEST_FUNC(test_skeleton),
              TEST_FUNC(test_defaultmotion), TEST_FUNC(test_spline),
              TEST_FUNC(test_interleaved), TEST_FUNC(test_delta),
-             TEST_FUNC(test_sample), TEST_FUNC(test_xml_base));
+             TEST_FUNC(test_wavelet), TEST_FUNC(test_sample),
+             TEST_FUNC(test_xml_base));
 
   return resultVar;
 }

@@ -1,8 +1,3 @@
-*.bat
-*.d
-
-*hkaWaveletDecompressor*
-
 .vscode/
 .cache/
 build/

@@ -15,17 +15,18 @@
     along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "internal/hka_waveletanimation.hpp"
 #include "hka_animation.hpp"
 #include "hka_decompressor.hpp"
+#include "hka_wavelet_decompressor.hpp"
+#include "internal/hka_waveletanimation.hpp"
+
 #include "hka_animation_wavelet.inl"
-//#include "hkaWaveletDecompressor.h"
 
 struct hkaWaveletCompressedAnimationMidInterface
     : hkaWaveletCompressedAnimationInternalInterface,
       hkaAnimationMidInterface<hkaAnimationLerpSampler> {
   clgen::hkaWaveletCompressedAnimation::Interface interface;
-  //hkaWaveletDecompressor decomp;
+  hkaWaveletDecompressor decomp;
 
   hkaWaveletCompressedAnimationMidInterface(clgen::LayoutLookup rules,
                                             char *data)
@@ -38,7 +39,7 @@ struct hkaWaveletCompressedAnimationMidInterface
   const void *GetPointer() const override { return interface.data; }
 
   clgen::hkaAnimation::Interface Anim() const override {
-     return interface.BasehkaAnimation();
+    return interface.BasehkaAnimation();
   }
 
   void SwapEndian() override {
@@ -49,24 +50,42 @@ struct hkaWaveletCompressedAnimationMidInterface
     interface.QFormat(fmt);
   }
 
-  void Process() override {} //{ decomp.Assign(this); }
+  void Process() override {
+    decomp.Assign(this);
+    numFrames = GetNumOfPoses();
+    frameRate = static_cast<uint32>(numFrames / Duration());
+  }
 
-  size_t GetNumOfPoses() const { return interface.NumberOfPoses(); }
-  size_t GetBlockSize() const { return interface.BlockSize(); }
-  size_t GetQuantizedDataOffset() const {
+  size_t GetNumOfPoses() const override { return interface.NumberOfPoses(); }
+  size_t GetBlockSize() const override { return interface.BlockSize(); }
+  size_t GetQuantizedDataOffset() const override {
     return interface.QuantizedDataIdx();
   }
-  size_t GetStaticMaskOffset() const { return interface.StaticMaskIdx(); }
-  size_t GetStaticDataOffset() const { return interface.StaticDOFsIdx(); }
-  const char *GetData() const { return interface.DataBuffer(); }
-  size_t GetNumDynamicTracks() const { return interface.QFormat().numD; }
-  size_t GetOffsetsOffset() const { return interface.QFormat().offsetIdx; }
-  size_t GetBitWidthOffset() const { return interface.QFormat().bitWidthIdx; }
-  size_t GetScalesOffset() const { return interface.QFormat().scaleIdx; }
-  size_t GetNumPreserved() const { return interface.QFormat().preserved; }
+  size_t GetStaticMaskOffset() const override {
+    return interface.StaticMaskIdx();
+  }
+  size_t GetStaticDataOffset() const override {
+    return interface.StaticDOFsIdx();
+  }
+  const char *GetData() const override { return interface.DataBuffer(); }
+  size_t GetNumDynamicTracks() const override {
+    return interface.QFormat().numD;
+  }
+  size_t GetOffsetsOffset() const override {
+    return interface.QFormat().offsetIdx;
+  }
+  size_t GetBitWidthOffset() const override {
+    return interface.QFormat().bitWidthIdx;
+  }
+  size_t GetScalesOffset() const override {
+    return interface.QFormat().scaleIdx;
+  }
+  size_t GetNumPreserved() const override {
+    return interface.QFormat().preserved;
+  }
 
-  void GetFrame(size_t trackID, int32 frame, hkQTransform &out) const override{
-      // decomp.GetFrame(trackID, frame, out);
+  void GetFrame(size_t trackID, int32 frame, hkQTransform &out) const override {
+    decomp.GetFrame(trackID, frame, out);
   };
 };
 
