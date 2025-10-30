@@ -180,7 +180,11 @@ void hkxHeader::GenerateToolset() {
     case 2013: {
       switch (versions[1]) {
       case 1:
-        return HK2013;
+        return HK2013_1;
+      case 2:
+        return HK2013_2;
+      case 3:
+        return HK2013_3;
       }
       return HKUNKVER;
     }

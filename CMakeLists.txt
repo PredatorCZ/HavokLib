@@ -4,7 +4,7 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 4)
   message(FATAL_ERROR "X86 architecture is not supported!")
 endif()
 
-project(HavokLib VERSION 1)
+project(HavokLib VERSION 2)
 
 find_package(Python3 COMPONENTS Development Interpreter)
 
