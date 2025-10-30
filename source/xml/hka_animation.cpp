@@ -15,51 +15,28 @@
     along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "internal/hka_animatedreferenceframe.hpp"
 #include "internal/hka_animation.hpp"
+#include "base.hpp"
+#include "internal/hka_animatedreferenceframe.hpp"
 #include "internal/hka_annotationtrack.hpp"
 
 void hkaAnimationInternalInterface::ToXML(XMLHandle hdl) const {
+  ::ToXML("type", GetAnimationTypeName(), *hdl.node);
+  ::ToXML("duration", Duration(), *hdl.node);
+  ::ToXML(hdl.toolset > HK510 ? "numberOfTransformTracks" : "numberOfTracks",
+          GetNumOfTransformTracks(), *hdl.node);
+
+  if (hdl.toolset > HK510) {
+    ::ToXML("numberOfFloatTracks", GetNumOfFloatTracks(), *hdl.node);
+  }
+
   std::string _buff;
-
-  pugi::xml_node typeNode = hdl.node->append_child(_hkParam);
-  typeNode.append_attribute(_hkName).set_value("type");
-  auto anType = GetAnimationTypeName();
-  typeNode.append_buffer(anType.data(), anType.size());
-
-  pugi::xml_node durationNode = hdl.node->append_child(_hkParam);
-  durationNode.append_attribute(_hkName).set_value("duration");
-  _buff = std::to_string(Duration());
-  durationNode.append_buffer(_buff.c_str(), _buff.size());
-
-  pugi::xml_node numTransNode = hdl.node->append_child(_hkParam);
-
-  if (hdl.toolset > HK510) {
-    numTransNode.append_attribute(_hkName).set_value("numberOfTransformTracks");
-  } else {
-    numTransNode.append_attribute(_hkName).set_value("numberOfTracks");
-  }
-  _buff = std::to_string(GetNumOfTransformTracks());
-  numTransNode.append_buffer(_buff.c_str(), _buff.size());
-
-  if (hdl.toolset > HK510) {
-    pugi::xml_node numFloatsNode = hdl.node->append_child(_hkParam);
-    numFloatsNode.append_attribute(_hkName).set_value("numberOfFloatTracks");
-    _buff = std::to_string(GetNumOfFloatTracks());
-    numFloatsNode.append_buffer(_buff.c_str(), _buff.size());
-  }
-
-  pugi::xml_node exMotionNode = hdl.node->append_child(_hkParam);
-  exMotionNode.append_attribute(_hkName).set_value("extractedMotion");
-  _buff.clear();
   PointerToString(GetExtractedMotion() ? GetExtractedMotion()->GetPointer()
                                        : nullptr,
                   _buff);
-  exMotionNode.append_buffer(_buff.c_str(), _buff.size());
-
-  pugi::xml_node annotsNode = hdl.node->append_child(_hkParam);
-  annotsNode.append_attribute(_hkName).set_value("annotationTracks");
-  annotsNode.append_attribute(_hkNumElements).set_value(GetNumAnnotations());
+  ::ToXML("extractedMotion", _buff, *hdl.node);
+  pugi::xml_node annotsNode =
+      ToXMLArray("annotationTracks", GetNumAnnotations(), *hdl.node);
 
   if (hdl.toolset > HK660) {
     for (auto a : Annotations()) {

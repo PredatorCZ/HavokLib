@@ -16,32 +16,13 @@
 */
 
 #include "internal/hk_rootlevelcontainer.hpp"
+#include "base.hpp"
 
 void hkNamedVariant::ToXML(XMLHandle hdl) const {
   pugi::xml_node &objectNode = *hdl.node;
-
-  pugi::xml_node nameNode = objectNode.append_child(_hkParam);
-  nameNode.append_attribute(_hkName).set_value(_hkName);
-  nameNode.append_buffer(name.data(), name.size());
-
-  pugi::xml_node classNameNode = objectNode.append_child(_hkParam);
-  classNameNode.append_attribute(_hkName).set_value("className");
-  classNameNode.append_buffer(className.data(), className.size());
-
-  pugi::xml_node variantNode = objectNode.append_child(_hkParam);
-  variantNode.append_attribute(_hkName).set_value("variant");
-
-  std::string buffer;
-
-  if (hdl.toolset < HK700)
-    buffer.push_back('(');
-
-  PointerToString(pointer->GetPointer(), buffer);
-
-  if (hdl.toolset < HK700) {
-    buffer.append(" null)");
-  }
-  variantNode.append_buffer(buffer.c_str(), buffer.size());
+  ::ToXML(_hkName, name, objectNode);
+  ::ToXML("className", className, objectNode);
+  ::ToXML("variant", pointer, objectNode, hdl.toolset);
 }
 
 void hkRootLevelContainerInternalInterface::ToXML(XMLHandle hdl) const {

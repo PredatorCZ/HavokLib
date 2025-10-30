@@ -16,6 +16,7 @@
 */
 
 #include "internal/hka_interleavedanimation.hpp"
+#include "base.hpp"
 
 void hkaInterleavedAnimationInternalInterface::ToXML(XMLHandle hdl) const {
   hkaAnimationInternalInterface::ToXML(hdl);
@@ -24,9 +25,7 @@ void hkaInterleavedAnimationInternalInterface::ToXML(XMLHandle hdl) const {
   static const char *ident = "\n\t\t\t\t";
   std::string buffer = ident;
 
-  pugi::xml_node transNode = hdl.node->append_child(_hkParam);
-  transNode.append_attribute(_hkName).set_value("transforms");
-  transNode.append_attribute(_hkNumElements).set_value(numTransforms);
+  pugi::xml_node transNode = ToXMLArray("transforms", numTransforms, *hdl.node);
 
   for (size_t t = 0; t < numTransforms; t++) {
     buffer += ::to_string(*GetTransform(t)) + ident;
@@ -42,9 +41,7 @@ void hkaInterleavedAnimationInternalInterface::ToXML(XMLHandle hdl) const {
   buffer = ident;
   size_t cc = 0;
 
-  pugi::xml_node floatsNode = hdl.node->append_child(_hkParam);
-  floatsNode.append_attribute(_hkName).set_value("floats");
-  floatsNode.append_attribute(_hkNumElements).set_value(numFloats);
+  pugi::xml_node floatsNode = ToXMLArray("floats", numFloats, *hdl.node);
 
   for (size_t t = 0; t < numFloats; t++) {
     buffer += std::to_string(GetFloat(t));

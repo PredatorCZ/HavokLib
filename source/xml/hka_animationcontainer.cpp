@@ -15,33 +15,27 @@
     along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "internal/hka_animationcontainer.hpp"
+#include "base.hpp"
 #include "hklib/hka_boneattachment.hpp"
 #include "hklib/hka_meshbinding.hpp"
 #include "internal/hka_animation.hpp"
 #include "internal/hka_animationbinding.hpp"
-#include "internal/hka_animationcontainer.hpp"
 #include "internal/hka_skeleton.hpp"
 
 void hkaAnimationContainerInternalInterface::ToXML(XMLHandle hdl) const {
-  pugi::xml_node skelNode = hdl.node->append_child(_hkParam);
-  skelNode.append_attribute(_hkName).set_value("skeletons");
-  skelNode.append_attribute(_hkNumElements).set_value(GetNumSkeletons());
+  pugi::xml_node skelNode =
+      ToXMLArray("skeletons", GetNumSkeletons(), *hdl.node);
 
-  pugi::xml_node animNode = hdl.node->append_child(_hkParam);
-  animNode.append_attribute(_hkName).set_value("animations");
-  animNode.append_attribute(_hkNumElements).set_value(GetNumAnimations());
+  pugi::xml_node animNode =
+      ToXMLArray("animations", GetNumAnimations(), *hdl.node);
 
-  pugi::xml_node bindNode = hdl.node->append_child(_hkParam);
-  bindNode.append_attribute(_hkName).set_value("bindings");
-  bindNode.append_attribute(_hkNumElements).set_value(GetNumBindings());
+  pugi::xml_node bindNode = ToXMLArray("bindings", GetNumBindings(), *hdl.node);
 
-  pugi::xml_node attNode = hdl.node->append_child(_hkParam);
-  attNode.append_attribute(_hkName).set_value("attachments");
-  attNode.append_attribute(_hkNumElements).set_value(GetNumAttachments());
+  pugi::xml_node attNode =
+      ToXMLArray("attachments", GetNumAttachments(), *hdl.node);
 
-  pugi::xml_node skinNode = hdl.node->append_child(_hkParam);
-  skinNode.append_attribute(_hkName).set_value("skins");
-  skinNode.append_attribute(_hkNumElements).set_value(GetNumSkins());
+  pugi::xml_node skinNode = ToXMLArray("skins", GetNumSkins(), *hdl.node);
 
   std::string buffer;
 

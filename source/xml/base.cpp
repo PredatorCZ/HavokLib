@@ -15,62 +15,10 @@
     along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "base.hpp"
 #include "hklib/hk_packfile.hpp"
-#include "spike/except.hpp"
-#include "spike/master_printer.hpp"
-#include "spike/util/pugiex.hpp"
-#include "spike/util/vectors_string.hpp"
-#include "toolset.hpp"
-#include <cinttypes>
-
-static const char *_hkName = "name", *_hkObject = "hkobject",
-                  *_hkClass = "class", *_hkNumElements = "numelements",
-                  *_hkParam = "hkparam";
-
-static void PointerToString(const void *ptr, std::string &str) {
-  if (!ptr) {
-    str.append("null");
-    return;
-  }
-
-  str.append("0x");
-  char buffer[20];
-  snprintf(buffer, 20, "%" PRIXPTR, reinterpret_cast<uintptr_t>(ptr));
-  str.append(buffer);
-}
-
-template <class C> static void ExportReflectedClass(C &input, XMLnode &parent) {
-  ReflectorWrap<const C> refl(input);
-
-  for (size_t t = 0; t < refl.GetNumReflectedValues(); t++) {
-    Reflector::KVPair pair = refl.GetReflectedPair(t);
-    XMLnode nameNode = parent.append_child(_hkParam);
-    nameNode.append_attribute(_hkName).set_value(pair.name.data());
-    nameNode.append_buffer(pair.value.c_str(), pair.value.size());
-  }
-}
-
-std::string to_string(const hkQTransform &tm) {
-  std::string retVal;
-  retVal.push_back('(');
-  retVal
-      .append(std::to_string(reinterpret_cast<const Vector &>(tm.translation)))
-      .append(")(")
-      .append(std::to_string(tm.rotation))
-      .append(")(")
-      .append(std::to_string(reinterpret_cast<const Vector &>(tm.scale)))
-      .push_back(')');
-  return retVal;
-}
-
-#include "hk_rootlevelcontainer.inl"
-#include "hka_animation.inl"
-#include "hka_animationbinding.inl"
-#include "hka_animationcontainer.inl"
-#include "hka_annotationtrack.inl"
-#include "hka_interleavedanimation.inl"
-#include "hka_skeleton.inl"
-#include "hkx_environment.inl"
+#include "hklib/hk_rootlevelcontainer.hpp"
+#include "internal/hk_internal_api.hpp"
 
 const std::map<hkToolset, xmlToolsetProp> xmlToolsetProps = {
     {HK500, xmlToolsetProp{{}, 5, "Havok-5.0.0-r1"}},

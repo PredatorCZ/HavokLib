@@ -16,18 +16,14 @@
 */
 
 #include "internal/hka_animationbinding.hpp"
+#include "base.hpp"
+#include "internal/hka_animation.hpp"
 
 void hkaAnimationBindingInternalInterface::ToXML(XMLHandle hdl) const {
   std::string buffer;
 
   if (hdl.toolset > HK550) {
-    pugi::xml_node skelNode = hdl.node->append_child(_hkParam);
-    skelNode.append_attribute(_hkName).set_value("originalSkeletonName");
-
-    auto skelName = GetSkeletonName();
-
-    if (!skelName.empty())
-      skelNode.append_buffer(skelName.data(), skelName.size());
+    ::ToXML("originalSkeletonName", GetSkeletonName(), *hdl.node);
   }
 
   pugi::xml_node aniNode = hdl.node->append_child(_hkParam);
@@ -38,10 +34,9 @@ void hkaAnimationBindingInternalInterface::ToXML(XMLHandle hdl) const {
     aniNode.append_buffer(buffer.c_str(), buffer.size());
   }
 
-  pugi::xml_node transNode = hdl.node->append_child(_hkParam);
-  transNode.append_attribute(_hkName).set_value("transformTrackToBoneIndices");
-  transNode.append_attribute(_hkNumElements)
-      .set_value(GetNumTransformTrackToBoneIndices());
+  pugi::xml_node transNode =
+      ToXMLArray("transformTrackToBoneIndices",
+                 GetNumTransformTrackToBoneIndices(), *hdl.node);
 
   static const char *ident = "\n\t\t\t\t";
   buffer = ident;
@@ -66,11 +61,9 @@ void hkaAnimationBindingInternalInterface::ToXML(XMLHandle hdl) const {
   }
 
   if (hdl.toolset > HK510) {
-    pugi::xml_node floatNode = hdl.node->append_child(_hkParam);
-    floatNode.append_attribute(_hkName).set_value(
-        "floatTrackToFloatSlotIndices");
-    floatNode.append_attribute(_hkNumElements)
-        .set_value(GetNumFloatTrackToFloatSlotIndices());
+    pugi::xml_node floatNode =
+        ToXMLArray("floatTrackToFloatSlotIndices",
+                   GetNumFloatTrackToFloatSlotIndices(), *hdl.node);
 
     buffer = ident;
     cc = 0;
@@ -95,10 +88,8 @@ void hkaAnimationBindingInternalInterface::ToXML(XMLHandle hdl) const {
   }
 
   if (hdl.toolset > HK2011_3) {
-    pugi::xml_node partNode = hdl.node->append_child(_hkParam);
-    partNode.append_attribute(_hkName).set_value("partitionIndices");
-    partNode.append_attribute(_hkNumElements)
-        .set_value(GetNumPartitionIndices());
+    pugi::xml_node partNode =
+        ToXMLArray("partitionIndices", GetNumPartitionIndices(), *hdl.node);
 
     buffer = ident;
     cc = 0;
@@ -122,12 +113,10 @@ void hkaAnimationBindingInternalInterface::ToXML(XMLHandle hdl) const {
     }
   }
 
-  pugi::xml_node blendNode = hdl.node->append_child(_hkParam);
-  blendNode.append_attribute(_hkName).set_value("blendHint");
-
   BlendHint blendHint = GetBlendHint();
-  std::string_view blendName = GetReflectedEnum<
-      BlendHint>()->names[blendHint + (!blendHint || hdl.toolset > HK700 ? 0 : 1)];
+  std::string_view blendName =
+      GetReflectedEnum<BlendHint>()
+          ->names[blendHint + (!blendHint || hdl.toolset > HK700 ? 0 : 1)];
 
-  blendNode.append_buffer(blendName.data(), blendName.size());
+  ::ToXML("blendHint", blendName, *hdl.node);
 }

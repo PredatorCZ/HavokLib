@@ -16,30 +16,16 @@
 */
 
 #include "internal/hka_annotationtrack.hpp"
+#include "base.hpp"
 
 void hkaAnnotationTrackInternalInterface::ToXML(XMLHandle hdl) const {
-  std::string _buff;
-
-  pugi::xml_node tracksNode = hdl.node->append_child(_hkParam);
-  tracksNode.append_attribute(_hkName).set_value(
-      hdl.toolset < HK600 ? _hkName : "trackName");
-  auto aName = this->GetName();
-  tracksNode.append_buffer(aName.data(), aName.size());
-
-  pugi::xml_node annotsNode = hdl.node->append_child(_hkParam);
-  annotsNode.append_attribute(_hkName).set_value("annotations");
-  annotsNode.append_attribute(_hkNumElements).set_value(Size());
+  ::ToXML(hdl.toolset < HK600 ? _hkName : "trackName", this->GetName(),
+          *hdl.node);
+  pugi::xml_node annotsNode = ToXMLArray("annotations", Size(), *hdl.node);
 
   for (auto a : *this) {
     pugi::xml_node cObjNode = annotsNode.append_child(_hkObject);
-
-    pugi::xml_node timeNode = cObjNode.append_child(_hkParam);
-    timeNode.append_attribute("time");
-    _buff = std::to_string(a.time);
-    timeNode.append_buffer(_buff.c_str(), _buff.size());
-
-    pugi::xml_node textNode = cObjNode.append_child(_hkParam);
-    textNode.append_attribute("text");
-    textNode.append_buffer(a.text.data(), a.text.size());
+    ::ToXML("time", a.time, cObjNode);
+    ::ToXML("text", a.text, cObjNode);
   }
 }
