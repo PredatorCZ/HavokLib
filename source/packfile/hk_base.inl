@@ -1,4 +1,5 @@
 // This file has been automatically generated. Do not modify.
+#pragma once
 #include "spike/classgen.hpp"
 namespace clgen::hkVariant {
 enum Members {
@@ -56,16 +57,16 @@ struct Interface {
 namespace clgen::hkReferenceObject {
 enum Members {
   memSizeAndFlags,
+  propertyBag,
   referenceCount,
-  unk,
   vtable,
   _count_,
 };
 static const std::set<ClassData<_count_>> LAYOUTS {
-  {{{{HK500, HK2015, 8, 0}}, 16}, {8, 10, -1, 0}, {0x5}},
-  {{{{HK2016, HK2019, 8, 0}}, 24}, {16, 18, 8, 0}, {0x5}},
-  {{{{HK500, HK2015, 4, 0}}, 8}, {4, 6, -1, 0}, {0x5}},
-  {{{{HK2016, HK2019, 4, 0}}, 12}, {8, 10, 4, 0}, {0x5}}
+  {{{{HK500, HK2015, 8, 0}}, 16}, {8, -1, 10, 0}, {0x11}},
+  {{{{HK2016, HK2019, 8, 0}}, 24}, {16, 8, 18, 0}, {0x11}},
+  {{{{HK500, HK2015, 4, 0}}, 8}, {4, -1, 6, 0}, {0x11}},
+  {{{{HK2016, HK2019, 4, 0}}, 12}, {8, 4, 10, 0}, {0x11}}
 };
 struct Interface {
   Interface(char *data_, LayoutLookup layout_): data{data_}, layout{GetLayout(LAYOUTS, {layout_, {LookupFlag::Ptr}})}, lookup{layout_} {}
@@ -90,17 +91,17 @@ struct Interface {
   }
   int16 MemSizeAndFlags() const { return m(memSizeAndFlags) == -1 ? int16{} : *reinterpret_cast<int16*>(data + m(memSizeAndFlags)); }
   int16 ReferenceCount() const { return m(referenceCount) == -1 ? int16{} : *reinterpret_cast<int16*>(data + m(referenceCount)); }
-  Pointer<int32> UnkPtr() {
-    int16 off = m(unk); if (off == -1) return {nullptr, lookup};
+  Pointer<int32> PropertyBagPtr() {
+    int16 off = m(propertyBag); if (off == -1) return {nullptr, lookup};
     return {data + off, lookup};
   }
-  int32 *Unk() {
-    int16 off = m(unk); if (off == -1) return nullptr;
+  int32 *PropertyBag() {
+    int16 off = m(propertyBag); if (off == -1) return nullptr;
     if (layout->ptrSize == 8) return *reinterpret_cast<int32**>(data + off);
     return *reinterpret_cast<es::PointerX86<int32>*>(data + off);
   }
-  const int32 *Unk() const {
-    int16 off = m(unk); if (off == -1) return nullptr;
+  const int32 *PropertyBag() const {
+    int16 off = m(propertyBag); if (off == -1) return nullptr;
     if (layout->ptrSize == 8) return *reinterpret_cast<int32**>(data + off);
     return *reinterpret_cast<es::PointerX86<int32>*>(data + off);
   }

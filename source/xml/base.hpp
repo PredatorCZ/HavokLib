@@ -42,8 +42,8 @@ static inline void PointerToString(const void *ptr, std::string &str) {
 template <class C> static void ExportReflectedClass(C &input, XMLnode &parent) {
   ReflectorWrap<const C> refl(input);
 
-  for (size_t t = 0; t < refl.GetNumReflectedValues(); t++) {
-    Reflector::KVPair pair = refl.GetReflectedPair(t);
+  for (ReflectorMember v : refl) {
+    ReflectorMember::KVPair pair = v.ReflectedPair();
     XMLnode nameNode = parent.append_child(_hkParam);
     nameNode.append_attribute(_hkName).set_value(pair.name.data());
     nameNode.append_buffer(pair.value.c_str(), pair.value.size());

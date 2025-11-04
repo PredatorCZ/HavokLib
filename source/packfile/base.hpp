@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2023 Lukas Cone
+    Copyright(C) 2016-2025 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -33,3 +33,7 @@ template <class C, template <class _C> class _ipointer> struct hkArray {
   operator C *() { return data; }
   operator const C *() const { return data; }
 };
+
+static inline std::string_view safe_sw(const char *name) {
+  return name ? name : std::string_view{};
+}

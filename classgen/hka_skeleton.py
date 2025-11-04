@@ -12,8 +12,10 @@ hkLocalFrameOnBone.members = [
     ClassMember('boneIndex', TYPES.int32),
 ]
 hkLocalFrameOnBone.patches = [
-    ClassPatch('HK2011_1', ClassPatchType.replace,
-               ClassMember('boneIndex', TYPES.int16)),
+    ClassPatch('HK2011_1',
+        ClassPatchType.replace,
+            ClassMember('boneIndex', TYPES.int16)
+    ),
 ]
 
 hkaPartition = ClassData('hkaPartition')
@@ -32,22 +34,33 @@ hkaSkeleton.members = [
 ]
 
 hkaSkeleton.patches = [
-    ClassPatch('HK550', ClassPatchType.append, LegacyArray(
-        'floatSlots', Pointer(TYPES.char))),
-    ClassPatch('HK600', ClassPatchType.append, LegacyArray(
-        'localFrames', hkLocalFrameOnBone)),
-    ClassPatch('HK700', ClassPatchType.replace,
+    ClassPatch('HK550',
+        ClassPatchType.append,
+        LegacyArray('floatSlots', Pointer(TYPES.char))
+    ),
+    ClassPatch('HK600',
+        ClassPatchType.append,
+            LegacyArray('localFrames', hkLocalFrameOnBone)
+    ),
+    ClassPatch('HK700',
+        ClassPatchType.replace,
                hkArray('parentIndices', TYPES.int16),
                hkArray('bones', hkaBone),
                hkArray('transforms', hkQTransform),
                hkArray('floatSlots', Pointer(TYPES.char)),
                hkArray('localFrames', hkLocalFrameOnBone),
-               ClassPatchType.append, Inheritable(hkReferenceObject)
-               ),
-    ClassPatch('HK2010_1', ClassPatchType.insert_after, 'transforms', hkArray(
-        'referenceFloats', TYPES.float)),
-    ClassPatch('HK2012_1', ClassPatchType.append, hkArray(
-        'partitions', hkaPartition)),
+        ClassPatchType.append,
+            Inheritable(hkReferenceObject)
+    ),
+    ClassPatch('HK2010_1',
+        ClassPatchType.insert_after,
+            'transforms',
+            hkArray('referenceFloats', TYPES.float)
+    ),
+    ClassPatch('HK2012_1',
+        ClassPatchType.append,
+            hkArray('partitions', hkaPartition)
+    ),
 ]
 
 if __name__ == "__main__":

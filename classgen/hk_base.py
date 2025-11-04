@@ -39,7 +39,8 @@ BASE.ignore_pointer_endianness = True
 
 hkQTransform = NamedType('hkQTransform', 48, 16)
 hkLocalFrame = NamedType('hkLocalFrame')
-esMatrix44 = NamedType('es::Matrix44', 64, 16)
+hkMatrix4 = NamedType('es::Matrix44', 64, 16)
+hkMatrix3 = NamedType('hkMatrix3', 48, 16)
 
 hkVariant = ClassData('hkVariant')
 hkVariant.members = [
@@ -55,8 +56,9 @@ class LegacyArray():
             'num' + name[0].upper() + name[1:], TYPES.uint32)
 
     def get_location(self, cur_offset, settings: PermSettings):
-        loc = self.pointer.get_location(cur_offset, settings)
-        return self.counter.get_location(loc.end, settings)
+        loc0 = self.pointer.get_location(cur_offset, settings)
+        loc1 = self.counter.get_location(loc0.end, settings)
+        return TypeLocation(loc0.begin, loc1.end, loc0.alignment)
 
     def append_offsets(self, offsets: list, cur_offset: int, member_names: list, settings: MainSettings):
         data_loc = self.pointer.type.get_location(cur_offset, settings)
@@ -109,8 +111,7 @@ hkReferenceObject.members = [
     ClassMember('referenceCount', TYPES.int16),
 ]
 hkReferenceObject.patches = [
-    ClassPatch('HK2016', ClassPatchType.insert_after, 'vtable',
-               ClassMember('unk', Pointer(TYPES.int32))),
+    ClassPatch('HK2016', ClassPatchType.insert_after, 'vtable', ClassMember('propertyBag', Pointer(TYPES.int32))),
 ]
 
 def dump_classes(CLASSES):
@@ -128,5 +129,6 @@ if __name__ == "__main__":
     BASE.class_layout_gnu = False
     CLASSES = [hkVariant,hkReferenceObject,]
     print('// This file has been automatically generated. Do not modify.')
+    print('#pragma once')
     print('#include "spike/classgen.hpp"')
     dump_classes(CLASSES)

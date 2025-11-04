@@ -8,7 +8,6 @@ HavokLib is an independent Havok packfile serialize and XML store library for C+
 In addition, it can output packfile formats into XML/Bin under any available version. This library can possibly upgrade/downgrade between versions.\
 Library can also store classic data for XML direct export.\
 Library uses wrapper for a python 3 module.\
-Library is compilable under Clang 10, Windowns Clang 13.0.1 and G++10.
 
 ## Toolset
 
@@ -18,27 +17,27 @@ Toolset can be found in [Toolset folder](https://github.com/PredatorCZ/HavokLib/
 
 ## Supported formats/toolset versions
 
-Havok 5.0.0 - 2017
+Havok 5.0.0 - 2019
 
 It also supports both endians, both x86 and x64 platforms and files compiled for all available compilers.\
-For versions 2015+, there aren't any samples for unit tests. Only MSVC formats tested!\
-This library doesn't support loading tagfiles and never will.\
+For versions 2015+, there aren't any samples for unit tests. Only Win64 formats tested!\
+This library doesn't support loading tagfiles and never will. (You'll need to convert tagfile to packfile with hct or assetcc)\
 Binary exporting is an experimental feature for now.
 
 ## Supported classes
 
-* hkaSkeleton: 5.0.0 - 2017
-* hkRootLevelContainer: 5.0.0 - 2017
-* hkaAnimationContainer: 5.0.0 - 2017
-* hkaAnimation (not final): 5.0.0 - 2017
+* hkaSkeleton: 5.0.0 - 2019
+* hkRootLevelContainer: 5.0.0 - 2019
+* hkaAnimationContainer: 5.0.0 - 2019
+* hkaAnimation (not final): 5.0.0 - 2019
 * hkaDeltaCompressedAnimation: 5.0.0 - 2010
-* hkaWaveletCompressedAnimation: 5.0.0 - 2010 (/wo decompressor)
-* hkaAnnotationTrack: 5.0.0 - 2017
+* hkaWaveletCompressedAnimation: 5.0.0 - 2010
+* hkaAnnotationTrack: 5.0.0 - 2019
 * hkaInterleavedAnimation: 5.0.0 - 2015
-* hkaAnimationBinding: 5.0.0 - 2017
+* hkaAnimationBinding: 5.0.0 - 2019
 * hkxEnvironment: 5.0.0 - 2014
-* hkaSplineCompressedAnimation: 5.0.0 - 2017
-* hkaDefaultAnimatedReferenceFrame: 5.0.0 - 2014
+* hkaSplineCompressedAnimation: 5.0.0 - 2019
+* hkaDefaultAnimatedReferenceFrame: 5.0.0 - 2019
 
 ## Supported XML classes
 
@@ -74,4 +73,4 @@ This library is available under GPL v3 license. (See LICENSE.md)
 
 This library uses following libraries:
 
-* PreCore, Copyright (c) 2016-2022 Lukas Cone
+* Spike, Copyright (c) 2016-2025 Lukas Cone
