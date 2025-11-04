@@ -1,5 +1,5 @@
 /*  Havok Format Unit Tests for common classes
-    Copyright(C) 2020-2023 Lukas Cone
+    Copyright(C) 2020-2025 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -15,10 +15,7 @@
     along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
 
-#pragma once
-#include "havok_xml.hpp"
-#include "spike/util/unit_testing.hpp"
-#include <algorithm>
+#include "test.hpp"
 
 int test_rootcontainer(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   TEST_CHECK(hkNode);
@@ -35,19 +32,17 @@ int test_rootcontainer(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   for (auto &v : *rlCont) {
     for (auto &b : *xmVariant) {
       std::string_view paramName = b.attribute("name").as_string();
+      std::string_view paramText = b.text().as_string();
 
       if (paramName == "className") {
-        auto xmText = b.text().as_string();
-        TEST_EQUAL(v.className, xmText);
+        TEST_EQUAL(v.className, paramText);
       } else if (paramName == "name") {
-        std::string_view xmlText = b.text().as_string();
-
-        if (xmlText == "hkaAnimationContainer") {
+        if (paramText == "hkaAnimationContainer") {
           if (v.name != "Merged Animation Container") {
-            TEST_EQUAL(v.name, xmlText);
+            TEST_EQUAL(v.name, paramText);
           }
         } else {
-          TEST_EQUAL(v.name, xmlText)
+          TEST_EQUAL(v.name, paramText)
         }
       }
     }
@@ -99,40 +94,6 @@ int test_animationcontainer(pugi::xml_node nde, IhkVirtualClass *hkNode) {
 
   return 0;
 }
-
-int GetNumber(float hkNum, std::string_view &sw) {
-  char *strEnd = nullptr;
-  auto xmNum = std::strtof(sw.data(), &strEnd);
-
-  const size_t processed =
-      std::distance(sw.data(), const_cast<const char *>(strEnd));
-
-  TEST_NOT_EQUAL(processed, 0);
-
-  TEST_EQUAL(hkNum, xmNum);
-  sw.remove_prefix(processed);
-
-  sw = es::SkipStartWhitespace(sw, true);
-
-  return 0;
-};
-
-int GetInt(float hkNum, std::string_view &sw) {
-  char *strEnd = nullptr;
-  auto xmNum = std::strtol(sw.data(), &strEnd, 10);
-
-  const size_t processed =
-      std::distance(sw.data(), const_cast<const char *>(strEnd));
-
-  TEST_NOT_EQUAL(processed, 0);
-
-  TEST_EQUAL(hkNum, xmNum);
-  sw.remove_prefix(processed);
-
-  sw = es::SkipStartWhitespace(sw, true);
-
-  return 0;
-};
 
 int test_animationbinding(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   TEST_CHECK(hkNode);

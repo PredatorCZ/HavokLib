@@ -1,5 +1,5 @@
 /*  Havok Format Unit Tests for xml generation
-    Copyright(C) 2020-2023 Lukas Cone
+    Copyright(C) 2020-2025 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -15,8 +15,8 @@
     along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
 
-#pragma once
 #include "havok_xml.hpp"
+#include "pugixml.hpp"
 #include "spike/util/unit_testing.hpp"
 
 int test_xml_base() {

@@ -1,5 +1,5 @@
 /*  Havok Format Unit Tests for hkaSkeleton
-    Copyright(C) 2020-2022 Lukas Cone
+    Copyright(C) 2020-2025 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -15,8 +15,9 @@
     along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
 
-#pragma once
-#include "test_common.inl"
+#include "hklib/hka_skeleton.hpp"
+#include "hklib/hkx_environment.hpp"
+#include "test.hpp"
 
 int test_environment(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   TEST_CHECK(hkNode);
@@ -97,25 +98,14 @@ int test_skeleton(pugi::xml_node nde, IhkVirtualClass *hkNode) {
     auto xmParent = nde.parent();
 
     for (auto b : skel->BoneNames()) {
-      auto fndEnd = xmBoneLinks.find_first_of("\n ");
-      const auto swNPOS = xmBoneLinks.npos;
-
-      TEST_NOT_EQUAL(fndEnd, swNPOS);
-
-      const std::string subName(xmBoneLinks.substr(0, fndEnd));
-
-      auto xmBone = xmParent.find_child_by_attribute("name", subName.c_str());
-
-      TEST_NOT_CHECK(xmBone.empty());
+      pugi::xml_node xmBone;
+      TEST_NOT_CHECK(GetLink(xmBone, xmParent, xmBoneLinks));
 
       auto xmBoneName = xmBone.find_child_by_attribute("name", "name");
 
       TEST_NOT_CHECK(xmBoneName.empty());
 
       TEST_EQUAL(b, xmBoneName.text().as_string());
-
-      xmBoneLinks.remove_prefix(fndEnd);
-      xmBoneLinks = es::SkipStartWhitespace(xmBoneLinks, true);
     }
   } else {
     auto xmBone = xmBones.begin();

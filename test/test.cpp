@@ -15,28 +15,7 @@
     along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "pugixml.hpp"
-#include "spike/master_printer.hpp"
-
-static const std::string_view compiledFlags[] = {
-    "[4001].hkx", "[4011].hkx", "[4101].hkx", "[4111].hkx",
-    "[8001].hkx", "[8011].hkx", "[8101].hkx", "[8111].hkx",
-};
-
-static const std::string_view versions[] = {
-    "550/",    "660/",    "710/",    "2010_2/", "2011_1/",
-    "2011_2/", "2012_2/", "2013_1/", "2014_1/",
-};
-
-#include "test_defaultmotion.inl"
-#include "test_delta.inl"
-#include "test_interleaved.inl"
-#include "test_skeleton.inl"
-#include "test_spline.inl"
-#include "test_wavelet.inl"
-#include "test_xml.inl"
-
-#include "test_sample.inl"
+#include "test.hpp"
 
 int main() {
   es::print::AddPrinterFunction(es::Print);

@@ -7,6 +7,15 @@ build_target(
   APP
   SOURCES
   test.cpp
+  test_common.cpp
+  test_defaultmotion.cpp
+  test_delta.cpp
+  test_interleaved.cpp
+  test_sample.cpp
+  test_skeleton.cpp
+  test_spline.cpp
+  test_wavelet.cpp
+  test_xml.cpp
   LINKS
   havok-objects
   spike-objects

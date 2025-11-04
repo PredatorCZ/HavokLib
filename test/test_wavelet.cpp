@@ -15,9 +15,8 @@
     along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
 
-#pragma once
 #include "internal/hka_waveletanimation.hpp"
-#include "test_common.inl"
+#include "test.hpp"
 
 int test_wavelet(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   TEST_CHECK(hkNode);

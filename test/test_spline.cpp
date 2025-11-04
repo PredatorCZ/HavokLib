@@ -1,5 +1,5 @@
 /*  Havok Format Unit Tests for Spline Animation
-    Copyright(C) 2020-2022 Lukas Cone
+    Copyright(C) 2020-2025 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -15,9 +15,8 @@
     along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
 
-#pragma once
 #include "internal/hka_splineanimation.hpp"
-#include "test_common.inl"
+#include "test.hpp"
 
 int test_spline(pugi::xml_node nde, IhkVirtualClass *hkNode) {
   TEST_CHECK(hkNode);

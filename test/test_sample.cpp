@@ -1,5 +1,5 @@
 /*  Havok Format Unit Tests for Animation Sampling
-    Copyright(C) 2020-2023 Lukas Cone
+    Copyright(C) 2020-2025 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -15,10 +15,8 @@
     along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
 
-#pragma once
-#include "hklib/hk_packfile.hpp"
 #include "hklib/hka_animation.hpp"
-#include "spike/util/unit_testing.hpp"
+#include "test.hpp"
 #include <random>
 
 int test_sample() {
