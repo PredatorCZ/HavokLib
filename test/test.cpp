@@ -24,7 +24,7 @@ int main() {
              TEST_FUNC(test_defaultmotion), TEST_FUNC(test_spline),
              TEST_FUNC(test_interleaved), TEST_FUNC(test_delta),
              TEST_FUNC(test_wavelet), TEST_FUNC(test_sample),
-             TEST_FUNC(test_xml_base));
+             TEST_FUNC(test_xml_base), TEST_FUNC(test_scene));
 
   return resultVar;
 }

@@ -24,7 +24,7 @@ struct hkxEnvironmentVariable {
   std::string_view value;
 };
 
-struct hkxEnvironment : IhkVirtualClass,
+struct hkxEnvironment : IhkxVirtualClass,
                         virtual uni::Vector<hkxEnvironmentVariable> {
   DECLARE_HKCLASS(hkxEnvironment)
 };

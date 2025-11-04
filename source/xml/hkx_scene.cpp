@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2022 Lukas Cone
+    Copyright(C) 2016-2025 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -15,7 +15,20 @@
     along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
 
-#pragma once
-#include "hk_base.hpp"
+#include "internal/hkx_scene.hpp"
+#include "base.hpp"
+void hkxNodeInternalInterface::ToXML(XMLHandle) const {}
 
-struct hkaBoneAttachment : IhkaVirtualClass {};
+void hkxNodeSelectionSetInternalInterface::ToXML(XMLHandle) const {}
+
+void hkxLightInternalInterface ::ToXML(XMLHandle) const {}
+
+void hkxTextureInplaceInternalInterface::ToXML(XMLHandle) const {}
+
+void hkxTextureFileInternalInterface ::ToXML(XMLHandle) const {}
+
+void hkxSkinBindingInternalInterface::ToXML(XMLHandle) const {}
+
+void hkxCameraInternalInterface ::ToXML(XMLHandle) const {}
+
+void hkxSceneInternalInterface::ToXML(XMLHandle) const {}

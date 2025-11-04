@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2022 Lukas Cone
+    Copyright(C) 2016-2025 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -15,7 +15,21 @@
     along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
 
-#pragma once
-#include "hk_base.hpp"
+#include "internal/hkx_attributeholder.hpp"
+#include "base.hpp"
 
-struct hkaBoneAttachment : IhkaVirtualClass {};
+void hkxAttributeHolderInternalInterface::ToXML(XMLHandle hdl) const {
+  pugi::xml_node groupsNode = ToXMLArray("attributeGroups", Size(), *hdl.node);
+
+  for (const auto &g : *this) {
+    auto obj = groupsNode.append_child(_hkObject);
+    ::ToXML(_hkName, g->Name(), obj);
+    auto attrs = ToXMLArray("attributes", g->Size(), obj);
+
+    for (auto &a : *g) {
+      auto obj = attrs.append_child(_hkObject);
+      ::ToXML(_hkName, a.name, obj);
+      ::ToXML("value", a.value, obj, hdl.toolset);
+    }
+  }
+}

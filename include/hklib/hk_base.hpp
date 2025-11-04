@@ -16,6 +16,8 @@
 */
 
 #pragma once
+#pragma GCC diagnostic ignored "-Woverloaded-virtual"
+
 #include "spike/crypto/jenkinshash.hpp"
 #include "spike/reflect/reflector.hpp"
 #include "spike/uni/common.hpp"
@@ -42,6 +44,8 @@ struct XMLHandle {
   hkToolset toolset;
 };
 
+struct IhkxVirtualClass;
+struct IhkaVirtualClass;
 struct hkVirtualClass;
 struct hkRootLevelContainer;
 struct hkaAnimatedReferenceFrame;
@@ -53,22 +57,92 @@ struct hkxEnvironment;
 struct hkaBoneAttachment;
 struct hkaMeshBinding;
 struct hkaAnnotationTrack;
+struct hkxAttributeHolder;
+struct hkxMaterial;
+struct hkxMesh;
+struct hkxScene;
+struct hkxMeshSection;
+struct hkxVertexBuffer;
+struct hkxIndexBuffer;
+struct hkxVertexDescription;
+struct hkxNode;
+struct hkxNodeSelectionSet;
+struct hkxLight;
+struct hkxTextureInplace;
+struct hkxTextureFile;
+struct hkxSkinBinding;
 
 struct IhkVirtualClass {
   virtual const void *GetPointer() const = 0;
   virtual operator hkVirtualClass const *() const { return nullptr; }
   virtual operator hkRootLevelContainer const *() const { return nullptr; }
+  virtual operator IhkaVirtualClass const *() const { return nullptr; }
+  virtual operator IhkxVirtualClass const *() const { return nullptr; }
+  template <class C> operator C const *() const;
+  virtual ~IhkVirtualClass() = default;
+};
+
+struct IhkaVirtualClass : IhkVirtualClass {
   virtual operator hkaAnimatedReferenceFrame const *() const { return nullptr; }
   virtual operator hkaAnimation const *() const { return nullptr; }
   virtual operator hkaAnimationBinding const *() const { return nullptr; }
   virtual operator hkaAnimationContainer const *() const { return nullptr; }
   virtual operator hkaSkeleton const *() const { return nullptr; }
-  virtual operator hkxEnvironment const *() const { return nullptr; }
   virtual operator hkaBoneAttachment const *() const { return nullptr; }
   virtual operator hkaMeshBinding const *() const { return nullptr; }
   virtual operator hkaAnnotationTrack const *() const { return nullptr; }
-  virtual ~IhkVirtualClass() = default;
+  operator IhkaVirtualClass const *() const override { return this; }
+  template <class C> operator C const *() const = delete;
 };
+
+struct IhkxVirtualClass : IhkVirtualClass {
+  virtual operator hkxEnvironment const *() const { return nullptr; }
+  virtual operator hkxAttributeHolder const *() const { return nullptr; }
+  virtual operator hkxMaterial const *() const { return nullptr; }
+  virtual operator hkxMesh const *() const { return nullptr; }
+  virtual operator hkxScene const *() const { return nullptr; }
+  virtual operator hkxMeshSection const *() const { return nullptr; }
+  virtual operator hkxVertexBuffer const *() const { return nullptr; }
+  virtual operator hkxIndexBuffer const *() const { return nullptr; }
+  virtual operator hkxVertexDescription const *() const { return nullptr; }
+  virtual operator hkxNode const *() const { return nullptr; }
+  virtual operator hkxNodeSelectionSet const *() const { return nullptr; }
+  virtual operator hkxLight const *() const { return nullptr; }
+  virtual operator hkxTextureInplace const *() const { return nullptr; }
+  virtual operator hkxTextureFile const *() const { return nullptr; }
+  virtual operator hkxSkinBinding const *() const { return nullptr; }
+  operator IhkxVirtualClass const *() const override { return this; }
+  template <class C> operator C const *() const = delete;
+};
+
+template <class T>
+using is_hkaVirtualClass =
+    decltype(std::declval<IhkaVirtualClass>().operator T const *());
+template <class C>
+constexpr static bool is_hkaVirtualClass_v =
+    es::is_detected_v<is_hkaVirtualClass, C>;
+
+template <class T>
+using is_hkxVirtualClass =
+    decltype(std::declval<IhkxVirtualClass>().operator T const *());
+template <class C>
+constexpr static bool is_hkxVirtualClass_v =
+    es::is_detected_v<is_hkxVirtualClass, C>;
+
+static_assert(is_hkxVirtualClass_v<hkxMaterial>);
+static_assert(!is_hkaVirtualClass_v<hkxMaterial>);
+
+template <class C> IhkVirtualClass::operator C const *() const {
+  if constexpr (is_hkaVirtualClass_v<C>) {
+    const IhkaVirtualClass *asHka = *this;
+    return *asHka;
+  } else if constexpr (is_hkxVirtualClass_v<C>) {
+    const IhkxVirtualClass *asHkx = *this;
+    return *asHkx;
+  } else {
+    return *this;
+  }
+}
 
 template <class C, class D> C *safe_deref_cast(D *val) {
   if (!val)

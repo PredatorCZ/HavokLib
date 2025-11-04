@@ -16,6 +16,17 @@
 */
 
 #pragma once
-#include "hk_base.hpp"
+#include "hka_skeleton.hpp"
+#include "hkx_mesh.hpp"
+#include "spike/type/matrix44.hpp"
+#include <span>
 
-struct hkaMeshBinding : IhkVirtualClass {};
+struct hkaMeshBinding : IhkaVirtualClass {
+  virtual uni::Element<hkxMesh> Mesh() const = 0;
+  virtual std::string_view SkeletonName() const = 0;
+  virtual std::string_view Name() const = 0;
+  virtual uni::Element<hkaSkeleton> Skeleton() const = 0;
+  virtual size_t NumMappings() const = 0;
+  virtual std::span<const int16> Mappings(size_t at) const = 0;
+  virtual std::span<const es::Matrix44> BoneFromSkinMeshTransforms() const = 0;
+};

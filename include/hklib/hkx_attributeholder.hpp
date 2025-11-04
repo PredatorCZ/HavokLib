@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2022 Lukas Cone
+    Copyright(C) 2016-2025 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -17,5 +17,18 @@
 
 #pragma once
 #include "hk_base.hpp"
+#include "spike/uni/list.hpp"
 
-struct hkaBoneAttachment : IhkaVirtualClass {};
+struct hkxAttribute {
+  std::string_view name;
+  const IhkVirtualClass *value;
+};
+
+struct hkxAttributeGroup : uni::Vector<hkxAttribute> {
+  virtual std::string_view Name() const = 0;
+};
+
+struct hkxAttributeHolder : virtual IhkxVirtualClass,
+                            virtual uni::List<hkxAttributeGroup> {
+  DECLARE_HKCLASS(hkxAttributeHolder)
+};

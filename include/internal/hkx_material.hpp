@@ -1,5 +1,5 @@
 /*  Havok Format Library
-    Copyright(C) 2016-2022 Lukas Cone
+    Copyright(C) 2016-2025 Lukas Cone
 
     This program is free software : you can redistribute it and / or modify
     it under the terms of the GNU General Public License as published by
@@ -16,6 +16,15 @@
 */
 
 #pragma once
-#include "hk_base.hpp"
+#include "hk_internal_api.hpp"
+#include "hklib/hkx_material.hpp"
+#include "hkx_attributeholder.hpp"
 
-struct hkaBoneAttachment : IhkaVirtualClass {};
+struct hkxMaterialInternalInterface
+    : hkxMaterial,
+      virtual hkxAttributeHolderInternalInterface {
+  operator hkxMaterial const *() const override { return this; }
+  operator hkVirtualClass const *() const override { return this; }
+  void ToXML(XMLHandle hdl) const override;
+  static hkxMaterialInternalInterface *Create(void *interface);
+};

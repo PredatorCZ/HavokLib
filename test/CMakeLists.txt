@@ -11,7 +11,9 @@ build_target(
   test_defaultmotion.cpp
   test_delta.cpp
   test_interleaved.cpp
+  test_mesh.cpp
   test_sample.cpp
+  test_scene.cpp
   test_skeleton.cpp
   test_spline.cpp
   test_wavelet.cpp
