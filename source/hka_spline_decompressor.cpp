@@ -64,6 +64,7 @@ Vector4A16 Read32Quat(const char *&buffer) {
 }
 
 Vector4A16 Read40Quat(const char *&buffer) {
+  constexpr uint64 mask = (1 << 11) - 1;
   constexpr float fractal = 0.000345436f;
   const Vector4A16 fract(fractal, fractal, fractal, 0);
 
@@ -72,7 +73,7 @@ Vector4A16 Read40Quat(const char *&buffer) {
   const auto tmpVal = (UIVector4A16(cVal0, cVal0, cVal1, 0) *
                        UIVector4A16(1 << 20, 1 << 8, 1 << 20, 0)) >>
                       20;
-  const auto tmpVal1 = IVector4A16(tmpVal) - (1 << 11) - 1;
+  const auto tmpVal1 = IVector4A16(tmpVal) - mask;
   const auto tmpVal2 = (Vector4A16(tmpVal1) * fract).QComputeElement();
   const size_t resultShift = (cVal0 >> 36) & 3;
   const Vector4A16 wmul(1.f, 1.f, 1.f, (cVal0 >> 38) & 1 ? -1.f : 1.f);
